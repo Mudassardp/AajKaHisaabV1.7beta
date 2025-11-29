@@ -1,0 +1,10 @@
+Your Project Folder/
+│
+├── index.html
+│
+├── css/
+│   └── style.css
+│
+└── js/
+    ├── script.js
+    └── pdf-generator.js

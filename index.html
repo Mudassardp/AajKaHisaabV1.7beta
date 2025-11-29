@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HisaabKitaab - Expense Splitter</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <button id="manualSyncBtn" class="btn btn-small btn-info sync-btn">Sync to Cloud</button>
+                <div class="mode-tabs">
+                    <button id="viewerTab" class="mode-tab active">Viewer Mode</button>
+                    <button id="adminTab" class="mode-tab">Admin Mode</button>
+                </div>
+                <div id="userStatus" class="user-status" style="display: none;">
+                    <button id="logoutBtn" class="btn btn-small">Logout</button>
+                </div>
+            </div>
+            
+            <h1>HisaabKitaab</h1>
+            <p class="tagline">Weekly Expense Split</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- Viewer Mode Content -->
+            <div id="viewerContent" class="mode-content active">
+                <!-- Existing Sheets Section -->
+                <div class="existing-sheets-section">
+                    <h2 class="section-title">Existing Expense Sheets</h2>
+                    <div id="sheetsListContainer">
+                        <div class="no-sheets" id="noSheetsMessage">No saved sheets found.</div>
+                        <ul id="sheetsList" class="sheets-list" style="display: none;"></ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Mode Content -->
+            <div id="adminContent" class="mode-content">
+                <!-- Login Section for Normal Users -->
+                <div id="loginSection" class="login-section">
+                    <h2>Admin Access Required</h2>
+                    <p>Login as admin to create and manage expense sheets.</p>
+                    <div class="action-buttons">
+                        <button id="loginAsAdminBtn" class="btn btn-info">Login as Admin</button>
+                    </div>
+                </div>
+
+                <!-- Admin Only Sections -->
+                <div id="adminSections" style="display: none;">
+                    <div class="create-section">
+                        <h2>Start a New Expense Sheet</h2>
+                        <button id="createBtn" class="btn">Create New Hisaab</button>
+                    </div>
+                    
+                    <!-- Existing Sheets Section -->
+                    <div class="existing-sheets-section">
+                        <h2 class="section-title">Existing Expense Sheets</h2>
+                        <div id="adminSheetsListContainer">
+                            <div class="no-sheets" id="adminNoSheetsMessage">No saved sheets found.</div>
+                            <ul id="adminSheetsList" class="sheets-list" style="display: none;"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Login Modal -->
+            <div id="adminLoginModal" class="modal">
+                <div class="modal-content">
+                    <h3>Admin Login</h3>
+                    <p>Please enter the admin password to access editing features:</p>
+                    <input type="password" id="adminPasswordInput" placeholder="Enter admin password" class="form-input">
+                    <div class="modal-buttons" style="margin-top: 20px;">
+                        <button id="confirmAdminLoginBtn" class="btn btn-success">Login</button>
+                        <button id="cancelAdminLoginBtn" class="btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants Section (Admin Only) -->
+            <div id="participantsSection" class="participants-section">
+                <h2 class="section-title">Select Participants</h2>
+                <ul id="participantsList" class="participants-list"></ul>
+                
+                <div class="add-participant-section">
+                    <h3>Add Custom Participant</h3>
+                    <div class="add-participant-form">
+                        <input type="text" id="customParticipantInput" placeholder="Enter participant name">
+                        <button id="addCustomParticipantBtn" class="btn btn-small">Add Participant</button>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="createSheetBtn" class="btn btn-success">Create Sheet with Selected Participants</button>
+                </div>
+            </div>
+            
+            <!-- Sheet Section (Different for Admin and Normal Users) -->
+            <div id="sheetSection" class="sheet-section">
+                <div class="sheet-header">
+                    <div id="sheetName" class="sheet-name"></div>
+                    <div id="adminSheetActions" class="sheet-actions" style="display: none;">
+                        <button id="editParticipantsBtn" class="btn btn-info">Edit Participants</button>
+                        <button id="deleteSheetBtn" class="btn btn-danger">Delete Sheet</button>
+                    </div>
+                </div>
+                
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Participant</th>
+                            <th>Spent (SAR)</th>
+                            <th>Meals</th>
+                            <th>To Be Paid (SAR)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+                
+                <div class="summary-box">
+                    <h3 class="section-title">Expense Summary</h3>
+                    <div class="summary-item">
+                        <span>Total Participants:</span>
+                        <span class="currency" id="totalParticipants">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Spent:</span>
+                        <span class="currency" id="totalSpent">0.00 SAR</span>
+                    </div>
+                    <div id="totalMealsSummary" class="summary-item">
+                        <span>Total Meals:</span>
+                        <span class="currency" id="totalMeals">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Cost Per Meal:</span>
+                        <span class="currency" id="costPerMeal">0.00 SAR</span>
+                    </div>
+                    <div class="meals-summary">
+                        <div class="summary-item">
+                            <span>1 Meal Participants:</span>
+                            <span id="oneMealCount">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>2 Meals Participants:</span>
+                            <span id="twoMealsCount">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>All Meals Participants:</span>
+                            <span id="threeMealsCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settlement-section">
+                    <h3 class="section-title">Settlement Suggestions</h3>
+                    <div id="settlementList" class="settlement-list">
+                        <div class="no-settlements">Calculate shares to see settlement suggestions</div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="calculateBtn" class="btn btn-success" style="display: none;">Calculate Shares</button>
+                    <button id="saveCloseBtn" class="btn btn-warning" style="display: none;">Save and Close</button>
+                    <button id="sharePdfBtn" class="btn btn-info">Share as PDF</button>
+                    <button id="closeSheetBtn" class="btn">Close Sheet</button>
+                </div>
+            </div>
+            
+            <!-- Edit Participants Section (Admin Only) -->
+            <div id="editParticipantsSection" class="edit-participants-section">
+                <h2 class="section-title">Edit Participants</h2>
+                
+                <div class="add-participant-section">
+                    <h3>Add New Participant</h3>
+                    <div class="add-participant-form">
+                        <input type="text" id="editCustomParticipantInput" placeholder="Enter participant name">
+                        <button id="editAddCustomParticipantBtn" class="btn btn-small">Add Participant</button>
+                    </div>
+                </div>
+                
+                <h3>Current Participants</h3>
+                <ul id="editParticipantsList" class="edit-participants-list"></ul>
+                
+                <div class="action-buttons">
+                    <button id="updateParticipantsBtn" class="btn btn-success">Update Participants & Recalculate</button>
+                    <button id="cancelEditBtn" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content">
+                <h3>Delete Sheet</h3>
+                <p>Are you sure you want to delete this expense sheet? This action cannot be undone.</p>
+                <div class="modal-buttons">
+                    <button id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
+                    <button id="cancelDeleteBtn" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>HisaabKitaab©2025(created by Mudassar)-v1.4</p>
+        </footer>
+    </div>
+
+    <!-- PDF Loading Overlay -->
+    <div id="pdfLoadingOverlay" class="pdf-loading" style="display: none;">
+        <div class="pdf-loading-spinner"></div>
+        <div class="pdf-loading-text">Generating PDF...</div>
+    </div>
+
+    <!-- IMPORTANT: Load scripts in correct order -->
+
+   <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+<!-- Firebase Sync -->
+<script src="js/firebase-sync.js"></script>
+
+<!-- Your existing scripts -->
+<script src="js/pdf-generator.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
