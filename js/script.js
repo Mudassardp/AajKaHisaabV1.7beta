@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const createSheetBtn = document.getElementById('createSheetBtn');
     const tableBody = document.getElementById('tableBody');
     const calculateBtn = document.getElementById('calculateBtn');
-    const saveCloseBtn = document.getElementById('saveCloseBtn');
+    const saveBtn = document.getElementById('saveBtn');
     const sharePdfBtn = document.getElementById('sharePdfBtn');
     const closeSheetBtn = document.getElementById('closeSheetBtn');
     const deleteSheetBtn = document.getElementById('deleteSheetBtn');
@@ -54,15 +54,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const editParticipantsList = document.getElementById('editParticipantsList');
     const totalMealsSummary = document.getElementById('totalMealsSummary');
     
+    // New Elements for Beta v1.5
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.querySelector('.theme-icon');
+    
     // Application State
     let selectedParticipants = [];
     let currentSheetData = null;
     let savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
     let isAdmin = false;
-    let currentMode = 'viewer'; // Track current mode
+    let currentMode = 'viewer';
     const ADMIN_PASSWORD = "226622";
     
-    // Define the 15 default participants with Mohsin at position 11
+    // Color mapping for participants
+    const participantColors = {
+        "Rizwan": "#3498db",
+        "Aarif": "#e74c3c",
+        "Abdul Razzaq": "#2ecc71",
+        "Haris": "#9b59b6",
+        "Mauzam": "#f39c12",
+        "Masif": "#1abc9c",
+        "Mudassar": "#34495e",
+        "Shahid": "#d35400",
+        "Mansoor Kotawdekar": "#c0392b",
+        "Mansoor Wasta": "#8e44ad",
+        "Mohsin": "#27ae60",
+        "Ubedulla": "#f1c40f",
+        "Abdul Alim": "#e67e22",
+        "Sabir": "#e74c3c",
+        "Aftab": "#3498db"
+    };
+    
+    // Default participants
     const defaultParticipants = [
         "Rizwan", "Aarif", "Abdul Razzaq", "Haris", "Mauzam", 
         "Masif", "Mudassar", "Shahid", "Mansoor Kotawdekar", 
@@ -76,6 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSavedSheets();
         setupEventListeners();
         checkAdminStatus();
+        applyTheme(); // Apply saved theme
+        
         // NEW: Initialize Firebase sync
         setTimeout(() => {
             if (window.firebaseSync) {
@@ -94,8 +119,11 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmAdminLoginBtn.addEventListener('click', handleAdminLogin);
         cancelAdminLoginBtn.addEventListener('click', hideAdminLoginModal);
         logoutBtn.addEventListener('click', handleLogout);
+        
+        // Theme Toggle
+        themeToggleBtn.addEventListener('click', toggleTheme);
 
-        // Add this in setupEventListeners()
+        // Sync button
         document.getElementById('manualSyncBtn')?.addEventListener('click', () => {
             if (window.firebaseSync) {
                 window.firebaseSync.manualSync();
@@ -106,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
         createBtn.addEventListener('click', showParticipantsSection);
         createSheetBtn.addEventListener('click', createNewSheet);
         calculateBtn.addEventListener('click', calculateShares);
-        saveCloseBtn.addEventListener('click', saveAndCloseSheet);
+        saveBtn.addEventListener('click', saveSheet);
         sharePdfBtn.addEventListener('click', handlePDFGeneration);
         closeSheetBtn.addEventListener('click', closeSheet);
         deleteSheetBtn.addEventListener('click', showDeleteConfirmation);
@@ -127,6 +155,34 @@ document.addEventListener('DOMContentLoaded', function() {
         editParticipantsBtn.addEventListener('click', openEditParticipants);
         updateParticipantsBtn.addEventListener('click', updateParticipants);
         cancelEditBtn.addEventListener('click', cancelEditParticipants);
+    }
+    
+    // Theme Functions
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('hisaabKitaabTheme', isDark ? 'dark' : 'light');
+        updateThemeIcon(isDark);
+    }
+    
+    function applyTheme() {
+        const savedTheme = localStorage.getItem('hisaabKitaabTheme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateThemeIcon(true);
+        } else {
+            document.body.classList.remove('dark-mode');
+            updateThemeIcon(false);
+        }
+    }
+    
+    function updateThemeIcon(isDark) {
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+        themeToggleBtn.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    }
+    
+    // Color Functions
+    function getParticipantColor(participantName) {
+        return participantColors[participantName] || '#3498db';
     }
     
     // Mode Switching Functions
@@ -209,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loginSection.style.display = 'none';
         adminSections.style.display = 'block';
         calculateBtn.style.display = 'inline-block';
-        saveCloseBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'inline-block';
         sharePdfBtn.style.display = 'inline-block';
         adminSheetActions.style.display = 'flex';
         closeSheetBtn.style.display = 'inline-block';
@@ -219,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateUIForViewer() {
         calculateBtn.style.display = 'none';
-        saveCloseBtn.style.display = 'none';
+        saveBtn.style.display = 'none';
         sharePdfBtn.style.display = 'inline-block';
         adminSheetActions.style.display = 'none';
         participantsSection.style.display = 'none';
@@ -233,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loginSection.style.display = 'block';
         adminSections.style.display = 'none';
         calculateBtn.style.display = 'none';
-        saveCloseBtn.style.display = 'none';
+        saveBtn.style.display = 'none';
         sharePdfBtn.style.display = 'none';
         adminSheetActions.style.display = 'none';
         participantsSection.style.display = 'none';
@@ -248,32 +304,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         participantsList.innerHTML = '';
         defaultParticipants.forEach(participantName => {
-            const participant = document.createElement('li');
-            participant.className = 'participant';
-            
-            const checkboxContainer = document.createElement('div');
-            checkboxContainer.className = 'checkbox-container';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `participant_${participantName.replace(/\s+/g, '_')}`;
-            checkbox.value = participantName;
-            checkbox.checked = true;
-            
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.className = 'participant-name';
-            label.textContent = participantName;
-            
-            checkboxContainer.appendChild(checkbox);
-            checkboxContainer.appendChild(label);
-            participant.appendChild(checkboxContainer);
-            participantsList.appendChild(participant);
+            addParticipantToList(participantName);
         });
         
         customParticipantInput.value = '';
         participantsSection.style.display = 'block';
         participantsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function addParticipantToList(participantName) {
+        const color = getParticipantColor(participantName);
+        
+        const participantItem = document.createElement('li');
+        participantItem.className = 'participant';
+        participantItem.style.borderLeft = `3px solid ${color}`;
+        
+        participantItem.innerHTML = `
+            <span class="participant-name" style="color: ${color}; font-weight: 600;">
+                ${participantName}
+            </span>
+            <div class="checkbox-container">
+                <input type="checkbox" id="participant_${participantName.replace(/\s+/g, '_')}" 
+                       value="${participantName}" checked>
+            </div>
+        `;
+        
+        participantsList.appendChild(participantItem);
     }
     
     function createNewSheet() {
@@ -339,9 +395,10 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedParticipants.forEach(participant => {
             const row = document.createElement('tr');
             
-            // Participant Name
+            // Participant Name with color
             const nameCell = document.createElement('td');
-            nameCell.textContent = participant;
+            const color = getParticipantColor(participant);
+            nameCell.innerHTML = `<span style="color: ${color}; font-weight: 600;">${participant}</span>`;
             
             // Spent Amount
             const spentCell = document.createElement('td');
@@ -546,6 +603,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Check if we're in admin mode AND the user is logged in as admin
                 const showAdminControls = isAdmin && currentMode === 'admin';
                 
+                const fromColor = getParticipantColor(settlement.from);
+                const toColor = getParticipantColor(settlement.to);
+                
                 if (showAdminControls) {
                     // Admin mode with toggle button
                     const isPaid = settlement.status === 'paid';
@@ -554,13 +614,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     settlementItem.innerHTML = `
                         <div class="settlement-details">
-                            <span class="settlement-from">${settlement.from}</span>
-                            <span class="settlement-arrow">→</span>
-                            <span class="settlement-to">${settlement.to}</span>
-                            <span class="settlement-amount">${settlement.amount} SAR</span>
-                            <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
-                                ${statusText}
-                            </button>
+                            <div class="settlement-first-line">
+                                <span class="settlement-from" style="color: ${fromColor}; font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-arrow">→</span>
+                                <span class="settlement-to" style="color: ${toColor}; font-weight: 600;">${settlement.to}</span>
+                            </div>
+                            <div class="settlement-second-line">
+                                <span class="settlement-amount">${settlement.amount} SAR</span>
+                                <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
+                                    ${statusText}
+                                </button>
+                            </div>
                         </div>
                     `;
                     
@@ -587,11 +651,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     settlementItem.innerHTML = `
                         <div class="settlement-details">
-                            <span class="settlement-from">${settlement.from}</span>
-                            <span class="settlement-arrow">→</span>
-                            <span class="settlement-to">${settlement.to}</span>
-                            <span class="settlement-amount">${settlement.amount} SAR</span>
-                            <span class="settlement-status ${statusClass}">${statusText}</span>
+                            <div class="settlement-first-line">
+                                <span class="settlement-from" style="color: ${fromColor}; font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-arrow">→</span>
+                                <span class="settlement-to" style="color: ${toColor}; font-weight: 600;">${settlement.to}</span>
+                            </div>
+                            <div class="settlement-second-line">
+                                <span class="settlement-amount">${settlement.amount} SAR</span>
+                                <span class="settlement-status ${statusClass}">${statusText}</span>
+                            </div>
                         </div>
                     `;
                 }
@@ -599,12 +667,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 settlementList.appendChild(settlementItem);
             });
         }
-    }
-    
-    function saveAndCloseSheet() {
-        if (!isAdmin) return;
-        saveSheet();
-        closeSheet();
     }
     
     function saveSheet() {
@@ -622,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         loadSavedSheets();
         
-        // NEW: Auto-sync to cloud
+        // Auto-sync to cloud
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveToCloud(savedSheets);
         }
@@ -678,15 +740,28 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const participant = document.createElement('li');
-        participant.className = 'participant custom-participant';
-        participant.innerHTML = `
+        // Add new participant with default color
+        const participantItem = document.createElement('li');
+        participantItem.className = 'participant custom-participant';
+        participantItem.style.borderLeft = '3px solid #3498db';
+        
+        participantItem.innerHTML = `
+            <span class="participant-name" style="color: #3498db; font-weight: 600;">
+                ${customName}
+            </span>
             <div class="checkbox-container">
                 <input type="checkbox" id="custom_${Date.now()}" value="${customName}" checked>
-                <label for="custom_${Date.now()}" class="participant-name">${customName}</label>
             </div>
         `;
-        listElement.appendChild(participant);
+        
+        listElement.appendChild(participantItem);
+        
+        // Check the checkbox for new participant
+        const newCheckbox = participantItem.querySelector('input[type="checkbox"]');
+        if (newCheckbox) {
+            newCheckbox.checked = true;
+        }
+        
         inputElement.value = '';
         alert(`Participant "${customName}" added successfully!`);
     }
@@ -715,10 +790,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function addParticipantToEditList(participantName) {
+        const color = getParticipantColor(participantName);
+        
         const participantItem = document.createElement('li');
         participantItem.className = 'edit-participant-item';
         participantItem.innerHTML = `
-            <span class="edit-participant-name">${participantName}</span>
+            <span class="edit-participant-name" style="color: ${color}; font-weight: 600;">${participantName}</span>
             <button class="remove-participant-btn" title="Remove Participant">🗑️</button>
         `;
         
@@ -901,7 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save to localStorage
             localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
             
-            // NEW: Force sync to Firebase
+            // Force sync to Firebase
             if (window.firebaseSync && window.firebaseSync.isInitialized) {
                 window.firebaseSync.saveToCloud(savedSheets);
             }
@@ -925,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function() {
         savedSheets = savedSheets.filter(sheet => sheet.id !== sheetId);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // NEW: Sync to Firebase after deletion
+        // Sync to Firebase after deletion
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveToCloud(savedSheets);
         }
@@ -1013,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-      // PDF Generation Handler
+    // PDF Generation Handler
     function handlePDFGeneration() {
         if (!currentSheetData) {
             alert('No sheet data available to share');
@@ -1051,4 +1128,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make functions available globally for PDF generator
     window.showPDFLoading = showPDFLoading;
     window.hidePDFLoading = hidePDFLoading;
+    window.loadSavedSheets = loadSavedSheets;
 });
