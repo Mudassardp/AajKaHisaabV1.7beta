@@ -256,7 +256,7 @@
         // Footer
     const footer = `
     <div style="text-align: center; margin-top: 25px; padding-top: 12px; border-top: 1px solid #eaeaea; color: #7f8c8d; font-size: 8px;">
-        <p>Generated with HisaabKitaabApp (created by Mudassar) • ${new Date().toLocaleString()} • v1.4</p>
+        <p>Generated with HisaabKitaabApp (created by Mudassar) • ${new Date().toLocaleString()} • Beta-v1.5</p>
     </div>
 `;
         

@@ -66,25 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMode = 'viewer';
     const ADMIN_PASSWORD = "226622";
     
-    // Color mapping for participants
-    const participantColors = {
-        "Rizwan": "#3498db",
-        "Aarif": "#e74c3c",
-        "Abdul Razzaq": "#2ecc71",
-        "Haris": "#9b59b6",
-        "Mauzam": "#f39c12",
-        "Masif": "#1abc9c",
-        "Mudassar": "#34495e",
-        "Shahid": "#d35400",
-        "Mansoor Kotawdekar": "#c0392b",
-        "Mansoor Wasta": "#8e44ad",
-        "Mohsin": "#27ae60",
-        "Ubedulla": "#f1c40f",
-        "Abdul Alim": "#e67e22",
-        "Sabir": "#e74c3c",
-        "Aftab": "#3498db"
-    };
-    
     // Default participants
     const defaultParticipants = [
         "Rizwan", "Aarif", "Abdul Razzaq", "Haris", "Mauzam", 
@@ -178,11 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateThemeIcon(isDark) {
         themeIcon.textContent = isDark ? '☀️' : '🌙';
         themeToggleBtn.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-    }
-    
-    // Color Functions
-    function getParticipantColor(participantName) {
-        return participantColors[participantName] || '#3498db';
     }
     
     // Mode Switching Functions
@@ -313,14 +289,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function addParticipantToList(participantName) {
-        const color = getParticipantColor(participantName);
-        
         const participantItem = document.createElement('li');
         participantItem.className = 'participant';
-        participantItem.style.borderLeft = `3px solid ${color}`;
+        participantItem.style.borderLeft = '3px solid var(--primary-color)';
         
         participantItem.innerHTML = `
-            <span class="participant-name" style="color: ${color}; font-weight: 600;">
+            <span class="participant-name">
                 ${participantName}
             </span>
             <div class="checkbox-container">
@@ -395,10 +369,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedParticipants.forEach(participant => {
             const row = document.createElement('tr');
             
-            // Participant Name with color
+            // Participant Name
             const nameCell = document.createElement('td');
-            const color = getParticipantColor(participant);
-            nameCell.innerHTML = `<span style="color: ${color}; font-weight: 600;">${participant}</span>`;
+            nameCell.innerHTML = `<span style="font-weight: 600;">${participant}</span>`;
             
             // Spent Amount
             const spentCell = document.createElement('td');
@@ -505,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
         twoMealsCountElement.textContent = twoMealsCount;
         threeMealsCountElement.textContent = threeMealsCount;
         
-        // Calculate To Be Paid
+        // Calculate To Be Paid with CSS variable colors
         selectedParticipants.forEach(participant => {
             const spentAmount = currentSheetData.expenses[participant].spent;
             const mealsAttended = currentSheetData.expenses[participant].meals;
@@ -517,7 +490,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const toBePaidCell = document.querySelector(`td[data-participant="${participant}"]`);
             if (toBePaidCell) {
                 toBePaidCell.textContent = toBePaid.toFixed(2) + ' SAR';
-                toBePaidCell.style.color = toBePaid > 0 ? '#e74c3c' : toBePaid < 0 ? '#2ecc71' : '#2c3e50';
+                // Use CSS variables instead of hardcoded colors
+                if (toBePaid > 0) {
+                    toBePaidCell.style.color = 'var(--danger-color)';
+                } else if (toBePaid < 0) {
+                    toBePaidCell.style.color = 'var(--success-color)';
+                } else {
+                    toBePaidCell.style.color = 'var(--text-color)';
+                }
             }
         });
         
@@ -603,9 +583,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Check if we're in admin mode AND the user is logged in as admin
                 const showAdminControls = isAdmin && currentMode === 'admin';
                 
-                const fromColor = getParticipantColor(settlement.from);
-                const toColor = getParticipantColor(settlement.to);
-                
                 if (showAdminControls) {
                     // Admin mode with toggle button
                     const isPaid = settlement.status === 'paid';
@@ -615,9 +592,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     settlementItem.innerHTML = `
                         <div class="settlement-details">
                             <div class="settlement-first-line">
-                                <span class="settlement-from" style="color: ${fromColor}; font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
                                 <span class="settlement-arrow">→</span>
-                                <span class="settlement-to" style="color: ${toColor}; font-weight: 600;">${settlement.to}</span>
+                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
                             </div>
                             <div class="settlement-second-line">
                                 <span class="settlement-amount">${settlement.amount} SAR</span>
@@ -652,9 +629,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     settlementItem.innerHTML = `
                         <div class="settlement-details">
                             <div class="settlement-first-line">
-                                <span class="settlement-from" style="color: ${fromColor}; font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
                                 <span class="settlement-arrow">→</span>
-                                <span class="settlement-to" style="color: ${toColor}; font-weight: 600;">${settlement.to}</span>
+                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
                             </div>
                             <div class="settlement-second-line">
                                 <span class="settlement-amount">${settlement.amount} SAR</span>
@@ -740,13 +717,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Add new participant with default color
+        // Add new participant
         const participantItem = document.createElement('li');
         participantItem.className = 'participant custom-participant';
-        participantItem.style.borderLeft = '3px solid #3498db';
+        participantItem.style.borderLeft = '3px solid var(--primary-color)';
         
         participantItem.innerHTML = `
-            <span class="participant-name" style="color: #3498db; font-weight: 600;">
+            <span class="participant-name">
                 ${customName}
             </span>
             <div class="checkbox-container">
@@ -790,12 +767,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function addParticipantToEditList(participantName) {
-        const color = getParticipantColor(participantName);
-        
         const participantItem = document.createElement('li');
         participantItem.className = 'edit-participant-item';
         participantItem.innerHTML = `
-            <span class="edit-participant-name" style="color: ${color}; font-weight: 600;">${participantName}</span>
+            <span class="edit-participant-name">${participantName}</span>
             <button class="remove-participant-btn" title="Remove Participant">🗑️</button>
         `;
         
@@ -1065,7 +1040,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const toBePaidCell = document.querySelector(`td[data-participant="${participant}"]`);
             if (toBePaidCell) {
                 toBePaidCell.textContent = toBePaid.toFixed(2) + ' SAR';
-                toBePaidCell.style.color = toBePaid > 0 ? '#e74c3c' : toBePaid < 0 ? '#2ecc71' : '#2c3e50';
+                // Use CSS variables instead of hardcoded colors
+                if (toBePaid > 0) {
+                    toBePaidCell.style.color = 'var(--danger-color)';
+                } else if (toBePaid < 0) {
+                    toBePaidCell.style.color = 'var(--success-color)';
+                } else {
+                    toBePaidCell.style.color = 'var(--text-color)';
+                }
             }
         });
         

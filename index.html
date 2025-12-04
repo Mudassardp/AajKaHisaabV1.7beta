@@ -9,13 +9,16 @@
 </head>
 <body>
     <div class="container">
-        <header>
+                <header>
             <div class="header-top">
-                <button id="manualSyncBtn" class="btn btn-small btn-info sync-btn">Sync to Cloud</button>
-                
-                <div class="mode-tabs">
-                    <button id="viewerTab" class="mode-tab active">Viewer Mode</button>
-                    <button id="adminTab" class="mode-tab">Admin Mode</button>
+                <div class="mode-tabs-container">
+                    <div class="mode-tabs">
+                        <button id="viewerTab" class="mode-tab active">Viewer Mode</button>
+                        <button id="adminTab" class="mode-tab">Admin Mode</button>
+                    </div>
+                    <button id="manualSyncBtn" class="sync-tab-btn">
+                        <span class="sync-icon">🔄</span> Sync
+                    </button>
                 </div>
                 
                 <div class="header-controls">
