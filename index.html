@@ -295,11 +295,26 @@
                     <input type="text" id="editProfileBank" placeholder="Bank Name" class="form-input">
                     <input type="text" id="editProfileIBAN" placeholder="IBAN" class="form-input">
                     <div class="photo-upload-section">
-                        <small style="color: var(--secondary-color); display: block; margin-bottom: 10px;">Max photo size: 100KB</small>
-                        <label for="profilePhotoUpload" class="btn btn-small">Upload Photo</label>
-                        <input type="file" id="profilePhotoUpload" accept="image/*" style="display: none;">
-                        <button id="removeProfilePhotoBtn" class="btn btn-small btn-danger">Remove Photo</button>
-                    </div>
+    <small style="color: var(--secondary-color); display: block; margin-bottom: 15px; text-align: center;">
+        📷 Max photo size: 100KB
+    </small>
+    
+    <!-- UPLOAD PHOTO BUTTON -->
+    <label for="profilePhotoUpload" class="photo-upload-button" 
+           style="display: block; padding: 12px; background-color: var(--primary-color); color: white; 
+                  border-radius: 5px; text-align: center; cursor: pointer; font-weight: 600; margin-bottom: 10px;">
+        📁 Choose Photo to Upload
+    </label>
+    
+    <!-- HIDDEN FILE INPUT -->
+    <input type="file" id="profilePhotoUpload" accept="image/*" style="display: none;">
+    
+    <!-- REMOVE PHOTO BUTTON -->
+    <button id="removeProfilePhotoBtn" class="btn btn-small btn-danger" 
+            style="width: 100%; padding: 12px;">
+        🗑️ Remove Current Photo
+    </button>
+</div>
                 </div>
                 
                 <div class="modal-buttons">

@@ -1174,6 +1174,9 @@ footer {
 /* Profile Card Modal */
 .profile-card-modal {
     max-width: 400px;
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .profile-card-header {
@@ -1258,12 +1261,59 @@ footer {
     text-align: center;
 }
 
+/* =========== FIXED UPLOAD SECTION =========== */
 .photo-upload-section {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
     margin-top: 15px;
-    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Hide the file input completely */
+#profilePhotoUpload {
+    display: none !important;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+/* Make the upload button look like a real button */
+.photo-upload-section label[for="profilePhotoUpload"] {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 5px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+}
+
+.photo-upload-section label[for="profilePhotoUpload"]:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
+}
+
+/* Style the remove button */
+#removeProfilePhotoBtn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+}
+
+/* Mobile fix for upload section */
+@media (max-width: 768px) {
+    .photo-upload-section label[for="profilePhotoUpload"] {
+        padding: 14px;
+        font-size: 1rem;
+    }
+    
+    #removeProfilePhotoBtn {
+        padding: 14px;
+        font-size: 1rem;
+    }
 }
 
 /* Clickable Profile */
@@ -1318,37 +1368,302 @@ footer {
     border-color: var(--primary-color);
 }
 
-/* Mobile Responsiveness for Profile */
-@media (max-width: 600px) {
+/* ==================== PROFILE MODAL MOBILE FIXES ==================== */
+
+/* Mobile-specific profile modal styles */
+@media (max-width: 768px) {
     .profile-card-modal {
-        max-width: 90%;
+        max-width: 95vw;
+        max-height: 90vh;
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    /* Fix for mobile viewport height */
+    .modal-content {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+    
+    .profile-card-header {
+        padding-top: 10px;
     }
     
     .profile-photo-large {
         width: 80px;
         height: 80px;
+        margin-bottom: 10px;
     }
     
     .profile-photo-large-initials {
         font-size: 28px;
     }
     
+    .profile-details {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
     .profile-detail-item {
         flex-direction: column;
+        align-items: flex-start;
         gap: 5px;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        min-width: auto;
     }
     
     .detail-value {
-        max-width: 100%;
+        font-size: 0.95rem;
         text-align: left;
+        width: 100%;
+        max-width: 100%;
+        word-break: break-word;
+        padding-left: 0;
+    }
+    
+    /* Profile edit form mobile fixes */
+    .profile-edit-form {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .profile-edit-form h4 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+    
+    .form-input {
+        padding: 10px 12px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        margin-bottom: 12px;
     }
     
     .photo-upload-section {
         flex-direction: column;
+        gap: 8px;
     }
     
     .photo-upload-section button {
         width: 100%;
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    
+    /* Modal buttons container */
+    .modal-buttons {
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 10px;
+    }
+    
+    .modal-buttons button {
+        width: 100%;
+        padding: 12px;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    /* Ensure modal stays within viewport */
+    .modal {
+        align-items: flex-start;
+        padding-top: 20px;
+        overflow-y: auto;
+    }
+    
+    .modal-content {
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+}
+
+/* Extra small devices (phones, 480px and down) */
+@media (max-width: 480px) {
+    .profile-card-modal {
+        max-width: 98vw;
+        max-height: 95vh;
+        padding: 12px;
+        margin: 5px;
+    }
+    
+    .profile-photo-large {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .profile-photo-large-initials {
+        font-size: 24px;
+    }
+    
+    #profileFullName {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+    }
+    
+    .profile-details {
+        padding: 10px;
+    }
+    
+    .profile-detail-item {
+        font-size: 0.9rem;
+    }
+    
+    .profile-edit-form input {
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    /* Make sure modal is scrollable */
+    .modal-content {
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .profile-card-modal {
+        max-height: -webkit-fill-available;
+    }
+    
+    .modal {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Fix for Android Chrome */
+@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
+    .profile-card-modal {
+        touch-action: pan-y;
+    }
+    
+    .modal-content {
+        overscroll-behavior: contain;
+    }
+}
+
+/* Ensure clickable areas are large enough for touch */
+@media (max-width: 768px) {
+    .clickable-profile {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    button, 
+    .btn,
+    input[type="button"],
+    input[type="submit"] {
+        min-height: 44px;
+    }
+    
+    .profile-detail-item {
+        min-height: 44px;
+        padding: 8px 0;
+    }
+}
+
+/* Fix for modal backdrop on mobile */
+@media (max-width: 768px) {
+    .modal {
+        background-color: rgba(0, 0, 0, 0.8);
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .modal-content {
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Control Panel Modal mobile fixes */
+@media (max-width: 768px) {
+    .control-panel-modal {
+        max-width: 95vw;
+        max-height: 90vh;
+        padding: 15px;
+    }
+    
+    .control-panel-section {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .control-panel-section h4 {
+        font-size: 1.1rem;
+    }
+    
+    .default-participants-list {
+        max-height: 200px;
+    }
+    
+    .default-participant-item {
+        padding: 8px 10px;
+    }
+    
+    .password-change-form .form-input {
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+}
+
+/* ==================== GENERAL MODAL MOBILE FIXES ==================== */
+
+@media (max-width: 768px) {
+    /* All modals general fixes */
+    .modal {
+        padding: 10px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-width: 95vw;
+        padding: 20px 15px;
+        margin: auto;
+    }
+    
+    /* Ensure content doesn't get hidden by virtual keyboard */
+    .modal:focus-within {
+        padding-bottom: 50vh;
+    }
+    
+    /* Fix for delete confirmation modal */
+    #deleteModal .modal-content {
+        max-width: 90vw;
+    }
+    
+    /* Fix for admin login modal */
+    #adminLoginModal .modal-content {
+        max-width: 90vw;
+    }
+    
+    /* Make sure all form inputs are readable on mobile */
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents iOS zoom */
+    }
+}
+
+/* Fix for very small screens (Galaxy Fold, iPhone SE, etc.) */
+@media (max-width: 360px) {
+    .profile-card-modal {
+        padding: 10px;
+    }
+    
+    #profileFullName {
+        font-size: 1.1rem;
+    }
+    
+    .modal-buttons button {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .profile-edit-form h4 {
+        font-size: 1rem;
     }
 }
 
@@ -1663,36 +1978,3 @@ footer {
         padding: 8px 10px;
     }
 }
-
-[file name]: style.css
-[file content begin]
-/* Add this to your existing style.css file, in the "Bank-Aware Settlement Styles" section or at the end */
-
-/* Version badges in sheets list */
-.sheet-item .version-badge {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    margin-left: 8px;
-}
-
-.sheet-item .version-badge.new {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.sheet-item .version-badge.old {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-/* Mobile responsiveness for version badges */
-@media (max-width: 768px) {
-    .sheet-item .version-badge {
-        font-size: 0.6rem;
-        padding: 1px 6px;
-        margin-left: 5px;
-    }
-}
-[file content end]

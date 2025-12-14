@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const profileCardModal = document.getElementById('profileCardModal');
@@ -119,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         loadSavedSheets();
         setupEventListeners();
+        setupMobileModalFix(); // Add mobile modal fixes
         checkAdminStatus();
         applyTheme(); // Apply saved theme
         
@@ -140,6 +140,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 1500);
         }, 1000);
+    }
+    
+    // Mobile modal fixes
+    function setupMobileModalFix() {
+        // Handle profile modal for mobile
+        const profileModal = document.getElementById('profileCardModal');
+        const controlPanelModal = document.getElementById('controlPanelModal');
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const deleteModal = document.getElementById('deleteModal');
+        
+        // List of all modals
+        const allModals = [profileModal, controlPanelModal, adminLoginModal, deleteModal];
+        
+        // Fix for mobile viewport
+        allModals.forEach(modal => {
+            if (modal) {
+                // Ensure modal is properly centered on mobile
+                const originalDisplay = modal.style.display;
+                
+                // Override show/hide to handle body scroll
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'style') {
+                            const display = modal.style.display;
+                            if (display === 'flex') {
+                                document.body.style.overflow = 'hidden';
+                                // Scroll to top of modal
+                                setTimeout(() => {
+                                    modal.scrollTop = 0;
+                                }, 10);
+                            } else if (display === 'none') {
+                                document.body.style.overflow = 'auto';
+                            }
+                        }
+                    });
+                });
+                
+                observer.observe(modal, { attributes: true });
+                
+                // Ensure modal closes when tapping outside on mobile
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        // Find and click the close button
+                        const closeBtn = modal.querySelector('.btn:not(.btn-success):not(.btn-danger):not(.btn-info):not(.btn-warning)');
+                        if (closeBtn) closeBtn.click();
+                    }
+                });
+            }
+        });
+        
+        // Fix for iOS virtual keyboard
+        const textInputs = document.querySelectorAll('input[type="text"], input[type="tel"], input[type="password"]');
+        textInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                // Scroll input into view on mobile
+                setTimeout(() => {
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        const rect = this.getBoundingClientRect();
+                        if (rect.bottom > window.innerHeight) {
+                            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }, 300);
+            });
+        });
+        
+        // Prevent body scroll when modal is open
+        document.addEventListener('touchmove', function(e) {
+            const modalOpen = Array.from(allModals).some(modal => 
+                modal && modal.style.display === 'flex'
+            );
+            if (modalOpen && !e.target.closest('.modal-content')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     }
     
     // Check and upgrade existing sheets to add version tracking
@@ -180,17 +256,65 @@ document.addEventListener('DOMContentLoaded', function() {
         // Theme Toggle
         themeToggleBtn.addEventListener('click', toggleTheme);
 
-        // Profile Events
-        closeProfileCardBtn.addEventListener('click', () => window.profileManager?.hideProfileCard());
-        editProfileBtn.addEventListener('click', () => window.profileManager?.enterEditMode());
-        saveProfileBtn.addEventListener('click', () => window.profileManager?.saveEditedProfile());
-        cancelEditProfileBtn.addEventListener('click', () => window.profileManager?.exitEditMode());
-        profilePhotoUpload.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                window.profileManager?.handlePhotoUpload(e.target.files[0]);
-            }
-        });
-        removeProfilePhotoBtn.addEventListener('click', () => window.profileManager?.handlePhotoRemoval());
+      // Profile Events - FIXED (prevents double clicking)
+closeProfileCardBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.profileManager?.hideProfileCard();
+});
+
+editProfileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    window.profileManager?.enterEditMode();
+});
+
+saveProfileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    window.profileManager?.saveEditedProfile();
+});
+
+cancelEditProfileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    window.profileManager?.exitEditMode();
+});
+
+// File upload - FIXED
+profilePhotoUpload.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+        window.profileManager?.handlePhotoUpload(e.target.files[0]);
+        // Clear the file input
+        e.target.value = '';
+    }
+    e.stopPropagation();
+});
+
+removeProfilePhotoBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    window.profileManager?.handlePhotoRemoval();
+});
+
+// Extra fix: Prevent any clicks from opening file dialog accidentally
+document.addEventListener('click', function(e) {
+    // If clicking anywhere except the actual upload button
+    if (e.target.id === 'profilePhotoUpload' || 
+        e.target.htmlFor === 'profilePhotoUpload' ||
+        e.target.classList.contains('photo-upload-button')) {
+        // This is a valid click on upload button
+        return;
+    }
+    
+    // For all other clicks in the modal, make sure file input doesn't trigger
+    const fileInput = document.getElementById('profilePhotoUpload');
+    if (fileInput) {
+        fileInput.style.pointerEvents = 'none';
+        setTimeout(() => {
+            fileInput.style.pointerEvents = 'auto';
+        }, 100);
+    }
+});
 
         // Sync button
         document.getElementById('manualSyncBtn')?.addEventListener('click', () => {
