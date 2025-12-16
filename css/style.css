@@ -436,20 +436,52 @@ table {
 
 th, td {
     padding: 12px 15px;
-    text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
 
+/* Default header alignment */
 th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #2c3e50;
+    text-align: left;
+}
+
+/* Align Spent column header to right */
+th:nth-child(2) {
+    text-align: right;
+}
+
+/* Align Meals column header to center */
+th:nth-child(3) {
+    text-align: center;
+}
+
+/* Align To Be Paid column header to right */
+th:nth-child(4) {
+    text-align: right;
 }
 
 tr:hover {
     background-color: var(--hover-bg);
 }
 
+/* Spent column (2nd column) */
+td:nth-child(2) {
+    text-align: right;
+}
+
+/* Meals column (3rd column) */
+td:nth-child(3) {
+    text-align: center;
+}
+
+/* To Be Paid column (4th column) */
+td:nth-child(4) {
+    text-align: right;
+}
+
+/* Keep these classes for backward compatibility */
 .amount-cell {
     text-align: right;
 }
@@ -522,14 +554,6 @@ select:focus {
 .currency {
     font-weight: bold;
     color: var(--text-color);
-}
-
-.meals-summary {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-top: 10px;
-    border-left: 3px solid var(--primary-color);
 }
 
 .settlement-section {
@@ -1977,4 +2001,402 @@ footer {
     .settlement-summary > div {
         padding: 8px 10px;
     }
+}
+
+/* Add these styles to the end of your existing style.css file */
+
+/* Export UI Styles */
+.sheet-export-options {
+    animation: fadeIn 0.3s ease;
+}
+
+.export-options-grid button {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.export-options-grid button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* Export Modal Styles */
+.export-format-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.format-option {
+    padding: 20px;
+    text-align: center;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: var(--container-bg);
+}
+
+.format-option:hover {
+    border-color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.format-option.selected {
+    border-color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.format-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.format-option h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.format-option p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+.export-details {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--hover-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--info-color);
+}
+
+.file-name-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: var(--container-bg);
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
+.file-name-preview input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--container-bg);
+    color: var(--text-color);
+}
+
+.file-name-preview input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Import UI Styles */
+.file-upload-area.drag-over {
+    border-color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.import-step {
+    animation: slideIn 0.3s ease;
+}
+
+.import-step.active {
+    display: block !important;
+}
+
+.import-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.import-preview-table th,
+.import-preview-table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.import-preview-table th {
+    background-color: var(--hover-bg);
+    font-weight: 600;
+}
+
+.conflict-item {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: var(--container-bg);
+    border-radius: 4px;
+    border-left: 3px solid var(--warning-color);
+}
+
+/* Loading States */
+.export-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.export-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--info-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+.export-loading-text {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.export-progress {
+    width: 200px;
+    height: 4px;
+    background-color: var(--border-color);
+    border-radius: 2px;
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.export-progress-bar {
+    height: 100%;
+    background-color: var(--info-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Success/Error Messages */
+.export-success {
+    text-align: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.export-success-icon {
+    font-size: 3rem;
+    color: var(--success-color);
+    margin-bottom: 15px;
+}
+
+.export-error {
+    text-align: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.export-error-icon {
+    font-size: 3rem;
+    color: var(--danger-color);
+    margin-bottom: 15px;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .export-options-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .format-option {
+        padding: 15px;
+    }
+    
+    .export-modal-content {
+        padding: 15px;
+    }
+    
+    .file-upload-area {
+        padding: 30px 15px;
+    }
+    
+    .file-name-preview {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .file-name-preview input {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .sheet-export-options {
+        padding: 12px;
+    }
+    
+    .export-format-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .import-step {
+        padding: 10px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-buttons button {
+        width: 100%;
+    }
+}
+
+/* Version Badge */
+.version-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.version-badge.v1_9 {
+    background-color: var(--info-color);
+    color: white;
+}
+
+.version-badge.v1_8 {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.version-badge.v1_7 {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.version-badge.v1_6 {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--container-bg);
+    color: var(--text-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+
+/* ==================== EXPORT STYLES v1.9 ==================== */
+
+/* Export button - MOST IMPORTANT */
+#exportSheetBtn {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Export section */
+.sheet-export-options {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--hover-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--info-color);
+}
+
+/* Export modal basic styles */
+.export-format-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.format-option {
+    padding: 20px;
+    text-align: center;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: var(--container-bg);
+}
+
+.format-option.selected {
+    border-color: var(--primary-color);
+}
+
+/* Loading overlay */
+.export-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
