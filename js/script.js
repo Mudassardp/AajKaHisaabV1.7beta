@@ -743,367 +743,366 @@ document.addEventListener('DOMContentLoaded', function() {
         generateSettlementSuggestions();
     }
     
-    // New function to get participant's banks
-   // New function to get participant's banks with preferred bank first
-function getParticipantBanks(participantName) {
-    if (!window.profileManager) return [];
-    
-    const profile = window.profileManager.getProfile(participantName);
-    if (!profile.bankAccounts || !profile.bankAccounts.trim()) {
-        return [];
-    }
-    
-    const bankAccounts = window.profileManager.parseBankAccounts(profile.bankAccounts);
-    const banks = [...new Set(bankAccounts.map(acc => acc.bank))];
-    
-    // Put preferred bank first if it exists
-    if (profile.preferredBank && profile.preferredBank !== '' && banks.includes(profile.preferredBank)) {
-        const preferredIndex = banks.indexOf(profile.preferredBank);
-        if (preferredIndex > 0) {
-            banks.splice(preferredIndex, 1);
-            banks.unshift(profile.preferredBank);
-        }
-    }
-    
-    return banks;
-}
-
-// Enhanced settlement algorithm with bank prioritization and preferred banks
-function generateSettlementSuggestions() {
-    const creditors = [];
-    const debtors = [];
-    
-    selectedParticipants.forEach(participant => {
-        const balance = currentSheetData.expenses[participant].toBePaid;
-        if (balance < 0) {
-            // Creditors (should receive money)
-            creditors.push({ 
-                name: participant, 
-                amount: -balance,
-                banks: getParticipantBanks(participant),
-                preferredBank: window.profileManager ? 
-                              window.profileManager.getProfile(participant).preferredBank || '' : '',
-                bankCount: getParticipantBanks(participant).length
-            });
-        } else if (balance > 0) {
-            // Debtors (should pay money)
-            debtors.push({ 
-                name: participant, 
-                amount: balance,
-                banks: getParticipantBanks(participant),
-                preferredBank: window.profileManager ? 
-                              window.profileManager.getProfile(participant).preferredBank || '' : '',
-                bankCount: getParticipantBanks(participant).length
-            });
-        }
-    });
-    
-    // Sort creditors and debtors by priority:
-    // 1. Single-bank participants with preferred bank
-    // 2. Single-bank participants without preferred bank
-    // 3. Multi-bank participants with preferred bank
-    // 4. Multi-bank participants without preferred bank
-    creditors.sort((a, b) => {
-        if (a.bankCount === 1 && b.bankCount > 1) return -1;
-        if (a.bankCount > 1 && b.bankCount === 1) return 1;
-        if (a.preferredBank && !b.preferredBank) return -1;
-        if (!a.preferredBank && b.preferredBank) return 1;
-        return b.amount - a.amount;
-    });
-    
-    debtors.sort((a, b) => {
-        if (a.bankCount === 1 && b.bankCount > 1) return -1;
-        if (a.bankCount > 1 && b.bankCount === 1) return 1;
-        if (a.preferredBank && !b.preferredBank) return -1;
-        if (!a.preferredBank && b.preferredBank) return 1;
-        return b.amount - a.amount;
-    });
-    
-    const settlements = [];
-    
-    // Create working copies
-    const workingCreditors = JSON.parse(JSON.stringify(creditors));
-    const workingDebtors = JSON.parse(JSON.stringify(debtors));
-    
-    // PHASE 1: Match single-bank participants with preferred bank first
-    for (let i = 0; i < workingDebtors.length; i++) {
-        const debtor = workingDebtors[i];
-        if (debtor.amount < 0.01) continue;
+    // New function to get participant's banks with preferred bank first
+    function getParticipantBanks(participantName) {
+        if (!window.profileManager) return [];
         
-        // For single-bank debtors, try to match with same-bank creditors
-        if (debtor.bankCount === 1) {
-            const debtorBank = debtor.banks[0];
+        const profile = window.profileManager.getProfile(participantName);
+        if (!profile.bankAccounts || !profile.bankAccounts.trim()) {
+            return [];
+        }
+        
+        const bankAccounts = window.profileManager.parseBankAccounts(profile.bankAccounts);
+        const banks = [...new Set(bankAccounts.map(acc => acc.bank))];
+        
+        // Put preferred bank first if it exists
+        if (profile.preferredBank && profile.preferredBank !== '' && banks.includes(profile.preferredBank)) {
+            const preferredIndex = banks.indexOf(profile.preferredBank);
+            if (preferredIndex > 0) {
+                banks.splice(preferredIndex, 1);
+                banks.unshift(profile.preferredBank);
+            }
+        }
+        
+        return banks;
+    }
+    
+    // Enhanced settlement algorithm with bank prioritization and preferred banks
+    function generateSettlementSuggestions() {
+        const creditors = [];
+        const debtors = [];
+        
+        selectedParticipants.forEach(participant => {
+            const balance = currentSheetData.expenses[participant].toBePaid;
+            if (balance < 0) {
+                // Creditors (should receive money)
+                creditors.push({ 
+                    name: participant, 
+                    amount: -balance,
+                    banks: getParticipantBanks(participant),
+                    preferredBank: window.profileManager ? 
+                                  window.profileManager.getProfile(participant).preferredBank || '' : '',
+                    bankCount: getParticipantBanks(participant).length
+                });
+            } else if (balance > 0) {
+                // Debtors (should pay money)
+                debtors.push({ 
+                    name: participant, 
+                    amount: balance,
+                    banks: getParticipantBanks(participant),
+                    preferredBank: window.profileManager ? 
+                                  window.profileManager.getProfile(participant).preferredBank || '' : '',
+                    bankCount: getParticipantBanks(participant).length
+                });
+            }
+        });
+        
+        // Sort creditors and debtors by priority:
+        // 1. Single-bank participants with preferred bank
+        // 2. Single-bank participants without preferred bank
+        // 3. Multi-bank participants with preferred bank
+        // 4. Multi-bank participants without preferred bank
+        creditors.sort((a, b) => {
+            if (a.bankCount === 1 && b.bankCount > 1) return -1;
+            if (a.bankCount > 1 && b.bankCount === 1) return 1;
+            if (a.preferredBank && !b.preferredBank) return -1;
+            if (!a.preferredBank && b.preferredBank) return 1;
+            return b.amount - a.amount;
+        });
+        
+        debtors.sort((a, b) => {
+            if (a.bankCount === 1 && b.bankCount > 1) return -1;
+            if (a.bankCount > 1 && b.bankCount === 1) return 1;
+            if (a.preferredBank && !b.preferredBank) return -1;
+            if (!a.preferredBank && b.preferredBank) return 1;
+            return b.amount - a.amount;
+        });
+        
+        const settlements = [];
+        
+        // Create working copies
+        const workingCreditors = JSON.parse(JSON.stringify(creditors));
+        const workingDebtors = JSON.parse(JSON.stringify(debtors));
+        
+        // PHASE 1: Match single-bank participants with preferred bank first
+        for (let i = 0; i < workingDebtors.length; i++) {
+            const debtor = workingDebtors[i];
+            if (debtor.amount < 0.01) continue;
             
-            // First, try to match with creditors who have the same preferred bank
-            for (let j = 0; j < workingCreditors.length; j++) {
-                const creditor = workingCreditors[j];
-                if (creditor.amount < 0.01) continue;
+            // For single-bank debtors, try to match with same-bank creditors
+            if (debtor.bankCount === 1) {
+                const debtorBank = debtor.banks[0];
                 
-                // Check if creditor has the same preferred bank
-                if (creditor.preferredBank === debtorBank) {
-                    const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                // First, try to match with creditors who have the same preferred bank
+                for (let j = 0; j < workingCreditors.length; j++) {
+                    const creditor = workingCreditors[j];
+                    if (creditor.amount < 0.01) continue;
                     
-                    if (settlementAmount > 0.01) {
-                        const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                    // Check if creditor has the same preferred bank
+                    if (creditor.preferredBank === debtorBank) {
+                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
                         
-                        settlements.push({
-                            from: debtor.name,
-                            to: creditor.name,
-                            amount: settlementAmount.toFixed(2),
-                            key: settlementKey,
-                            status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                                   ? currentSheetData.settlements[settlementKey].status 
-                                   : 'not-paid',
-                            bankMatch: true,
-                            bank: debtorBank,
-                            priority: 'single-bank-preferred-match',
-                            preferredMatch: true
-                        });
-                        
-                        debtor.amount -= settlementAmount;
-                        creditor.amount -= settlementAmount;
-                        
-                        if (debtor.amount < 0.01) {
-                            workingDebtors.splice(i, 1);
-                            i--;
-                            break;
+                        if (settlementAmount > 0.01) {
+                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                            
+                            settlements.push({
+                                from: debtor.name,
+                                to: creditor.name,
+                                amount: settlementAmount.toFixed(2),
+                                key: settlementKey,
+                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                       ? currentSheetData.settlements[settlementKey].status 
+                                       : 'not-paid',
+                                bankMatch: true,
+                                bank: debtorBank,
+                                priority: 'single-bank-preferred-match',
+                                preferredMatch: true
+                            });
+                            
+                            debtor.amount -= settlementAmount;
+                            creditor.amount -= settlementAmount;
+                            
+                            if (debtor.amount < 0.01) {
+                                workingDebtors.splice(i, 1);
+                                i--;
+                                break;
+                            }
+                            
+                            if (creditor.amount < 0.01) {
+                                workingCreditors.splice(j, 1);
+                                j--;
+                            }
                         }
+                    }
+                }
+                
+                // If debtor still has amount, try with any creditor having the same bank
+                if (debtor.amount > 0.01) {
+                    for (let j = 0; j < workingCreditors.length; j++) {
+                        const creditor = workingCreditors[j];
+                        if (creditor.amount < 0.01) continue;
                         
-                        if (creditor.amount < 0.01) {
-                            workingCreditors.splice(j, 1);
-                            j--;
+                        // Check if creditor has the same bank (not necessarily preferred)
+                        if (creditor.banks.includes(debtorBank)) {
+                            const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                            
+                            if (settlementAmount > 0.01) {
+                                const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                                
+                                settlements.push({
+                                    from: debtor.name,
+                                    to: creditor.name,
+                                    amount: settlementAmount.toFixed(2),
+                                    key: settlementKey,
+                                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                           ? currentSheetData.settlements[settlementKey].status 
+                                           : 'not-paid',
+                                    bankMatch: true,
+                                    bank: debtorBank,
+                                    priority: 'single-bank-any-match',
+                                    preferredMatch: false
+                                });
+                                
+                                debtor.amount -= settlementAmount;
+                                creditor.amount -= settlementAmount;
+                                
+                                if (debtor.amount < 0.01) {
+                                    workingDebtors.splice(i, 1);
+                                    i--;
+                                    break;
+                                }
+                                
+                                if (creditor.amount < 0.01) {
+                                    workingCreditors.splice(j, 1);
+                                    j--;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // PHASE 2: Match multi-bank participants with preferred banks first
+        for (let i = 0; i < workingDebtors.length; i++) {
+            const debtor = workingDebtors[i];
+            if (debtor.amount < 0.01) continue;
+            
+            // For multi-bank debtors, try preferred bank first
+            if (debtor.preferredBank) {
+                const preferredBank = debtor.preferredBank;
+                
+                for (let j = 0; j < workingCreditors.length; j++) {
+                    const creditor = workingCreditors[j];
+                    if (creditor.amount < 0.01) continue;
+                    
+                    // Check if creditor has the same preferred bank
+                    if (creditor.banks.includes(preferredBank)) {
+                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                        
+                        if (settlementAmount > 0.01) {
+                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                            
+                            settlements.push({
+                                from: debtor.name,
+                                to: creditor.name,
+                                amount: settlementAmount.toFixed(2),
+                                key: settlementKey,
+                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                       ? currentSheetData.settlements[settlementKey].status 
+                                       : 'not-paid',
+                                bankMatch: true,
+                                bank: preferredBank,
+                                priority: 'multi-bank-preferred-match',
+                                preferredMatch: true
+                            });
+                            
+                            debtor.amount -= settlementAmount;
+                            creditor.amount -= settlementAmount;
+                            
+                            if (debtor.amount < 0.01) {
+                                workingDebtors.splice(i, 1);
+                                i--;
+                                break;
+                            }
+                            
+                            if (creditor.amount < 0.01) {
+                                workingCreditors.splice(j, 1);
+                                j--;
+                            }
+                            
+                            break; // Move to next debtor
                         }
                     }
                 }
             }
             
-            // If debtor still has amount, try with any creditor having the same bank
+            // If debtor still has amount or no preferred bank, try all banks
             if (debtor.amount > 0.01) {
-                for (let j = 0; j < workingCreditors.length; j++) {
-                    const creditor = workingCreditors[j];
-                    if (creditor.amount < 0.01) continue;
-                    
-                    // Check if creditor has the same bank (not necessarily preferred)
-                    if (creditor.banks.includes(debtorBank)) {
-                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                for (const debtorBank of debtor.banks) {
+                    for (let j = 0; j < workingCreditors.length; j++) {
+                        const creditor = workingCreditors[j];
+                        if (creditor.amount < 0.01) continue;
                         
-                        if (settlementAmount > 0.01) {
-                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                        // Check if creditor has the same bank
+                        if (creditor.banks.includes(debtorBank)) {
+                            const settlementAmount = Math.min(debtor.amount, creditor.amount);
                             
-                            settlements.push({
-                                from: debtor.name,
-                                to: creditor.name,
-                                amount: settlementAmount.toFixed(2),
-                                key: settlementKey,
-                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                                       ? currentSheetData.settlements[settlementKey].status 
-                                       : 'not-paid',
-                                bankMatch: true,
-                                bank: debtorBank,
-                                priority: 'single-bank-any-match',
-                                preferredMatch: false
-                            });
-                            
-                            debtor.amount -= settlementAmount;
-                            creditor.amount -= settlementAmount;
-                            
-                            if (debtor.amount < 0.01) {
-                                workingDebtors.splice(i, 1);
-                                i--;
-                                break;
-                            }
-                            
-                            if (creditor.amount < 0.01) {
-                                workingCreditors.splice(j, 1);
-                                j--;
+                            if (settlementAmount > 0.01) {
+                                const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                                
+                                settlements.push({
+                                    from: debtor.name,
+                                    to: creditor.name,
+                                    amount: settlementAmount.toFixed(2),
+                                    key: settlementKey,
+                                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                           ? currentSheetData.settlements[settlementKey].status 
+                                           : 'not-paid',
+                                    bankMatch: true,
+                                    bank: debtorBank,
+                                    priority: 'multi-bank-any-match',
+                                    preferredMatch: false
+                                });
+                                
+                                debtor.amount -= settlementAmount;
+                                creditor.amount -= settlementAmount;
+                                
+                                if (debtor.amount < 0.01) {
+                                    workingDebtors.splice(i, 1);
+                                    i--;
+                                    break;
+                                }
+                                
+                                if (creditor.amount < 0.01) {
+                                    workingCreditors.splice(j, 1);
+                                    j--;
+                                }
+                                
+                                break; // Move to next debtor bank
                             }
                         }
                     }
+                    
+                    if (debtor.amount < 0.01) break;
                 }
             }
         }
-    }
-    
-    // PHASE 2: Match multi-bank participants with preferred banks first
-    for (let i = 0; i < workingDebtors.length; i++) {
-        const debtor = workingDebtors[i];
-        if (debtor.amount < 0.01) continue;
         
-        // For multi-bank debtors, try preferred bank first
-        if (debtor.preferredBank) {
-            const preferredBank = debtor.preferredBank;
+        // PHASE 3: Match remaining amounts (no bank match required)
+        let i = 0, j = 0;
+        while (i < workingDebtors.length && j < workingCreditors.length) {
+            const debtor = workingDebtors[i];
+            const creditor = workingCreditors[j];
             
-            for (let j = 0; j < workingCreditors.length; j++) {
-                const creditor = workingCreditors[j];
-                if (creditor.amount < 0.01) continue;
+            if (debtor.amount < 0.01) {
+                i++;
+                continue;
+            }
+            
+            if (creditor.amount < 0.01) {
+                j++;
+                continue;
+            }
+            
+            const settlementAmount = Math.min(debtor.amount, creditor.amount);
+            
+            if (settlementAmount > 0.01) {
+                const settlementKey = `${debtor.name}_to_${creditor.name}`;
                 
-                // Check if creditor has the same preferred bank
-                if (creditor.banks.includes(preferredBank)) {
-                    const settlementAmount = Math.min(debtor.amount, creditor.amount);
-                    
-                    if (settlementAmount > 0.01) {
-                        const settlementKey = `${debtor.name}_to_${creditor.name}`;
-                        
-                        settlements.push({
-                            from: debtor.name,
-                            to: creditor.name,
-                            amount: settlementAmount.toFixed(2),
-                            key: settlementKey,
-                            status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                                   ? currentSheetData.settlements[settlementKey].status 
-                                   : 'not-paid',
-                            bankMatch: true,
-                            bank: preferredBank,
-                            priority: 'multi-bank-preferred-match',
-                            preferredMatch: true
-                        });
-                        
-                        debtor.amount -= settlementAmount;
-                        creditor.amount -= settlementAmount;
-                        
-                        if (debtor.amount < 0.01) {
-                            workingDebtors.splice(i, 1);
-                            i--;
-                            break;
-                        }
-                        
-                        if (creditor.amount < 0.01) {
-                            workingCreditors.splice(j, 1);
-                            j--;
-                        }
-                        
-                        break; // Move to next debtor
-                    }
-                }
-            }
-        }
-        
-        // If debtor still has amount or no preferred bank, try all banks
-        if (debtor.amount > 0.01) {
-            for (const debtorBank of debtor.banks) {
-                for (let j = 0; j < workingCreditors.length; j++) {
-                    const creditor = workingCreditors[j];
-                    if (creditor.amount < 0.01) continue;
-                    
-                    // Check if creditor has the same bank
-                    if (creditor.banks.includes(debtorBank)) {
-                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
-                        
-                        if (settlementAmount > 0.01) {
-                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
-                            
-                            settlements.push({
-                                from: debtor.name,
-                                to: creditor.name,
-                                amount: settlementAmount.toFixed(2),
-                                key: settlementKey,
-                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                                       ? currentSheetData.settlements[settlementKey].status 
-                                       : 'not-paid',
-                                bankMatch: true,
-                                bank: debtorBank,
-                                priority: 'multi-bank-any-match',
-                                preferredMatch: false
-                            });
-                            
-                            debtor.amount -= settlementAmount;
-                            creditor.amount -= settlementAmount;
-                            
-                            if (debtor.amount < 0.01) {
-                                workingDebtors.splice(i, 1);
-                                i--;
-                                break;
-                            }
-                            
-                            if (creditor.amount < 0.01) {
-                                workingCreditors.splice(j, 1);
-                                j--;
-                            }
-                            
-                            break; // Move to next debtor bank
-                        }
-                    }
-                }
+                settlements.push({
+                    from: debtor.name,
+                    to: creditor.name,
+                    amount: settlementAmount.toFixed(2),
+                    key: settlementKey,
+                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                           ? currentSheetData.settlements[settlementKey].status 
+                           : 'not-paid',
+                    bankMatch: false,
+                    bank: null,
+                    priority: 'no-bank-match',
+                    preferredMatch: false
+                });
                 
-                if (debtor.amount < 0.01) break;
+                debtor.amount -= settlementAmount;
+                creditor.amount -= settlementAmount;
+                
+                if (debtor.amount < 0.01) i++;
+                if (creditor.amount < 0.01) j++;
+            } else {
+                if (debtor.amount <= creditor.amount) i++;
+                else j++;
             }
         }
+        
+        // Sort settlements by priority
+        settlements.sort((a, b) => {
+            const priorityOrder = {
+                'single-bank-preferred-match': 1,
+                'single-bank-any-match': 2,
+                'multi-bank-preferred-match': 3,
+                'multi-bank-any-match': 4,
+                'no-bank-match': 5
+            };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+        
+        // Store settlements in currentSheetData
+        currentSheetData.settlements = {};
+        settlements.forEach(settlement => {
+            currentSheetData.settlements[settlement.key] = {
+                from: settlement.from,
+                to: settlement.to,
+                amount: settlement.amount,
+                status: settlement.status,
+                bankMatch: settlement.bankMatch,
+                bank: settlement.bank,
+                preferredMatch: settlement.preferredMatch
+            };
+        });
+        
+        renderSettlementList(settlements);
     }
-    
-    // PHASE 3: Match remaining amounts (no bank match required)
-    let i = 0, j = 0;
-    while (i < workingDebtors.length && j < workingCreditors.length) {
-        const debtor = workingDebtors[i];
-        const creditor = workingCreditors[j];
-        
-        if (debtor.amount < 0.01) {
-            i++;
-            continue;
-        }
-        
-        if (creditor.amount < 0.01) {
-            j++;
-            continue;
-        }
-        
-        const settlementAmount = Math.min(debtor.amount, creditor.amount);
-        
-        if (settlementAmount > 0.01) {
-            const settlementKey = `${debtor.name}_to_${creditor.name}`;
-            
-            settlements.push({
-                from: debtor.name,
-                to: creditor.name,
-                amount: settlementAmount.toFixed(2),
-                key: settlementKey,
-                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                       ? currentSheetData.settlements[settlementKey].status 
-                       : 'not-paid',
-                bankMatch: false,
-                bank: null,
-                priority: 'no-bank-match',
-                preferredMatch: false
-            });
-            
-            debtor.amount -= settlementAmount;
-            creditor.amount -= settlementAmount;
-            
-            if (debtor.amount < 0.01) i++;
-            if (creditor.amount < 0.01) j++;
-        } else {
-            if (debtor.amount <= creditor.amount) i++;
-            else j++;
-        }
-    }
-    
-    // Sort settlements by priority
-    settlements.sort((a, b) => {
-        const priorityOrder = {
-            'single-bank-preferred-match': 1,
-            'single-bank-any-match': 2,
-            'multi-bank-preferred-match': 3,
-            'multi-bank-any-match': 4,
-            'no-bank-match': 5
-        };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
-    
-    // Store settlements in currentSheetData
-    currentSheetData.settlements = {};
-    settlements.forEach(settlement => {
-        currentSheetData.settlements[settlement.key] = {
-            from: settlement.from,
-            to: settlement.to,
-            amount: settlement.amount,
-            status: settlement.status,
-            bankMatch: settlement.bankMatch,
-            bank: settlement.bank,
-            preferredMatch: settlement.preferredMatch
-        };
-    });
-    
-    renderSettlementList(settlements);
-}
     
     function renderSettlementList(settlements) {
         settlementList.innerHTML = '';
@@ -1120,11 +1119,17 @@ function generateSettlementSuggestions() {
                 // Create bank match indicator if applicable
                 let bankInfo = '';
                 if (settlement.bankMatch && settlement.bank) {
-                    bankInfo = `<div class="bank-match-indicator" style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px;">
-                        <span style="background-color: color-mix(in srgb, var(--success-color) 20%, transparent); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--success-color);">
-                            Same Bank: ${settlement.bank}
-                        </span>
-                    </div>`;
+                    let preferredText = '';
+                    if (settlement.preferredMatch) {
+                        preferredText = ' (Preferred)';
+                    }
+                    bankInfo = `
+                        <div class="settlement-bank-info">
+                            <div class="bank-match-indicator">
+                                <span>Same Bank: ${settlement.bank}${preferredText}</span>
+                            </div>
+                        </div>
+                    `;
                 }
                 
                 if (showAdminControls) {

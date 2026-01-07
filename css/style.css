@@ -716,6 +716,32 @@ select:focus {
     font-style: italic;
 }
 
+/* Settlement bank info styles */
+.settlement-bank-info {
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.bank-match-indicator {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.bank-match-indicator span {
+    font-size: 0.75rem;
+    color: var(--success-color);
+    background-color: color-mix(in srgb, var(--success-color) 20%, transparent);
+    padding: 4px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--success-color);
+    text-align: center;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
 .sheets-list {
     list-style-type: none;
     margin-top: 15px;
@@ -1663,27 +1689,19 @@ td:first-child .participant-with-avatar {
         height: 250px;
     }
     
-    /* FIXED: Ensure bank match indicator displays on mobile */
+    /* Bank match indicator for mobile */
     .bank-match-indicator {
-        display: flex !important;
         justify-content: center !important;
         margin-top: 8px !important;
-        padding-top: 8px !important;
-        border-top: 1px solid var(--border-color) !important;
         width: 100% !important;
     }
     
     .bank-match-indicator span {
-        font-size: 0.75rem !important;
-        padding: 4px 8px !important;
-        text-align: center !important;
+        font-size: 0.7rem !important;
+        padding: 3px 6px !important;
         white-space: normal !important;
-        max-width: 100% !important;
         word-break: break-word !important;
-        background-color: color-mix(in srgb, var(--success-color) 20%, transparent) !important;
-        border-radius: 3px !important;
-        border: 1px solid var(--success-color) !important;
-        color: var(--success-color) !important;
+        max-width: 100% !important;
     }
     
     /* Ensure settlement details has proper spacing for bank info */
@@ -1697,6 +1715,13 @@ td:first-child .participant-with-avatar {
         margin-top: 8px !important;
         width: 100% !important;
         justify-content: center !important;
+    }
+    
+    .settlement-bank-info {
+        margin-top: 8px !important;
+        padding-top: 8px !important;
+        border-top: 1px solid var(--border-color) !important;
+        width: 100% !important;
     }
 }
 
