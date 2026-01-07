@@ -1,4 +1,4 @@
-// firebase-sync.js - SHARED VERSION (FIXED)
+// firebase-sync.js - v2.2 with Profile Image Support
 class FirebaseSync {
     constructor() {
         this.isInitialized = false;
@@ -8,7 +8,7 @@ class FirebaseSync {
     // Initialize Firebase
     initialize() {
         try {
-            console.log('Starting Firebase initialization...');
+            console.log('Starting Firebase initialization v2.2...');
             
             // Your Firebase configuration
             const firebaseConfig = {
@@ -24,9 +24,10 @@ class FirebaseSync {
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
             this.db = firebase.database();
+            this.storage = firebase.storage();
             
             this.isInitialized = true;
-            console.log('Firebase initialized successfully');
+            console.log('Firebase initialized successfully v2.2');
             
             this.showSyncStatus('Connected to shared cloud', 'success');
             
@@ -125,6 +126,54 @@ class FirebaseSync {
     mergeData(cloudData) {
         console.log('mergeData called - using replaceLocalData instead');
         this.replaceLocalData(cloudData);
+    }
+
+    // Upload profile image to Firebase Storage
+    async uploadProfileImage(participantName, imageDataUrl) {
+        if (!this.isInitialized) {
+            throw new Error('Firebase not initialized');
+        }
+        
+        try {
+            // Convert data URL to blob
+            const response = await fetch(imageDataUrl);
+            const blob = await response.blob();
+            
+            // Create a reference to the storage location
+            const storageRef = this.storage.ref();
+            const imageRef = storageRef.child(`profile_images/${participantName}_${Date.now()}.jpg`);
+            
+            // Upload the image
+            const snapshot = await imageRef.put(blob, {
+                contentType: 'image/jpeg',
+            });
+            
+            // Get the download URL
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            
+            console.log('Profile image uploaded:', downloadURL);
+            return downloadURL;
+            
+        } catch (error) {
+            console.error('Failed to upload profile image:', error);
+            throw error;
+        }
+    }
+
+    // Download profile image from Firebase Storage (if needed)
+    async getProfileImageUrl(participantName) {
+        if (!this.isInitialized) {
+            return null;
+        }
+        
+        try {
+            // This would need a specific storage structure
+            // For now, return null - images are stored in localStorage as data URLs
+            return null;
+        } catch (error) {
+            console.error('Failed to get profile image:', error);
+            return null;
+        }
     }
 
     // Show sync status

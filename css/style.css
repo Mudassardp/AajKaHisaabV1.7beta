@@ -84,6 +84,19 @@ header {
     margin-left: auto;
 }
 
+#controlPanelBtn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.control-icon {
+    font-size: 0.9rem;
+}
+
 .theme-toggle-btn {
     background: none;
     border: none;
@@ -293,7 +306,7 @@ h1 {
 }
 
 .color-legend {
-    display: none; /* Hidden as per requirement */
+    display: none;
 }
 
 .legend-item {
@@ -359,15 +372,43 @@ h1 {
     box-shadow: var(--shadow);
 }
 
+.participant-with-avatar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.participant-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
 .participant-name {
     font-weight: 600;
     color: var(--text-color);
+    cursor: pointer;
     display: block;
     margin-bottom: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-grow: 1;
+}
+
+.participant-name:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
 }
 
 .checkbox-container {
@@ -436,52 +477,20 @@ table {
 
 th, td {
     padding: 12px 15px;
+    text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
 
-/* Default header alignment */
 th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: #2c3e50;
-    text-align: left;
-}
-
-/* Align Spent column header to right */
-th:nth-child(2) {
-    text-align: right;
-}
-
-/* Align Meals column header to center */
-th:nth-child(3) {
-    text-align: center;
-}
-
-/* Align To Be Paid column header to right */
-th:nth-child(4) {
-    text-align: right;
 }
 
 tr:hover {
     background-color: var(--hover-bg);
 }
 
-/* Spent column (2nd column) */
-td:nth-child(2) {
-    text-align: right;
-}
-
-/* Meals column (3rd column) */
-td:nth-child(3) {
-    text-align: center;
-}
-
-/* To Be Paid column (4th column) */
-td:nth-child(4) {
-    text-align: right;
-}
-
-/* Keep these classes for backward compatibility */
 .amount-cell {
     text-align: right;
 }
@@ -554,6 +563,14 @@ select:focus {
 .currency {
     font-weight: bold;
     color: var(--text-color);
+}
+
+.meals-summary {
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+    border-left: 3px solid var(--primary-color);
 }
 
 .settlement-section {
@@ -813,16 +830,31 @@ select:focus {
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+    padding: 20px;
 }
 
 .modal-content {
     background-color: var(--container-bg);
     padding: 30px;
     border-radius: 10px;
-    max-width: 400px;
+    max-width: 500px;
     width: 90%;
     text-align: center;
     border: 1px solid var(--border-color);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.control-panel-modal,
+.profile-card-modal {
+    max-width: 600px;
+    max-height: 85vh;
+}
+
+.cropper-modal {
+    max-width: 700px;
+    max-height: 90vh;
 }
 
 .modal h3 {
@@ -856,6 +888,10 @@ select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.file-input {
+    margin: 10px 0;
 }
 
 footer {
@@ -902,114 +938,61 @@ footer {
     100% { transform: rotate(360deg); }
 }
 
-/* Control Panel Styles (NEW for v1.6) */
-.control-panel-modal {
-    max-width: 500px;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
+/* Control Panel Styles */
 .control-panel-section {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.control-panel-section:last-child {
-    border-bottom: none;
-    margin-bottom: 15px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: var(--hover-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: left;
 }
 
 .control-panel-section h4 {
     color: var(--primary-color);
-    margin-bottom: 8px;
-    font-size: 1.1rem;
+    margin-bottom: 5px;
 }
 
-.control-panel-description {
+.section-description {
     color: var(--secondary-color);
     font-size: 0.9rem;
     margin-bottom: 15px;
-    font-style: italic;
+    line-height: 1.4;
+}
+
+.add-participant-control {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.add-participant-control input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--container-bg);
+    color: var(--text-color);
 }
 
 .default-participants-list {
-    list-style-type: none;
-    margin: 15px 0;
-    max-height: 200px;
+    list-style: none;
+    max-height: 300px;
     overflow-y: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.default-participant-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: var(--container-bg);
+    border-radius: 5px;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
-}
-
-.default-participant-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px solid var(--border-color);
     transition: background-color 0.2s;
-}
-
-.default-participant-item:last-child {
-    border-bottom: none;
-}
-
-.default-participant-item:hover {
-    background-color: var(--hover-bg);
-}
-
-.default-participant-name {
-    font-weight: 600;
-    color: var(--text-color);
-    flex-grow: 1;
-}
-
-.remove-default-participant-btn {
-    background: none;
-    border: none;
-    color: var(--danger-color);
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 5px;
-    border-radius: 3px;
-    transition: background-color 0.2s;
-    margin-left: 10px;
-}
-
-.remove-default-participant-btn:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
-}
-
-.summary-info {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 15px;
-    border-radius: 5px;
-    border-left: 3px solid var(--primary-color);
-}
-
-.password-change-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.password-change-form .form-input {
-    margin-bottom: 0;
-}
-
-/* Control Panel Participant Item Styles */
-.default-participant-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s;
-}
-
-.default-participant-item:last-child {
-    border-bottom: none;
 }
 
 .default-participant-item:hover {
@@ -1020,35 +1003,43 @@ footer {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-grow: 1;
+    flex: 1;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
 }
 
-.default-participant-info:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+.default-participant-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+    flex-shrink: 0;
+    object-fit: cover;
 }
 
 .default-participant-name {
     font-weight: 600;
     color: var(--text-color);
-    flex-grow: 1;
+    flex: 1;
+    text-align: left;
 }
 
 .default-participant-actions {
     display: flex;
     gap: 8px;
-    margin-left: 10px;
+    flex-shrink: 0;
 }
 
-.edit-profile-btn, .remove-default-participant-btn {
+.default-participant-actions button {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 5px;
+    font-size: 1rem;
+    padding: 6px;
     border-radius: 3px;
     transition: background-color 0.2s;
     width: 32px;
@@ -1058,50 +1049,291 @@ footer {
     justify-content: center;
 }
 
-.edit-profile-btn {
+.edit-default-btn {
     color: var(--primary-color);
 }
 
-.edit-profile-btn:hover {
+.edit-default-btn:hover {
     background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
 }
 
-.remove-default-participant-btn {
+.delete-default-btn {
     color: var(--danger-color);
 }
 
-.remove-default-participant-btn:hover {
+.delete-default-btn:hover {
     background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
 }
 
-/* Add participant form in Control Panel */
-.add-participant-form {
+/* Profile Card Styles */
+.profile-card-modal {
+    max-width: 500px;
+    text-align: left;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-container {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 15px;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
     display: flex;
-    gap: 10px;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    object-fit: cover;
+    background-size: cover;
+    background-position: center;
 }
 
-.add-participant-form input {
-    padding: 10px 15px;
+.profile-details {
+    margin: 20px 0;
+}
+
+.profile-field {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--hover-bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.profile-field label {
+    display: block;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.profile-field span {
+    display: block;
+    color: var(--text-color);
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.bank-accounts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bank-account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 15px;
+    background-color: var(--container-bg);
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.bank-account-info {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.bank-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.bank-iban {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    color: var(--text-color);
+}
+
+.bank-copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 3px;
+    color: var(--primary-color);
+    transition: background-color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
+    align-self: center;
+}
+
+.bank-copy-btn:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
+    transform: scale(1.1);
+}
+
+.no-data {
+    color: var(--secondary-color);
+    font-style: italic;
+    text-align: center;
+    padding: 10px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Edit Profile Form */
+.edit-profile-form {
+    margin-top: 25px;
+    padding: 20px;
+    background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
+    border-radius: 8px;
+    border: 1px dashed var(--primary-color);
+}
+
+.edit-profile-form h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.form-group small {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+.profile-photo-upload {
+    text-align: center;
+}
+
+.profile-image-preview {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.current-profile-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+}
+
+.photo-upload-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+    justify-content: center;
+}
+
+/* Image Cropper Modal Styles */
+.cropper-container {
+    width: 100%;
+    height: 400px;
+    margin: 15px 0;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-size: 1rem;
-    min-width: 200px;
-    background-color: var(--container-bg);
+    overflow: hidden;
+    background-color: var(--hover-bg);
+}
+
+.cropper-container img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.cropper-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cropper-zoom, .cropper-rotate {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cropper-zoom span {
+    font-weight: 600;
     color: var(--text-color);
-    flex-grow: 1;
+    min-width: 50px;
 }
 
-.add-participant-form input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+.cropper-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-
+/* Table cell avatars */
+td:first-child .participant-with-avatar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
@@ -1170,528 +1402,48 @@ footer {
         width: 100%;
         justify-content: center;
     }
-}
-
-/* Profile Photo Styles */
-.profile-photo {
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: inline-block;
-    vertical-align: middle;
-    border: 2px solid var(--primary-color);
-}
-
-.profile-photo-initials {
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-    border: 2px solid var(--primary-color);
-}
-
-/* Profile Card Modal */
-.profile-card-modal {
-    max-width: 400px;
-    max-height: 85vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-}
-
-.profile-card-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.profile-photo-large {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 15px;
-}
-
-.profile-photo-large-img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    border: 4px solid var(--primary-color);
-}
-
-.profile-photo-large-initials {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-    font-weight: bold;
-    border: 4px solid var(--primary-color);
-}
-
-.profile-details {
-    background-color: var(--hover-bg);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.profile-detail-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.profile-detail-item:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-.detail-label {
-    font-weight: 600;
-    color: var(--primary-color);
-}
-
-.detail-value {
-    text-align: right;
-    color: var(--text-color);
-    max-width: 60%;
-    word-break: break-word;
-}
-
-/* Profile Edit Form */
-.profile-edit-form {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px dashed var(--primary-color);
-}
-
-.profile-edit-form h4 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-/* =========== FIXED UPLOAD SECTION =========== */
-.photo-upload-section {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-}
-
-/* Hide the file input completely */
-#profilePhotoUpload {
-    display: none !important;
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-}
-
-/* Make the upload button look like a real button */
-.photo-upload-section label[for="profilePhotoUpload"] {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 5px;
-    font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    margin-bottom: 10px;
-    transition: background-color 0.3s;
-}
-
-.photo-upload-section label[for="profilePhotoUpload"]:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
-}
-
-/* Style the remove button */
-#removeProfilePhotoBtn {
-    width: 100%;
-    padding: 12px;
-    margin-top: 5px;
-}
-
-/* Mobile fix for upload section */
-@media (max-width: 768px) {
-    .photo-upload-section label[for="profilePhotoUpload"] {
-        padding: 14px;
-        font-size: 1rem;
-    }
-    
-    #removeProfilePhotoBtn {
-        padding: 14px;
-        font-size: 1rem;
-    }
-}
-
-/* Clickable Profile */
-.clickable-profile {
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.clickable-profile:hover {
-    opacity: 0.8;
-}
-
-/* Sheet Participants */
-.sheet-participants {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 8px;
-}
-
-.sheet-participant {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.sheet-participant:hover {
-    transform: scale(1.1);
-}
-
-.more-participants {
-    color: var(--secondary-color);
-    font-size: 0.9rem;
-    margin-left: 5px;
-}
-
-/* Default Participants in Control Panel */
-.default-participant-item .default-participant-name {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Dark Mode Adjustments */
-.dark-mode .profile-photo-initials {
-    border-color: var(--primary-color);
-}
-
-.dark-mode .profile-photo-large-initials {
-    border-color: var(--primary-color);
-}
-
-/* ==================== PROFILE MODAL MOBILE FIXES ==================== */
-
-/* Mobile-specific profile modal styles */
-@media (max-width: 768px) {
-    .profile-card-modal {
-        max-width: 95vw;
-        max-height: 90vh;
-        margin: 10px;
-        padding: 15px;
-    }
-    
-    /* Fix for mobile viewport height */
-    .modal-content {
-        max-height: calc(100vh - 40px);
-        overflow-y: auto;
-    }
-    
-    .profile-card-header {
-        padding-top: 10px;
-    }
-    
-    .profile-photo-large {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 10px;
-    }
-    
-    .profile-photo-large-initials {
-        font-size: 28px;
-    }
-    
-    .profile-details {
-        padding: 12px;
-        margin-bottom: 15px;
-    }
-    
-    .profile-detail-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-        padding-bottom: 8px;
-        margin-bottom: 8px;
-    }
-    
-    .detail-label {
-        font-size: 0.9rem;
-        min-width: auto;
-    }
-    
-    .detail-value {
-        font-size: 0.95rem;
-        text-align: left;
-        width: 100%;
-        max-width: 100%;
-        word-break: break-word;
-        padding-left: 0;
-    }
-    
-    /* Profile edit form mobile fixes */
-    .profile-edit-form {
-        padding: 12px;
-        margin-bottom: 15px;
-    }
-    
-    .profile-edit-form h4 {
-        font-size: 1.1rem;
-        margin-bottom: 12px;
-    }
-    
-    .form-input {
-        padding: 10px 12px;
-        font-size: 16px; /* Prevents iOS zoom on focus */
-        margin-bottom: 12px;
-    }
-    
-    .photo-upload-section {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .photo-upload-section button {
-        width: 100%;
-        padding: 10px;
-        font-size: 0.95rem;
-    }
-    
-    /* Modal buttons container */
-    .modal-buttons {
-        flex-direction: column;
-        gap: 8px;
-        padding-top: 10px;
-    }
-    
-    .modal-buttons button {
-        width: 100%;
-        padding: 12px;
-        margin: 0;
-        font-size: 1rem;
-    }
-    
-    /* Ensure modal stays within viewport */
-    .modal {
-        align-items: flex-start;
-        padding-top: 20px;
-        overflow-y: auto;
-    }
     
     .modal-content {
-        margin-top: 10px;
-        margin-bottom: 20px;
-    }
-}
-
-/* Extra small devices (phones, 480px and down) */
-@media (max-width: 480px) {
-    .profile-card-modal {
-        max-width: 98vw;
-        max-height: 95vh;
-        padding: 12px;
-        margin: 5px;
-    }
-    
-    .profile-photo-large {
-        width: 70px;
-        height: 70px;
-    }
-    
-    .profile-photo-large-initials {
-        font-size: 24px;
-    }
-    
-    #profileFullName {
-        font-size: 1.2rem;
-        margin-bottom: 5px;
-    }
-    
-    .profile-details {
-        padding: 10px;
-    }
-    
-    .profile-detail-item {
-        font-size: 0.9rem;
-    }
-    
-    .profile-edit-form input {
-        font-size: 16px; /* Prevents iOS zoom */
-    }
-    
-    /* Make sure modal is scrollable */
-    .modal-content {
-        max-height: calc(100vh - 60px);
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-    .profile-card-modal {
-        max-height: -webkit-fill-available;
-    }
-    
-    .modal {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-}
-
-/* Fix for Android Chrome */
-@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
-    .profile-card-modal {
-        touch-action: pan-y;
-    }
-    
-    .modal-content {
-        overscroll-behavior: contain;
-    }
-}
-
-/* Ensure clickable areas are large enough for touch */
-@media (max-width: 768px) {
-    .clickable-profile {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    button, 
-    .btn,
-    input[type="button"],
-    input[type="submit"] {
-        min-height: 44px;
-    }
-    
-    .profile-detail-item {
-        min-height: 44px;
-        padding: 8px 0;
-    }
-}
-
-/* Fix for modal backdrop on mobile */
-@media (max-width: 768px) {
-    .modal {
-        background-color: rgba(0, 0, 0, 0.8);
-        -webkit-tap-highlight-color: transparent;
-    }
-    
-    .modal-content {
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    }
-}
-
-/* Control Panel Modal mobile fixes */
-@media (max-width: 768px) {
-    .control-panel-modal {
-        max-width: 95vw;
-        max-height: 90vh;
-        padding: 15px;
-    }
-    
-    .control-panel-section {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-    }
-    
-    .control-panel-section h4 {
-        font-size: 1.1rem;
-    }
-    
-    .default-participants-list {
-        max-height: 200px;
-    }
-    
-    .default-participant-item {
-        padding: 8px 10px;
-    }
-    
-    .password-change-form .form-input {
-        font-size: 16px; /* Prevents iOS zoom */
-    }
-}
-
-/* ==================== GENERAL MODAL MOBILE FIXES ==================== */
-
-@media (max-width: 768px) {
-    /* All modals general fixes */
-    .modal {
-        padding: 10px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .modal-content {
+        padding: 20px;
         width: 95%;
-        max-width: 95vw;
-        padding: 20px 15px;
-        margin: auto;
     }
     
-    /* Ensure content doesn't get hidden by virtual keyboard */
-    .modal:focus-within {
-        padding-bottom: 50vh;
-    }
-    
-    /* Fix for delete confirmation modal */
-    #deleteModal .modal-content {
-        max-width: 90vw;
-    }
-    
-    /* Fix for admin login modal */
-    #adminLoginModal .modal-content {
-        max-width: 90vw;
-    }
-    
-    /* Make sure all form inputs are readable on mobile */
-    input, select, textarea {
-        font-size: 16px !important; /* Prevents iOS zoom */
-    }
-}
-
-/* Fix for very small screens (Galaxy Fold, iPhone SE, etc.) */
-@media (max-width: 360px) {
+    .control-panel-modal,
     .profile-card-modal {
-        padding: 10px;
+        max-width: 95%;
+        padding: 15px;
     }
     
-    #profileFullName {
-        font-size: 1.1rem;
+    .profile-avatar-container {
+        width: 100px;
+        height: 100px;
     }
     
-    .modal-buttons button {
-        padding: 10px;
-        font-size: 0.9rem;
+    .profile-avatar {
+        font-size: 2rem;
     }
     
-    .profile-edit-form h4 {
-        font-size: 1rem;
+    .profile-field {
+        padding: 12px;
+    }
+    
+    .add-participant-control {
+        flex-direction: column;
+    }
+    
+    .add-participant-control input {
+        width: 100%;
+    }
+    
+    .cropper-modal {
+        max-width: 95%;
+        padding: 15px;
+    }
+    
+    .cropper-container {
+        height: 300px;
     }
 }
-
-
 
 @media (max-width: 600px) {
     .container {
@@ -1760,6 +1512,7 @@ footer {
         min-width: 60px;
         margin-top: 0px;
         margin-bottom: 0px;
+        height: 32px;
     }
     
     .theme-toggle-btn {
@@ -1867,536 +1620,146 @@ footer {
         font-size: 1rem;
     }
     
-    /* Control Panel Mobile */
-    .control-panel-modal {
-        max-width: 90%;
-        max-height: 85vh;
+    .profile-avatar-container {
+        width: 80px;
+        height: 80px;
     }
     
-    .control-panel-section h4 {
-        font-size: 1rem;
+    .profile-avatar {
+        font-size: 1.8rem;
+    }
+    
+    .profile-image-preview {
+        width: 120px;
+        height: 120px;
+        font-size: 2.5rem;
+    }
+    
+    .bank-account-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .bank-copy-btn {
+        align-self: flex-start;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
     }
     
     .default-participant-item {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-    }
-}
-
-/* Bank-Aware Settlement Styles */
-.settlement-summary {
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 8px;
-    background-color: color-mix(in srgb, var(--success-color) 15%, transparent);
-    border: 1px solid var(--success-color);
-}
-
-.bank-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 8px;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    background-color: var(--success-color);
-    color: white;
-    white-space: nowrap;
-}
-
-.settlement-tips {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border-left: 4px solid var(--info-color);
-}
-
-.settlement-tips ul {
-    margin: 10px 0 0 20px;
-    padding: 0;
-}
-
-.settlement-tips li {
-    margin-bottom: 5px;
-    color: var(--secondary-color);
-}
-
-/* Settlement item with same bank */
-.settlement-item.same-bank {
-    border-left: 4px solid var(--success-color);
-    background-color: color-mix(in srgb, var(--success-color) 10%, transparent);
-}
-
-/* Dark mode adjustments for bank indicator */
-.dark-mode .bank-indicator {
-    background-color: var(--success-color);
-    color: #1a1a2e;
-}
-
-.dark-mode .settlement-tips {
-    background-color: color-mix(in srgb, var(--container-bg) 90%, black);
-}
-
-/* Version badges in sheets list */
-.sheet-item .version-badge {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    margin-left: 8px;
-}
-
-.sheet-item .version-badge.new {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.sheet-item .version-badge.old {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-/* Mobile responsiveness for bank indicator */
-@media (max-width: 768px) {
-    .bank-indicator {
-        font-size: 0.7rem;
-        padding: 3px 8px;
-        margin-left: 5px;
-        margin-top: 5px;
-        display: inline-block;
-    }
-    
-    .settlement-first-line {
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    
-    .settlement-summary {
-        padding: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .settlement-tips {
-        padding: 12px;
-        font-size: 0.85rem;
-    }
-    
-    .sheet-item .version-badge {
-        font-size: 0.6rem;
-        padding: 1px 6px;
-        margin-left: 5px;
-    }
-}
-
-/* For very small screens */
-@media (max-width: 480px) {
-    .bank-indicator {
-        font-size: 0.65rem;
-        padding: 2px 6px;
-    }
-    
-    .settlement-summary > div {
-        padding: 8px 10px;
-    }
-}
-
-/* Add these styles to the end of your existing style.css file */
-
-/* Export UI Styles */
-.sheet-export-options {
-    animation: fadeIn 0.3s ease;
-}
-
-.export-options-grid button {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.export-options-grid button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
-}
-
-/* Export Modal Styles */
-.export-format-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.format-option {
-    padding: 20px;
-    text-align: center;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-    background-color: var(--container-bg);
-}
-
-.format-option:hover {
-    border-color: var(--primary-color);
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-}
-
-.format-option.selected {
-    border-color: var(--primary-color);
-    background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
-}
-
-.format-icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    display: block;
-}
-
-.format-option h4 {
-    margin: 0 0 5px 0;
-    color: var(--text-color);
-}
-
-.format-option p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--secondary-color);
-}
-
-.export-details {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border-left: 4px solid var(--info-color);
-}
-
-.file-name-preview {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 15px 0;
-    padding: 10px;
-    background-color: var(--container-bg);
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-}
-
-.file-name-preview input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--container-bg);
-    color: var(--text-color);
-}
-
-.file-name-preview input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-}
-
-/* Import UI Styles */
-.file-upload-area.drag-over {
-    border-color: var(--primary-color);
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-}
-
-.import-step {
-    animation: slideIn 0.3s ease;
-}
-
-.import-step.active {
-    display: block !important;
-}
-
-.import-preview-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-
-.import-preview-table th,
-.import-preview-table td {
-    padding: 8px;
-    border-bottom: 1px solid var(--border-color);
-    text-align: left;
-}
-
-.import-preview-table th {
-    background-color: var(--hover-bg);
-    font-weight: 600;
-}
-
-.conflict-item {
-    padding: 8px;
-    margin: 5px 0;
-    background-color: var(--container-bg);
-    border-radius: 4px;
-    border-left: 3px solid var(--warning-color);
-}
-
-/* Loading States */
-.export-loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-.export-loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--info-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-
-.export-loading-text {
-    color: var(--text-color);
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.export-progress {
-    width: 200px;
-    height: 4px;
-    background-color: var(--border-color);
-    border-radius: 2px;
-    margin-top: 20px;
-    overflow: hidden;
-}
-
-.export-progress-bar {
-    height: 100%;
-    background-color: var(--info-color);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-/* Success/Error Messages */
-.export-success {
-    text-align: center;
-    padding: 20px;
-    animation: fadeIn 0.3s ease;
-}
-
-.export-success-icon {
-    font-size: 3rem;
-    color: var(--success-color);
-    margin-bottom: 15px;
-}
-
-.export-error {
-    text-align: center;
-    padding: 20px;
-    animation: fadeIn 0.3s ease;
-}
-
-.export-error-icon {
-    font-size: 3rem;
-    color: var(--danger-color);
-    margin-bottom: 15px;
-}
-
-/* Animations */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .export-options-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .format-option {
-        padding: 15px;
-    }
-    
-    .export-modal-content {
-        padding: 15px;
-    }
-    
-    .file-upload-area {
-        padding: 30px 15px;
-    }
-    
-    .file-name-preview {
         flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .file-name-preview input {
-        width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .sheet-export-options {
-        padding: 12px;
-    }
-    
-    .export-format-options {
-        grid-template-columns: 1fr;
-    }
-    
-    .import-step {
-        padding: 10px;
-    }
-    
-    .modal-buttons {
-        flex-direction: column;
+        align-items: flex-start;
         gap: 10px;
     }
     
-    .modal-buttons button {
-        width: 100%;
+    .default-participant-actions {
+        align-self: flex-end;
+    }
+    
+    .cropper-container {
+        height: 250px;
     }
 }
 
-/* Version Badge */
-.version-badge {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: bold;
+/* Ensure all avatars stay perfectly round */
+.participant-avatar-small,
+.default-participant-avatar,
+.profile-avatar,
+.profile-image-preview,
+.current-profile-image {
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+}
+
+/* Force perfect circles on all screens */
+@media (max-width: 600px) {
+    .participant-avatar-small {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px;
+        min-height: 32px;
+    }
+    
+    .default-participant-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px;
+        min-height: 36px;
+    }
+    
+    .profile-avatar-container {
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px;
+        min-height: 80px;
+    }
+    
+    .profile-image-preview {
+        width: 120px !important;
+        height: 120px !important;
+        min-width: 120px;
+        min-height: 120px;
+    }
+}
+
+/* Print styles for PDF generation */
+@media print {
+    .participant-avatar-small,
+    .default-participant-avatar,
+    .profile-avatar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border-radius: 50% !important;
+    }
+}
+
+/* Add this to your existing style.css */
+
+/* Fix for avatar image display */
+.participant-avatar-small,
+.profile-avatar,
+.default-participant-avatar,
+.current-profile-image {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Ensure avatars are properly displayed in tables */
+td:first-child .participant-with-avatar .participant-avatar-small {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+
+/* Preferred Bank Styles */
+.bank-account-item.preferred {
+    border-left: 3px solid var(--success-color) !important;
+    background-color: color-mix(in srgb, var(--success-color) 10%, transparent) !important;
+}
+
+.preferred-badge {
+    color: var(--success-color);
+    font-size: 0.8rem;
     margin-left: 8px;
+    font-weight: bold;
 }
 
-.version-badge.v1_9 {
-    background-color: var(--info-color);
-    color: white;
-}
-
-.version-badge.v1_8 {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.version-badge.v1_7 {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.version-badge.v1_6 {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-/* Tooltip */
-.tooltip {
-    position: relative;
-    display: inline-block;
-}
-
-.tooltip .tooltip-text {
-    visibility: hidden;
-    width: 200px;
-    background-color: var(--container-bg);
-    color: var(--text-color);
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-}
-
-.tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
-
-
-
-/* ==================== EXPORT STYLES v1.9 ==================== */
-
-/* Export button - MOST IMPORTANT */
-#exportSheetBtn {
-    margin-top: 10px;
+/* Settlement preferred match indicator */
+.preferred-match-indicator {
+    font-size: 0.75rem;
+    color: var(--success-color);
+    margin-top: 3px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    gap: 4px;
 }
 
-/* Export section */
-.sheet-export-options {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border-left: 4px solid var(--info-color);
-}
-
-/* Export modal basic styles */
-.export-format-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.format-option {
-    padding: 20px;
-    text-align: center;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    cursor: pointer;
-    background-color: var(--container-bg);
-}
-
-.format-option.selected {
-    border-color: var(--primary-color);
-}
-
-/* Loading overlay */
-.export-loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+.preferred-match-indicator::before {
+    content: "★";
+    font-size: 0.9rem;
 }

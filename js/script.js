@@ -1,13 +1,6 @@
+// script.js - Updated v2.2 (without profile management code)
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
-    const profileCardModal = document.getElementById('profileCardModal');
-    const closeProfileCardBtn = document.getElementById('closeProfileCardBtn');
-    const editProfileBtn = document.getElementById('editProfileBtn');
-    const saveProfileBtn = document.getElementById('saveProfileBtn');
-    const cancelEditProfileBtn = document.getElementById('cancelEditProfileBtn');
-    const profilePhotoUpload = document.getElementById('profilePhotoUpload');
-    const removeProfilePhotoBtn = document.getElementById('removeProfilePhotoBtn');
-
+    // DOM Elements (keeping only essential ones)
     const userStatus = document.getElementById('userStatus');
     const logoutBtn = document.getElementById('logoutBtn');
     const viewerTab = document.getElementById('viewerTab');
@@ -42,7 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const totalParticipantsElement = document.getElementById('totalParticipants');
     const totalSpentElement = document.getElementById('totalSpent');
+    const totalMealsElement = document.getElementById('totalMeals');
     const costPerMealElement = document.getElementById('costPerMeal');
+    const oneMealCountElement = document.getElementById('oneMealCount');
+    const twoMealsCountElement = document.getElementById('twoMealsCount');
+    const threeMealsCountElement = document.getElementById('threeMealsCount');
     const settlementList = document.getElementById('settlementList');
     const sheetsList = document.getElementById('sheetsList');
     const adminSheetsList = document.getElementById('adminSheetsList');
@@ -56,30 +53,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const editCustomParticipantInput = document.getElementById('editCustomParticipantInput');
     const editAddCustomParticipantBtn = document.getElementById('editAddCustomParticipantBtn');
     const editParticipantsList = document.getElementById('editParticipantsList');
-    const sheetExportOptions = document.getElementById('sheetExportOptions');
+    const totalMealsSummary = document.getElementById('totalMealsSummary');
     
-    // New Elements for Beta v1.9
+    // New Elements for v2.2
     const themeToggleBtn = document.getElementById('themeToggle');
     const themeIcon = document.querySelector('.theme-icon');
-    
-    // Control Panel Elements
     const controlPanelBtn = document.getElementById('controlPanelBtn');
+    
+    // Control Panel Elements (keep only default participants part)
     const controlPanelModal = document.getElementById('controlPanelModal');
     const closeControlPanelBtn = document.getElementById('closeControlPanelBtn');
-    const defaultParticipantsList = document.getElementById('defaultParticipantsList');
-    const controlPanelParticipantInput = document.getElementById('controlPanelParticipantInput');
+    const newDefaultParticipantInput = document.getElementById('newDefaultParticipantInput');
     const addDefaultParticipantBtn = document.getElementById('addDefaultParticipantBtn');
-    const totalSheetsCount = document.getElementById('totalSheetsCount');
-    const latestSheetDate = document.getElementById('latestSheetDate');
-    const newPasswordInput = document.getElementById('newPasswordInput');
-    const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-    const changePasswordBtn = document.getElementById('changePasswordBtn');
-    
-    // Export/Import Elements
-    const exportSheetBtn = document.getElementById('exportSheetBtn');
-    const exportAllSheetsBtn = document.getElementById('exportAllSheetsBtn');
-    const backupAllDataBtn = document.getElementById('backupAllDataBtn');
-    const importDataBtn = document.getElementById('importDataBtn');
+    const defaultParticipantsList = document.getElementById('defaultParticipantsList');
     
     // Application State
     let selectedParticipants = [];
@@ -87,197 +73,37 @@ document.addEventListener('DOMContentLoaded', function() {
     let savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
     let isAdmin = false;
     let currentMode = 'viewer';
-    let ADMIN_PASSWORD = "226622";
+    const ADMIN_PASSWORD = "226622";
     
-    // App Version
-    const APP_VERSION = "1.9";
-    
-    // Default participants (with Asif and Sikandar added)
-    let defaultParticipants = [
+    // Default participants - now will be sorted alphabetically
+    let defaultParticipants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || [
         "Rizwan", "Aarif", "Abdul Razzaq", "Haris", "Mauzam", 
         "Masif", "Mudassar", "Shahid", "Mansoor Kotawdekar", 
-        "Mansoor Wasta", "Mohsin", "Ubedulla", "Abdul Alim", "Sabir", "Aftab",
-        "Asif", "Sikandar"  // Added Asif and Sikandar
+        "Mansoor Wasta", "Mohsin", "Ubedulla", "Abdul Alim", "Sabir", "Aftab"
     ];
+    
+    // Sort default participants alphabetically on initialization
+    defaultParticipants.sort(alphabeticalSort);
     
     // Initialize Application
     initApp();
     
     function initApp() {
-        // Load default participants from localStorage
-        const savedDefaultParticipants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants'));
-        if (savedDefaultParticipants) {
-            defaultParticipants = savedDefaultParticipants;
-        } else {
-            // Save default list with Asif and Sikandar
-            localStorage.setItem('hisaabKitaabDefaultParticipants', JSON.stringify(defaultParticipants));
-        }
-        
-        // Load admin password from localStorage if exists
-        const savedPassword = localStorage.getItem('hisaabKitaabAdminPassword');
-        if (savedPassword) {
-            ADMIN_PASSWORD = savedPassword;
-        }
-        
-        // Check and upgrade existing sheets if needed
-        checkAndUpgradeSheets();
-        
         loadSavedSheets();
         setupEventListeners();
-        setupMobileModalFix();
         checkAdminStatus();
         applyTheme();
-        
-        // Update footer version
-        document.querySelector('footer p').textContent = `HisaabKitaab©2025(created by Mudassar)-v${APP_VERSION}`;
         
         // Initialize Firebase sync
         setTimeout(() => {
             if (window.firebaseSync) {
                 window.firebaseSync.initialize();
             }
-            
-            // Initialize Profile Manager
-            setTimeout(() => {
-                if (window.profileManager) {
-                    console.log('Initializing Profile Manager...');
-                    window.profileManager.initialize();
-                    loadDefaultParticipants();
-                } else {
-                    console.error('Profile Manager not loaded!');
-                }
-            }, 1500);
-            
-            // Initialize Export Manager
-            setTimeout(() => {
-                if (window.exportManager) {
-                    window.exportManager.initialize();
-                    console.log('Export Manager initialized');
-                } else {
-                    console.error('Export Manager not loaded!');
-                }
-            }, 2000);
         }, 1000);
-    }
-    
-    // Mobile modal fixes
-    function setupMobileModalFix() {
-        const allModals = [
-            document.getElementById('profileCardModal'),
-            document.getElementById('controlPanelModal'),
-            document.getElementById('adminLoginModal'),
-            document.getElementById('deleteModal'),
-            document.getElementById('exportModal'),
-            document.getElementById('importModal')
-        ];
         
-        allModals.forEach(modal => {
-            if (modal) {
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.attributeName === 'style') {
-                            const display = modal.style.display;
-                            if (display === 'flex') {
-                                document.body.style.overflow = 'hidden';
-                                setTimeout(() => {
-                                    modal.scrollTop = 0;
-                                }, 10);
-                            } else if (display === 'none') {
-                                document.body.style.overflow = 'auto';
-                            }
-                        }
-                    });
-                });
-                
-                observer.observe(modal, { attributes: true });
-                
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        const closeBtn = modal.querySelector('.btn:not(.btn-success):not(.btn-danger):not(.btn-info):not(.btn-warning)');
-                        if (closeBtn) closeBtn.click();
-                    }
-                });
-            }
-        });
-        
-        const textInputs = document.querySelectorAll('input[type="text"], input[type="tel"], input[type="password"]');
-        textInputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                setTimeout(() => {
-                    const modal = this.closest('.modal');
-                    if (modal) {
-                        const rect = this.getBoundingClientRect();
-                        if (rect.bottom > window.innerHeight) {
-                            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }
-                }, 300);
-            });
-        });
-        
-        document.addEventListener('touchmove', function(e) {
-            const modalOpen = Array.from(allModals).some(modal => 
-                modal && modal.style.display === 'flex'
-            );
-            if (modalOpen && !e.target.closest('.modal-content')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    }
-    
-
-
-       // Show/Hide meals column based on user role
-    function showMealsColumn(show) {
-        // Get all meals column cells by class
-        const mealsCells = document.querySelectorAll('.meals-column');
-        
-        if (show) {
-            // Show meals column
-            mealsCells.forEach(cell => {
-                cell.style.display = 'table-cell';
-            });
-            
-            // Also show the meals header
-            const mealsHeader = document.querySelector('#expenseTable th:nth-child(3)');
-            if (mealsHeader) {
-                mealsHeader.style.display = 'table-cell';
-            }
-        } else {
-            // Hide meals column
-            mealsCells.forEach(cell => {
-                cell.style.display = 'none';
-            });
-            
-            // Also hide the meals header
-            const mealsHeader = document.querySelector('#expenseTable th:nth-child(3)');
-            if (mealsHeader) {
-                mealsHeader.style.display = 'none';
-            }
-        }
-    }
-
-    // Check and upgrade existing sheets to add version tracking
-    function checkAndUpgradeSheets() {
-        let needsSaving = false;
-        
-        savedSheets.forEach(sheet => {
-            // Add version if missing (old sheets)
-            if (!sheet.version) {
-                sheet.version = "1.6";
-                needsSaving = true;
-                console.log(`Upgraded sheet "${sheet.name}" to version 1.6`);
-            }
-            
-            // Ensure bankSettlements field exists for compatibility
-            if (!sheet.bankSettlements) {
-                sheet.bankSettlements = {};
-                needsSaving = true;
-            }
-        });
-        
-        if (needsSaving) {
-            localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
+        // Initialize Profile Manager
+        if (window.profileManager) {
+            window.profileManager.init();
         }
     }
     
@@ -295,48 +121,50 @@ document.addEventListener('DOMContentLoaded', function() {
         // Theme Toggle
         themeToggleBtn.addEventListener('click', toggleTheme);
 
-        // Profile Events
-        closeProfileCardBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.profileManager?.hideProfileCard();
-        });
-
-        editProfileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.profileManager?.enterEditMode();
-        });
-
-        saveProfileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.profileManager?.saveEditedProfile();
-        });
-
-        cancelEditProfileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.profileManager?.exitEditMode();
-        });
-
-        profilePhotoUpload.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                window.profileManager?.handlePhotoUpload(e.target.files[0]);
-                e.target.value = '';
-            }
-            e.stopPropagation();
-        });
-
-        removeProfilePhotoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.profileManager?.handlePhotoRemoval();
-        });
-
         // Sync button
         document.getElementById('manualSyncBtn')?.addEventListener('click', () => {
             if (window.firebaseSync) {
                 window.firebaseSync.manualSync();
+            }
+        });
+        
+        // Control Panel
+        controlPanelBtn.addEventListener('click', () => {
+            controlPanelModal.style.display = 'flex';
+            updateDefaultParticipantsList();
+        });
+        
+        closeControlPanelBtn.addEventListener('click', () => {
+            controlPanelModal.style.display = 'none';
+        });
+        
+        // Default Participants Management
+        addDefaultParticipantBtn.addEventListener('click', () => {
+            const newName = newDefaultParticipantInput.value.trim();
+            if (!newName) {
+                alert('Please enter a participant name');
+                return;
+            }
+            
+            if (defaultParticipants.includes(newName)) {
+                alert('This participant already exists in the default list');
+                newDefaultParticipantInput.value = '';
+                return;
+            }
+            
+            defaultParticipants.push(newName);
+            defaultParticipants.sort(alphabeticalSort); // Sort after adding
+            saveDefaultParticipants();
+            updateDefaultParticipantsList();
+            updateCreateParticipantsList();
+            newDefaultParticipantInput.value = '';
+            
+            alert(`"${newName}" added to default list!`);
+        });
+        
+        newDefaultParticipantInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addDefaultParticipantBtn.click();
             }
         });
         
@@ -366,25 +194,23 @@ document.addEventListener('DOMContentLoaded', function() {
         updateParticipantsBtn.addEventListener('click', updateParticipants);
         cancelEditBtn.addEventListener('click', cancelEditParticipants);
         
-        // Control Panel Events
-        controlPanelBtn.addEventListener('click', showControlPanel);
-        closeControlPanelBtn.addEventListener('click', hideControlPanel);
-        addDefaultParticipantBtn.addEventListener('click', addDefaultParticipant);
-        controlPanelParticipantInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addDefaultParticipant();
-        });
-        changePasswordBtn.addEventListener('click', changeAdminPassword);
-        
-        // Export/Import Events (v1.9)
-        exportSheetBtn?.addEventListener('click', () => {
-            if (window.exportManager && currentSheetData) {
-                window.exportManager.showExportModal('single', currentSheetData);
-            } else {
-                alert('No sheet data available to export');
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === controlPanelModal) {
+                controlPanelModal.style.display = 'none';
+            }
+            if (e.target === adminLoginModal) {
+                hideAdminLoginModal();
+            }
+            if (e.target === deleteModal) {
+                hideDeleteConfirmation();
             }
         });
-        
-        // Note: Other export/import buttons are handled by export-manager.js
+    }
+    
+    // Helper function for alphabetical sorting
+    function alphabeticalSort(a, b) {
+        return a.localeCompare(b, 'en', { sensitivity: 'base' });
     }
     
     // Theme Functions
@@ -443,11 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedAdminStatus === 'true') {
             isAdmin = true;
             userStatus.style.display = 'flex';
-            controlPanelBtn.style.display = 'inline-block';
+            controlPanelBtn.style.display = 'inline-flex';
             updateUIForAdmin();
         } else {
             isAdmin = false;
             userStatus.style.display = 'none';
+            controlPanelBtn.style.display = 'none';
             updateUIForViewer();
         }
     }
@@ -468,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isAdmin = true;
             localStorage.setItem('hisaabKitaabAdmin', 'true');
             userStatus.style.display = 'flex';
-            controlPanelBtn.style.display = 'inline-block';
+            controlPanelBtn.style.display = 'inline-flex';
             updateUIForAdmin();
             hideAdminLoginModal();
             alert('Admin login successful!');
@@ -489,45 +316,29 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Logged out successfully.');
     }
     
-   function updateUIForAdmin() {
-    loginSection.style.display = 'none';
-    adminSections.style.display = 'block';
-    calculateBtn.style.display = 'inline-block';
-    saveBtn.style.display = 'inline-block';
-    sharePdfBtn.style.display = 'inline-block';
-    adminSheetActions.style.display = 'flex';
-    closeSheetBtn.style.display = 'inline-block';
-    
-    // SHOW export section for admin
-    if (sheetExportOptions) {
-        sheetExportOptions.style.display = 'block';
+    function updateUIForAdmin() {
+        loginSection.style.display = 'none';
+        adminSections.style.display = 'block';
+        calculateBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'inline-block';
+        sharePdfBtn.style.display = 'inline-block';
+        adminSheetActions.style.display = 'flex';
+        closeSheetBtn.style.display = 'inline-block';
+        totalMealsSummary.style.display = 'flex';
+        loadSavedSheets();
     }
     
-    // SHOW meals column for admin
-    showMealsColumn(true);
-    
-    loadSavedSheets();
-}
-    
-  function updateUIForViewer() {
-    calculateBtn.style.display = 'none';
-    saveBtn.style.display = 'none';
-    sharePdfBtn.style.display = 'inline-block';
-    adminSheetActions.style.display = 'none';
-    participantsSection.style.display = 'none';
-    editParticipantsSection.style.display = 'none';
-    closeSheetBtn.style.display = 'inline-block';
-    
-    // HIDE export section for viewer
-    if (sheetExportOptions) {
-        sheetExportOptions.style.display = 'none';
+    function updateUIForViewer() {
+        calculateBtn.style.display = 'none';
+        saveBtn.style.display = 'none';
+        sharePdfBtn.style.display = 'inline-block';
+        adminSheetActions.style.display = 'none';
+        participantsSection.style.display = 'none';
+        editParticipantsSection.style.display = 'none';
+        closeSheetBtn.style.display = 'inline-block';
+        totalMealsSummary.style.display = 'none';
+        loadSavedSheets();
     }
-    
-    // HIDE meals column for viewer
-    showMealsColumn(false);
-    
-    loadSavedSheets();
-}
     
     function updateUIForAdminLogin() {
         loginSection.style.display = 'block';
@@ -539,11 +350,99 @@ document.addEventListener('DOMContentLoaded', function() {
         participantsSection.style.display = 'none';
         editParticipantsSection.style.display = 'none';
         closeSheetBtn.style.display = 'none';
+        totalMealsSummary.style.display = 'none';
+    }
+    
+    // Default Participants Management
+    function saveDefaultParticipants() {
+        defaultParticipants.sort(alphabeticalSort); // Sort before saving
+        localStorage.setItem('hisaabKitaabDefaultParticipants', JSON.stringify(defaultParticipants));
+    }
+    
+    function updateDefaultParticipantsList() {
+        defaultParticipantsList.innerHTML = '';
         
-        // HIDE export section for non-logged in users
-        if (sheetExportOptions) {
-            sheetExportOptions.style.display = 'none';
-        }
+        defaultParticipants.forEach(participantName => {
+            const participantItem = document.createElement('li');
+            participantItem.className = 'default-participant-item';
+            
+            const participantInfo = document.createElement('div');
+            participantInfo.className = 'default-participant-info';
+            participantInfo.addEventListener('click', () => {
+                if (window.profileManager) {
+                    window.profileManager.openProfileCard(participantName);
+                }
+            });
+            
+            // Create avatar using ProfileManager
+            let avatar;
+            if (window.profileManager) {
+                avatar = window.profileManager.createAvatarElement(participantName);
+            } else {
+                // Fallback if ProfileManager is not available
+                avatar = document.createElement('div');
+                avatar.className = 'default-participant-avatar';
+                avatar.style.backgroundColor = '#3498db';
+                avatar.style.color = 'white';
+                avatar.textContent = participantName.charAt(0).toUpperCase();
+            }
+            
+            avatar.className = 'default-participant-avatar';
+            participantInfo.appendChild(avatar);
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'default-participant-name';
+            nameSpan.textContent = participantName;
+            participantInfo.appendChild(nameSpan);
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'default-participant-actions';
+            
+            if (isAdmin) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-default-btn';
+                editBtn.innerHTML = '✏️';
+                editBtn.title = 'Edit Profile';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.profileManager) {
+                        window.profileManager.openProfileCard(participantName);
+                        setTimeout(() => {
+                            if (window.profileManager.showEditProfileForm) {
+                                window.profileManager.showEditProfileForm();
+                            }
+                        }, 300);
+                    }
+                });
+                actionsDiv.appendChild(editBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-default-btn';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = 'Remove from Default List';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Remove "${participantName}" from default list?`)) {
+                        defaultParticipants = defaultParticipants.filter(p => p !== participantName);
+                        saveDefaultParticipants();
+                        updateDefaultParticipantsList();
+                        updateCreateParticipantsList();
+                    }
+                });
+                actionsDiv.appendChild(deleteBtn);
+            }
+            
+            participantItem.appendChild(participantInfo);
+            participantItem.appendChild(actionsDiv);
+            defaultParticipantsList.appendChild(participantItem);
+        });
+    }
+    
+    function updateCreateParticipantsList() {
+        participantsList.innerHTML = '';
+        defaultParticipants.forEach(participantName => {
+            addParticipantToList(participantName);
+        });
     }
     
     // Sheet Management Functions
@@ -565,28 +464,42 @@ document.addEventListener('DOMContentLoaded', function() {
         participantItem.className = 'participant';
         participantItem.style.borderLeft = '3px solid var(--primary-color)';
         
-        // Get profile photo HTML
-        const photoHTML = window.profileManager?.getProfilePhotoHTML(participantName, 'small') || '';
+        const participantWithAvatar = document.createElement('div');
+        participantWithAvatar.className = 'participant-with-avatar';
         
-        participantItem.innerHTML = `
-            <span class="participant-name clickable-profile">
-                ${photoHTML}
-                <span>${participantName}</span>
-            </span>
-            <div class="checkbox-container">
-                <input type="checkbox" id="participant_${participantName.replace(/\s+/g, '_')}" 
-                       value="${participantName}" checked>
-            </div>
-        `;
+        // Create avatar using ProfileManager
+        let avatar;
+        if (window.profileManager) {
+            avatar = window.profileManager.createAvatarElement(participantName);
+        } else {
+            // Fallback
+            avatar = document.createElement('div');
+            avatar.className = 'participant-avatar-small';
+            avatar.style.backgroundColor = '#3498db';
+            avatar.style.color = 'white';
+            avatar.textContent = participantName.charAt(0).toUpperCase();
+        }
         
-        // Add click event to show profile
-        const nameElement = participantItem.querySelector('.participant-name');
-        nameElement.addEventListener('click', (e) => {
-            if (!e.target.matches('input[type="checkbox"]')) {
-                window.profileManager?.showProfileCard(participantName, isAdmin && currentMode === 'admin');
+        participantWithAvatar.appendChild(avatar);
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'participant-name';
+        nameSpan.textContent = participantName;
+        nameSpan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.profileManager) {
+                window.profileManager.openProfileCard(participantName);
             }
         });
+        participantWithAvatar.appendChild(nameSpan);
         
+        participantItem.appendChild(participantWithAvatar);
+        
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.className = 'checkbox-container';
+        checkboxContainer.innerHTML = `<input type="checkbox" id="participant_${participantName.replace(/\s+/g, '_')}" value="${participantName}" checked>`;
+        
+        participantItem.appendChild(checkboxContainer);
         participantsList.appendChild(participantItem);
     }
     
@@ -603,6 +516,9 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please select at least one participant');
             return;
         }
+        
+        // Sort participants alphabetically
+        selectedParticipants.sort(alphabeticalSort);
         
         const now = new Date();
         const dateString = now.toLocaleDateString();
@@ -629,9 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
             participants: selectedParticipants,
             expenses: {},
             settlements: {},
-            bankSettlements: {},
-            createdAt: new Date().toISOString(),
-            version: APP_VERSION
+            createdAt: new Date().toISOString()
         };
         
         selectedParticipants.forEach(participant => {
@@ -655,20 +569,43 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedParticipants.forEach(participant => {
             const row = document.createElement('tr');
             
-            // Participant Name with Profile Photo
+            // Participant Name with Avatar
             const nameCell = document.createElement('td');
-            const photoHTML = window.profileManager?.getProfilePhotoHTML(participant, 'small') || '';
-            nameCell.innerHTML = `
-                <div class="clickable-profile" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    ${photoHTML}
-                    <span style="font-weight: 600;">${participant}</span>
-                </div>
-            `;
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'participant-with-avatar';
+            nameDiv.style.alignItems = 'center';
             
-            // Add click event to show profile
-            nameCell.querySelector('.clickable-profile').addEventListener('click', () => {
-                window.profileManager?.showProfileCard(participant, isAdmin && currentMode === 'admin');
+            // Create avatar using ProfileManager
+            let avatar;
+            if (window.profileManager) {
+                avatar = window.profileManager.createAvatarElement(participant);
+            } else {
+                // Fallback
+                avatar = document.createElement('div');
+                avatar.className = 'participant-avatar-small';
+                avatar.style.backgroundColor = '#3498db';
+                avatar.style.color = 'white';
+                avatar.textContent = participant.charAt(0).toUpperCase();
+                avatar.style.cursor = 'pointer';
+                avatar.style.display = 'flex';
+                avatar.style.alignItems = 'center';
+                avatar.style.justifyContent = 'center';
+                avatar.style.borderRadius = '50%';
+            }
+            
+            nameDiv.appendChild(avatar);
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.innerHTML = `<span style="font-weight: 600;">${participant}</span>`;
+            nameSpan.style.cursor = 'pointer';
+            nameSpan.addEventListener('click', () => {
+                if (window.profileManager) {
+                    window.profileManager.openProfileCard(participant);
+                }
             });
+            
+            nameDiv.appendChild(nameSpan);
+            nameCell.appendChild(nameDiv);
             
             // Spent Amount
             const spentCell = document.createElement('td');
@@ -689,10 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 spentCell.textContent = currentSheetData.expenses[participant].spent.toFixed(2) + ' SAR';
             }
             
-                        // Meals
+            // Meals
             const mealsCell = document.createElement('td');
             mealsCell.className = 'meals-cell';
-            mealsCell.classList.add('meals-column'); // ADD THIS LINE
             
             if (isAdmin && currentMode === 'admin') {
                 const mealsSelect = document.createElement('select');
@@ -751,19 +687,30 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let totalSpent = 0;
         let totalMeals = 0;
+        let oneMealCount = 0, twoMealsCount = 0, threeMealsCount = 0;
         
         selectedParticipants.forEach(participant => {
             totalSpent += currentSheetData.expenses[participant].spent;
             totalMeals += currentSheetData.expenses[participant].meals;
+            
+            switch(currentSheetData.expenses[participant].meals) {
+                case 1: oneMealCount++; break;
+                case 2: twoMealsCount++; break;
+                case 3: threeMealsCount++; break;
+            }
         });
         
         const costPerMeal = totalMeals > 0 ? totalSpent / totalMeals : 0;
         
-        // Update Summary - SIMPLIFIED for v1.9 (no meals display)
+        // Update Summary
         totalParticipantsElement.textContent = selectedParticipants.length;
         document.getElementById('totalSpentCell').textContent = totalSpent.toFixed(2) + ' SAR';
         totalSpentElement.textContent = totalSpent.toFixed(2) + ' SAR';
+        totalMealsElement.textContent = totalMeals;
         costPerMealElement.textContent = costPerMeal.toFixed(2) + ' SAR';
+        oneMealCountElement.textContent = oneMealCount;
+        twoMealsCountElement.textContent = twoMealsCount;
+        threeMealsCountElement.textContent = threeMealsCount;
         
         // Calculate To Be Paid with CSS variable colors
         selectedParticipants.forEach(participant => {
@@ -777,6 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const toBePaidCell = document.querySelector(`td[data-participant="${participant}"]`);
             if (toBePaidCell) {
                 toBePaidCell.textContent = toBePaid.toFixed(2) + ' SAR';
+                // Use CSS variables instead of hardcoded colors
                 if (toBePaid > 0) {
                     toBePaidCell.style.color = 'var(--danger-color)';
                 } else if (toBePaid < 0) {
@@ -795,409 +743,452 @@ document.addEventListener('DOMContentLoaded', function() {
         generateSettlementSuggestions();
     }
     
-    // Get banks from profile
-    function getParticipantBanks(participantName) {
-        if (!window.profileManager) return [];
-        
-        const profile = window.profileManager.getProfile(participantName);
-        if (!profile || !profile.bank) return [];
-        
-        const banks = profile.bank.split(',')
-            .map(bank => bank.trim())
-            .filter(bank => bank.length > 0)
-            .map(bank => bank.toLowerCase());
-        
-        return banks;
+    // New function to get participant's banks
+   // New function to get participant's banks with preferred bank first
+function getParticipantBanks(participantName) {
+    if (!window.profileManager) return [];
+    
+    const profile = window.profileManager.getProfile(participantName);
+    if (!profile.bankAccounts || !profile.bankAccounts.trim()) {
+        return [];
     }
     
-    // Check if two participants share any bank
-    function shareSameBank(participant1, participant2) {
-        const banks1 = getParticipantBanks(participant1);
-        const banks2 = getParticipantBanks(participant2);
-        
-        if (banks1.length === 0 || banks2.length === 0) return false;
-        
-        return banks1.some(bank1 => 
-            banks2.some(bank2 => bank1 === bank2)
-        );
+    const bankAccounts = window.profileManager.parseBankAccounts(profile.bankAccounts);
+    const banks = [...new Set(bankAccounts.map(acc => acc.bank))];
+    
+    // Put preferred bank first if it exists
+    if (profile.preferredBank && profile.preferredBank !== '' && banks.includes(profile.preferredBank)) {
+        const preferredIndex = banks.indexOf(profile.preferredBank);
+        if (preferredIndex > 0) {
+            banks.splice(preferredIndex, 1);
+            banks.unshift(profile.preferredBank);
+        }
     }
     
-    // Get common banks between two participants
-    function getCommonBanks(participant1, participant2) {
-        const banks1 = getParticipantBanks(participant1);
-        const banks2 = getParticipantBanks(participant2);
-        
-        if (banks1.length === 0 || banks2.length === 0) return [];
-        
-        return banks1.filter(bank1 => banks2.includes(bank1));
-    }
+    return banks;
+}
+
+// Enhanced settlement algorithm with bank prioritization and preferred banks
+function generateSettlementSuggestions() {
+    const creditors = [];
+    const debtors = [];
     
-    // Check if sheet should use bank-aware settlements
-    function shouldUseBankAwareSettlements() {
-        return currentSheetData && currentSheetData.version && 
-               parseFloat(currentSheetData.version) >= 1.7;
-    }
+    selectedParticipants.forEach(participant => {
+        const balance = currentSheetData.expenses[participant].toBePaid;
+        if (balance < 0) {
+            // Creditors (should receive money)
+            creditors.push({ 
+                name: participant, 
+                amount: -balance,
+                banks: getParticipantBanks(participant),
+                preferredBank: window.profileManager ? 
+                              window.profileManager.getProfile(participant).preferredBank || '' : '',
+                bankCount: getParticipantBanks(participant).length
+            });
+        } else if (balance > 0) {
+            // Debtors (should pay money)
+            debtors.push({ 
+                name: participant, 
+                amount: balance,
+                banks: getParticipantBanks(participant),
+                preferredBank: window.profileManager ? 
+                              window.profileManager.getProfile(participant).preferredBank || '' : '',
+                bankCount: getParticipantBanks(participant).length
+            });
+        }
+    });
     
-    // Bank-aware settlement algorithm
-    function generateBankAwareSettlements(creditors, debtors) {
-        const settlements = [];
+    // Sort creditors and debtors by priority:
+    // 1. Single-bank participants with preferred bank
+    // 2. Single-bank participants without preferred bank
+    // 3. Multi-bank participants with preferred bank
+    // 4. Multi-bank participants without preferred bank
+    creditors.sort((a, b) => {
+        if (a.bankCount === 1 && b.bankCount > 1) return -1;
+        if (a.bankCount > 1 && b.bankCount === 1) return 1;
+        if (a.preferredBank && !b.preferredBank) return -1;
+        if (!a.preferredBank && b.preferredBank) return 1;
+        return b.amount - a.amount;
+    });
+    
+    debtors.sort((a, b) => {
+        if (a.bankCount === 1 && b.bankCount > 1) return -1;
+        if (a.bankCount > 1 && b.bankCount === 1) return 1;
+        if (a.preferredBank && !b.preferredBank) return -1;
+        if (!a.preferredBank && b.preferredBank) return 1;
+        return b.amount - a.amount;
+    });
+    
+    const settlements = [];
+    
+    // Create working copies
+    const workingCreditors = JSON.parse(JSON.stringify(creditors));
+    const workingDebtors = JSON.parse(JSON.stringify(debtors));
+    
+    // PHASE 1: Match single-bank participants with preferred bank first
+    for (let i = 0; i < workingDebtors.length; i++) {
+        const debtor = workingDebtors[i];
+        if (debtor.amount < 0.01) continue;
         
-        console.log("Starting bank-aware settlement calculation...");
-        
-        let remainingCreditors = creditors.map(c => ({...c}));
-        let remainingDebtors = debtors.map(d => ({...d}));
-        
-        // Step 1: Process SAME BANK transfers first
-        console.log("Step 1: Processing same-bank transfers...");
-        
-        const sameBankPairs = [];
-        
-        for (let i = 0; i < remainingDebtors.length; i++) {
-            const debtor = remainingDebtors[i];
-            if (!debtor || debtor.amount <= 0.01) continue;
+        // For single-bank debtors, try to match with same-bank creditors
+        if (debtor.bankCount === 1) {
+            const debtorBank = debtor.banks[0];
             
-            for (let j = 0; j < remainingCreditors.length; j++) {
-                const creditor = remainingCreditors[j];
-                if (!creditor || creditor.amount <= 0.01) continue;
+            // First, try to match with creditors who have the same preferred bank
+            for (let j = 0; j < workingCreditors.length; j++) {
+                const creditor = workingCreditors[j];
+                if (creditor.amount < 0.01) continue;
                 
-                if (shareSameBank(debtor.name, creditor.name)) {
-                    sameBankPairs.push({
-                        debtorIndex: i,
-                        creditorIndex: j,
-                        debtor: debtor,
-                        creditor: creditor,
-                        commonBanks: getCommonBanks(debtor.name, creditor.name)
-                    });
+                // Check if creditor has the same preferred bank
+                if (creditor.preferredBank === debtorBank) {
+                    const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                    
+                    if (settlementAmount > 0.01) {
+                        const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                        
+                        settlements.push({
+                            from: debtor.name,
+                            to: creditor.name,
+                            amount: settlementAmount.toFixed(2),
+                            key: settlementKey,
+                            status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                   ? currentSheetData.settlements[settlementKey].status 
+                                   : 'not-paid',
+                            bankMatch: true,
+                            bank: debtorBank,
+                            priority: 'single-bank-preferred-match',
+                            preferredMatch: true
+                        });
+                        
+                        debtor.amount -= settlementAmount;
+                        creditor.amount -= settlementAmount;
+                        
+                        if (debtor.amount < 0.01) {
+                            workingDebtors.splice(i, 1);
+                            i--;
+                            break;
+                        }
+                        
+                        if (creditor.amount < 0.01) {
+                            workingCreditors.splice(j, 1);
+                            j--;
+                        }
+                    }
+                }
+            }
+            
+            // If debtor still has amount, try with any creditor having the same bank
+            if (debtor.amount > 0.01) {
+                for (let j = 0; j < workingCreditors.length; j++) {
+                    const creditor = workingCreditors[j];
+                    if (creditor.amount < 0.01) continue;
+                    
+                    // Check if creditor has the same bank (not necessarily preferred)
+                    if (creditor.banks.includes(debtorBank)) {
+                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                        
+                        if (settlementAmount > 0.01) {
+                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                            
+                            settlements.push({
+                                from: debtor.name,
+                                to: creditor.name,
+                                amount: settlementAmount.toFixed(2),
+                                key: settlementKey,
+                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                       ? currentSheetData.settlements[settlementKey].status 
+                                       : 'not-paid',
+                                bankMatch: true,
+                                bank: debtorBank,
+                                priority: 'single-bank-any-match',
+                                preferredMatch: false
+                            });
+                            
+                            debtor.amount -= settlementAmount;
+                            creditor.amount -= settlementAmount;
+                            
+                            if (debtor.amount < 0.01) {
+                                workingDebtors.splice(i, 1);
+                                i--;
+                                break;
+                            }
+                            
+                            if (creditor.amount < 0.01) {
+                                workingCreditors.splice(j, 1);
+                                j--;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // PHASE 2: Match multi-bank participants with preferred banks first
+    for (let i = 0; i < workingDebtors.length; i++) {
+        const debtor = workingDebtors[i];
+        if (debtor.amount < 0.01) continue;
+        
+        // For multi-bank debtors, try preferred bank first
+        if (debtor.preferredBank) {
+            const preferredBank = debtor.preferredBank;
+            
+            for (let j = 0; j < workingCreditors.length; j++) {
+                const creditor = workingCreditors[j];
+                if (creditor.amount < 0.01) continue;
+                
+                // Check if creditor has the same preferred bank
+                if (creditor.banks.includes(preferredBank)) {
+                    const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                    
+                    if (settlementAmount > 0.01) {
+                        const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                        
+                        settlements.push({
+                            from: debtor.name,
+                            to: creditor.name,
+                            amount: settlementAmount.toFixed(2),
+                            key: settlementKey,
+                            status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                   ? currentSheetData.settlements[settlementKey].status 
+                                   : 'not-paid',
+                            bankMatch: true,
+                            bank: preferredBank,
+                            priority: 'multi-bank-preferred-match',
+                            preferredMatch: true
+                        });
+                        
+                        debtor.amount -= settlementAmount;
+                        creditor.amount -= settlementAmount;
+                        
+                        if (debtor.amount < 0.01) {
+                            workingDebtors.splice(i, 1);
+                            i--;
+                            break;
+                        }
+                        
+                        if (creditor.amount < 0.01) {
+                            workingCreditors.splice(j, 1);
+                            j--;
+                        }
+                        
+                        break; // Move to next debtor
+                    }
                 }
             }
         }
         
-        console.log("Found same-bank pairs:", sameBankPairs);
-        
-        for (const pair of sameBankPairs) {
-            const { debtorIndex, creditorIndex, debtor, creditor } = pair;
-            
-            if (remainingDebtors[debtorIndex]?.amount <= 0.01 || 
-                remainingCreditors[creditorIndex]?.amount <= 0.01) {
-                continue;
-            }
-            
-            const settlementAmount = Math.min(debtor.amount, creditor.amount);
-            
-            if (settlementAmount > 0.01) {
-                const settlementKey = `${debtor.name}_to_${creditor.name}`;
-                
-                settlements.push({
-                    from: debtor.name,
-                    to: creditor.name,
-                    amount: settlementAmount.toFixed(2),
-                    key: settlementKey,
-                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                           ? currentSheetData.settlements[settlementKey].status 
-                           : 'not-paid',
-                    sameBank: true,
-                    commonBanks: getCommonBanks(debtor.name, creditor.name)
-                });
-                
-                console.log(`Same-bank settlement: ${debtor.name} -> ${creditor.name}: ${settlementAmount} SAR`);
-                
-                remainingDebtors[debtorIndex].amount -= settlementAmount;
-                remainingCreditors[creditorIndex].amount -= settlementAmount;
-                
-                if (remainingDebtors[debtorIndex].amount < 0.01) {
-                    remainingDebtors[debtorIndex].amount = 0;
+        // If debtor still has amount or no preferred bank, try all banks
+        if (debtor.amount > 0.01) {
+            for (const debtorBank of debtor.banks) {
+                for (let j = 0; j < workingCreditors.length; j++) {
+                    const creditor = workingCreditors[j];
+                    if (creditor.amount < 0.01) continue;
+                    
+                    // Check if creditor has the same bank
+                    if (creditor.banks.includes(debtorBank)) {
+                        const settlementAmount = Math.min(debtor.amount, creditor.amount);
+                        
+                        if (settlementAmount > 0.01) {
+                            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+                            
+                            settlements.push({
+                                from: debtor.name,
+                                to: creditor.name,
+                                amount: settlementAmount.toFixed(2),
+                                key: settlementKey,
+                                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                                       ? currentSheetData.settlements[settlementKey].status 
+                                       : 'not-paid',
+                                bankMatch: true,
+                                bank: debtorBank,
+                                priority: 'multi-bank-any-match',
+                                preferredMatch: false
+                            });
+                            
+                            debtor.amount -= settlementAmount;
+                            creditor.amount -= settlementAmount;
+                            
+                            if (debtor.amount < 0.01) {
+                                workingDebtors.splice(i, 1);
+                                i--;
+                                break;
+                            }
+                            
+                            if (creditor.amount < 0.01) {
+                                workingCreditors.splice(j, 1);
+                                j--;
+                            }
+                            
+                            break; // Move to next debtor bank
+                        }
+                    }
                 }
-                if (remainingCreditors[creditorIndex].amount < 0.01) {
-                    remainingCreditors[creditorIndex].amount = 0;
-                }
+                
+                if (debtor.amount < 0.01) break;
             }
         }
-        
-        remainingCreditors = remainingCreditors.filter(c => c.amount > 0.01);
-        remainingDebtors = remainingDebtors.filter(d => d.amount > 0.01);
-        
-        console.log("After same-bank settlements:");
-        console.log("Remaining Creditors:", remainingCreditors);
-        console.log("Remaining Debtors:", remainingDebtors);
-        
-        // Step 2: Process remaining amounts
-        console.log("Step 2: Processing remaining amounts...");
-        
-        remainingCreditors.sort((a, b) => b.amount - a.amount);
-        remainingDebtors.sort((a, b) => b.amount - a.amount);
-        
-        let i = 0, j = 0;
-        while (i < remainingCreditors.length && j < remainingDebtors.length) {
-            const creditor = remainingCreditors[i];
-            const debtor = remainingDebtors[j];
-            const settlementAmount = Math.min(creditor.amount, debtor.amount);
-            
-            if (settlementAmount > 0.01) {
-                const settlementKey = `${debtor.name}_to_${creditor.name}`;
-                const sameBank = shareSameBank(debtor.name, creditor.name);
-                
-                settlements.push({
-                    from: debtor.name,
-                    to: creditor.name,
-                    amount: settlementAmount.toFixed(2),
-                    key: settlementKey,
-                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                           ? currentSheetData.settlements[settlementKey].status 
-                           : 'not-paid',
-                    sameBank: sameBank,
-                    commonBanks: sameBank ? getCommonBanks(debtor.name, creditor.name) : []
-                });
-                
-                console.log(`${sameBank ? 'Same-bank' : 'Regular'} settlement: ${debtor.name} -> ${creditor.name}: ${settlementAmount} SAR`);
-                
-                creditor.amount -= settlementAmount;
-                debtor.amount -= settlementAmount;
-                
-                if (creditor.amount < 0.01) i++;
-                if (debtor.amount < 0.01) j++;
-            } else {
-                if (creditor.amount <= debtor.amount) i++;
-                else j++;
-            }
-        }
-        
-        console.log("Final settlements:", settlements);
-        return settlements;
     }
     
-    // Original settlement algorithm (pre v1.7)
-    function generateOldSettlements(creditors, debtors) {
-        const settlements = [];
+    // PHASE 3: Match remaining amounts (no bank match required)
+    let i = 0, j = 0;
+    while (i < workingDebtors.length && j < workingCreditors.length) {
+        const debtor = workingDebtors[i];
+        const creditor = workingCreditors[j];
         
-        creditors.sort((a, b) => b.amount - a.amount);
-        debtors.sort((a, b) => b.amount - a.amount);
-        
-        let i = 0, j = 0;
-        while (i < creditors.length && j < debtors.length) {
-            const creditor = creditors[i];
-            const debtor = debtors[j];
-            const settlementAmount = Math.min(creditor.amount, debtor.amount);
-            
-            if (settlementAmount > 0.01) {
-                const settlementKey = `${debtor.name}_to_${creditor.name}`;
-                
-                settlements.push({
-                    from: debtor.name,
-                    to: creditor.name,
-                    amount: settlementAmount.toFixed(2),
-                    key: settlementKey,
-                    status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
-                           ? currentSheetData.settlements[settlementKey].status 
-                           : 'not-paid',
-                    sameBank: false,
-                    commonBanks: []
-                });
-                
-                creditor.amount -= settlementAmount;
-                debtor.amount -= settlementAmount;
-                
-                if (creditor.amount < 0.01) i++;
-                if (debtor.amount < 0.01) j++;
-            } else {
-                if (creditor.amount <= debtor.amount) i++;
-                else j++;
-            }
+        if (debtor.amount < 0.01) {
+            i++;
+            continue;
         }
         
-        return settlements;
-    }
-    
-    function generateSettlementSuggestions() {
-        const creditors = [];
-        const debtors = [];
+        if (creditor.amount < 0.01) {
+            j++;
+            continue;
+        }
         
-        selectedParticipants.forEach(participant => {
-            const balance = currentSheetData.expenses[participant].toBePaid;
-            if (balance < 0) {
-                creditors.push({ name: participant, amount: -balance });
-            } else if (balance > 0) {
-                debtors.push({ name: participant, amount: balance });
-            }
-        });
+        const settlementAmount = Math.min(debtor.amount, creditor.amount);
         
-        console.log("Generating settlements for:");
-        console.log("Sheet version:", currentSheetData?.version);
-        
-        let settlements = [];
-        
-        if (shouldUseBankAwareSettlements()) {
-            console.log("Using BANK-AWARE settlement algorithm (v1.7+)");
-            settlements = generateBankAwareSettlements(creditors, debtors);
+        if (settlementAmount > 0.01) {
+            const settlementKey = `${debtor.name}_to_${creditor.name}`;
+            
+            settlements.push({
+                from: debtor.name,
+                to: creditor.name,
+                amount: settlementAmount.toFixed(2),
+                key: settlementKey,
+                status: currentSheetData.settlements && currentSheetData.settlements[settlementKey] 
+                       ? currentSheetData.settlements[settlementKey].status 
+                       : 'not-paid',
+                bankMatch: false,
+                bank: null,
+                priority: 'no-bank-match',
+                preferredMatch: false
+            });
+            
+            debtor.amount -= settlementAmount;
+            creditor.amount -= settlementAmount;
+            
+            if (debtor.amount < 0.01) i++;
+            if (creditor.amount < 0.01) j++;
         } else {
-            console.log("Using OLD settlement algorithm (pre v1.7)");
-            settlements = generateOldSettlements(creditors, debtors);
+            if (debtor.amount <= creditor.amount) i++;
+            else j++;
         }
-        
-        currentSheetData.settlements = {};
-        currentSheetData.bankSettlements = {};
-        
-        settlements.forEach(settlement => {
-            currentSheetData.settlements[settlement.key] = {
-                from: settlement.from,
-                to: settlement.to,
-                amount: settlement.amount,
-                status: settlement.status,
-                sameBank: settlement.sameBank || false,
-                commonBanks: settlement.commonBanks || []
-            };
-            
-            if (settlement.sameBank) {
-                currentSheetData.bankSettlements[settlement.key] = {
-                    banks: settlement.commonBanks || []
-                };
-            }
-        });
-        
-        renderSettlementList(settlements);
     }
+    
+    // Sort settlements by priority
+    settlements.sort((a, b) => {
+        const priorityOrder = {
+            'single-bank-preferred-match': 1,
+            'single-bank-any-match': 2,
+            'multi-bank-preferred-match': 3,
+            'multi-bank-any-match': 4,
+            'no-bank-match': 5
+        };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+    
+    // Store settlements in currentSheetData
+    currentSheetData.settlements = {};
+    settlements.forEach(settlement => {
+        currentSheetData.settlements[settlement.key] = {
+            from: settlement.from,
+            to: settlement.to,
+            amount: settlement.amount,
+            status: settlement.status,
+            bankMatch: settlement.bankMatch,
+            bank: settlement.bank,
+            preferredMatch: settlement.preferredMatch
+        };
+    });
+    
+    renderSettlementList(settlements);
+}
     
     function renderSettlementList(settlements) {
         settlementList.innerHTML = '';
-        
         if (settlements.length === 0) {
             settlementList.innerHTML = '<div class="no-settlements">All balances are settled! 🎉</div>';
-            return;
-        }
-        
-        const isNewVersion = shouldUseBankAwareSettlements();
-        const sameBankCount = settlements.filter(s => s.sameBank).length;
-        const differentBankCount = settlements.length - sameBankCount;
-        
-        if (isNewVersion && sameBankCount > 0) {
-            const summaryHeader = document.createElement('div');
-            summaryHeader.className = 'settlement-summary';
-            summaryHeader.innerHTML = `
-                <div style="background-color: var(--success-color); color: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                        <span style="font-size: 1.2rem;">🏦</span>
-                        <strong style="font-size: 1.1rem;">Bank-Aware Settlement Priority</strong>
-                    </div>
-                    <div style="font-size: 0.9rem;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <span style="background-color: rgba(255,255,255,0.3); padding: 3px 10px; border-radius: 12px;">
-                                ✅ ${sameBankCount} Same-Bank Transfers
-                            </span>
-                            <span style="background-color: rgba(255,255,255,0.3); padding: 3px 10px; border-radius: 12px;">
-                                🔄 ${differentBankCount} Other Transfers
-                            </span>
-                        </div>
-                        <div style="margin-top: 8px; font-style: italic;">
-                            Same-bank transfers are prioritized for easier and potentially fee-free transactions
-                        </div>
-                    </div>
-                </div>
-            `;
-            settlementList.appendChild(summaryHeader);
-        }
-        
-        settlements.forEach(settlement => {
-            const settlementItem = document.createElement('div');
-            settlementItem.className = 'settlement-item';
-            
-            if (isNewVersion && settlement.sameBank) {
-                settlementItem.style.borderLeft = '4px solid var(--success-color)';
-                settlementItem.style.backgroundColor = 'color-mix(in srgb, var(--success-color) 10%, transparent)';
-            }
-            
-            const showAdminControls = isAdmin && currentMode === 'admin';
-            const commonBanks = settlement.commonBanks || [];
-            const bankInfo = commonBanks.length > 0 ? 
-                `(${commonBanks.map(b => b.charAt(0).toUpperCase() + b.slice(1)).join(', ')})` : 
-                '';
-            
-            if (showAdminControls) {
-                const isPaid = settlement.status === 'paid';
-                const statusClass = isPaid ? 'paid' : 'not-paid';
-                const statusText = isPaid ? 'Paid' : 'Not Paid';
+        } else {
+            settlements.forEach(settlement => {
+                const settlementItem = document.createElement('div');
+                settlementItem.className = 'settlement-item';
                 
-                settlementItem.innerHTML = `
-                    <div class="settlement-details">
-                        <div class="settlement-first-line">
-                            <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
-                            <span class="settlement-arrow">→</span>
-                            <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
-                            ${isNewVersion && settlement.sameBank ? 
-                                `<span class="bank-indicator" title="Same Bank Transfer - ${bankInfo}" style="margin-left: 10px;">
-                                    🏦 Same Bank ${bankInfo}
-                                </span>` : 
-                                ''
-                            }
-                        </div>
-                        <div class="settlement-second-line">
-                            <span class="settlement-amount">${settlement.amount} SAR</span>
-                            <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
-                                ${statusText}
-                            </button>
-                        </div>
-                    </div>
-                `;
+                // Check if we're in admin mode AND the user is logged in as admin
+                const showAdminControls = isAdmin && currentMode === 'admin';
                 
-                const toggleBtn = settlementItem.querySelector('.settlement-toggle-btn');
-                toggleBtn.addEventListener('click', function() {
-                    const newStatus = currentSheetData.settlements[this.dataset.key].status === 'paid' ? 'not-paid' : 'paid';
-                    currentSheetData.settlements[this.dataset.key].status = newStatus;
+                // Create bank match indicator if applicable
+                let bankInfo = '';
+                if (settlement.bankMatch && settlement.bank) {
+                    bankInfo = `<div class="bank-match-indicator" style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px;">
+                        <span style="background-color: color-mix(in srgb, var(--success-color) 20%, transparent); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--success-color);">
+                            Same Bank: ${settlement.bank}
+                        </span>
+                    </div>`;
+                }
+                
+                if (showAdminControls) {
+                    // Admin mode with toggle button
+                    const isPaid = settlement.status === 'paid';
+                    const statusClass = isPaid ? 'paid' : 'not-paid';
+                    const statusText = isPaid ? 'Paid' : 'Not Paid';
                     
-                    if (newStatus === 'paid') {
-                        this.className = 'settlement-toggle-btn paid';
-                        this.textContent = 'Paid';
-                    } else {
-                        this.className = 'settlement-toggle-btn not-paid';
-                        this.textContent = 'Not Paid';
-                    }
+                    settlementItem.innerHTML = `
+                        <div class="settlement-details">
+                            <div class="settlement-first-line">
+                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-arrow">→</span>
+                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
+                            </div>
+                            <div class="settlement-second-line">
+                                <span class="settlement-amount">${settlement.amount} SAR</span>
+                                <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
+                                    ${statusText}
+                                </button>
+                            </div>
+                            ${bankInfo}
+                        </div>
+                    `;
                     
-                    saveSheet();
-                });
-            } else {
-                const statusClass = settlement.status === 'paid' ? 'status-paid' : 'status-not-paid';
-                const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
+                    const toggleBtn = settlementItem.querySelector('.settlement-toggle-btn');
+                    toggleBtn.addEventListener('click', function() {
+                        const newStatus = currentSheetData.settlements[this.dataset.key].status === 'paid' ? 'not-paid' : 'paid';
+                        currentSheetData.settlements[this.dataset.key].status = newStatus;
+                        
+                        // Update button appearance
+                        if (newStatus === 'paid') {
+                            this.className = 'settlement-toggle-btn paid';
+                            this.textContent = 'Paid';
+                        } else {
+                            this.className = 'settlement-toggle-btn not-paid';
+                            this.textContent = 'Not Paid';
+                        }
+                        
+                        saveSheet();
+                    });
+                } else {
+                    // Viewer mode or admin in viewer tab - show static status
+                    const statusClass = settlement.status === 'paid' ? 'status-paid' : 'status-not-paid';
+                    const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
+                    
+                    settlementItem.innerHTML = `
+                        <div class="settlement-details">
+                            <div class="settlement-first-line">
+                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
+                                <span class="settlement-arrow">→</span>
+                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
+                            </div>
+                            <div class="settlement-second-line">
+                                <span class="settlement-amount">${settlement.amount} SAR</span>
+                                <span class="settlement-status ${statusClass}">${statusText}</span>
+                            </div>
+                            ${bankInfo}
+                        </div>
+                    `;
+                }
                 
-                settlementItem.innerHTML = `
-                    <div class="settlement-details">
-                        <div class="settlement-first-line">
-                            <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
-                            <span class="settlement-arrow">→</span>
-                            <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
-                            ${isNewVersion && settlement.sameBank ? 
-                                `<span class="bank-indicator" title="Same Bank Transfer - ${bankInfo}" style="margin-left: 10px;">
-                                    🏦 Same Bank ${bankInfo}
-                                </span>` : 
-                                ''
-                            }
-                        </div>
-                        <div class="settlement-second-line">
-                            <span class="settlement-amount">${settlement.amount} SAR</span>
-                            <span class="settlement-status ${statusClass}">${statusText}</span>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            settlementList.appendChild(settlementItem);
-        });
-        
-        if (isNewVersion) {
-            const tipsSection = document.createElement('div');
-            tipsSection.className = 'settlement-tips';
-            tipsSection.innerHTML = `
-                <div style="margin-top: 20px; padding: 12px; background-color: var(--hover-bg); border-radius: 8px; border-left: 4px solid var(--info-color); font-size: 0.9rem;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--info-color);">
-                        <span style="font-size: 1.1rem;">💡</span>
-                        <strong>Settlement Tips:</strong>
-                    </div>
-                    <ul style="margin: 0 0 0 20px; padding: 0; color: var(--secondary-color);">
-                        <li><strong>Same-bank transfers</strong> are usually instant and may have lower fees</li>
-                        <li>Mark settlements as "Paid" once completed to track progress</li>
-                        <li>Consider using mobile banking apps for quick transfers</li>
-                        <li>Keep transaction references for record keeping</li>
-                    </ul>
-                </div>
-            `;
-            settlementList.appendChild(tipsSection);
+                settlementList.appendChild(settlementItem);
+            });
         }
     }
     
@@ -1216,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         loadSavedSheets();
         
+        // Auto-sync to cloud
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveToCloud(savedSheets);
         }
@@ -1262,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const existingParticipants = Array.from(listElement.children).map(item => 
-            item.querySelector('.participant-name span:last-child').textContent
+            item.querySelector('.participant-name').textContent
         );
         
         if (existingParticipants.includes(customName)) {
@@ -1271,25 +1263,48 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Add new participant
         const participantItem = document.createElement('li');
         participantItem.className = 'participant custom-participant';
         participantItem.style.borderLeft = '3px solid var(--primary-color)';
         
-        participantItem.innerHTML = `
-            <span class="participant-name">
-                ${customName}
-            </span>
-            <div class="checkbox-container">
-                <input type="checkbox" id="custom_${Date.now()}" value="${customName}" checked>
-            </div>
-        `;
+        const participantWithAvatar = document.createElement('div');
+        participantWithAvatar.className = 'participant-with-avatar';
         
-        listElement.appendChild(participantItem);
-        
-        const newCheckbox = participantItem.querySelector('input[type="checkbox"]');
-        if (newCheckbox) {
-            newCheckbox.checked = true;
+        // Create avatar using ProfileManager
+        let avatar;
+        if (window.profileManager) {
+            avatar = window.profileManager.createAvatarElement(customName);
+        } else {
+            // Fallback
+            avatar = document.createElement('div');
+            avatar.className = 'participant-avatar-small';
+            avatar.style.backgroundColor = '#3498db';
+            avatar.style.color = 'white';
+            avatar.textContent = customName.charAt(0).toUpperCase();
         }
+        
+        participantWithAvatar.appendChild(avatar);
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'participant-name';
+        nameSpan.textContent = customName;
+        nameSpan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.profileManager) {
+                window.profileManager.openProfileCard(customName);
+            }
+        });
+        participantWithAvatar.appendChild(nameSpan);
+        
+        participantItem.appendChild(participantWithAvatar);
+        
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.className = 'checkbox-container';
+        checkboxContainer.innerHTML = `<input type="checkbox" id="custom_${Date.now()}" value="${customName}" checked>`;
+        
+        participantItem.appendChild(checkboxContainer);
+        listElement.appendChild(participantItem);
         
         inputElement.value = '';
         alert(`Participant "${customName}" added successfully!`);
@@ -1337,7 +1352,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isAdmin || !currentSheetData) return;
         
         editParticipantsList.innerHTML = '';
-        selectedParticipants.forEach(participant => {
+        
+        // Sort participants alphabetically for display
+        const sortedParticipants = [...selectedParticipants].sort(alphabeticalSort);
+        
+        sortedParticipants.forEach(participant => {
             addParticipantToEditList(participant);
         });
         
@@ -1359,15 +1378,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Sort participants alphabetically
+        updatedParticipants.sort(alphabeticalSort);
+        
         selectedParticipants = updatedParticipants;
         currentSheetData.participants = updatedParticipants;
         
+        // Initialize expenses for new participants
         updatedParticipants.forEach(participant => {
             if (!currentSheetData.expenses[participant]) {
                 currentSheetData.expenses[participant] = { spent: 0, meals: 3, toBePaid: 0 };
             }
         });
         
+        // Remove expenses for deleted participants
         Object.keys(currentSheetData.expenses).forEach(participant => {
             if (!updatedParticipants.includes(participant)) {
                 delete currentSheetData.expenses[participant];
@@ -1389,11 +1413,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetSummary() {
         totalParticipantsElement.textContent = '0';
         totalSpentElement.textContent = '0.00 SAR';
+        totalMealsElement.textContent = '0';
         costPerMealElement.textContent = '0.00 SAR';
+        oneMealCountElement.textContent = '0';
+        twoMealsCountElement.textContent = '0';
+        threeMealsCountElement.textContent = '0';
         settlementList.innerHTML = '<div class="no-settlements">Calculate shares to see settlement suggestions</div>';
     }
     
     function loadSavedSheets() {
+        // Update viewer sheets list
         if (savedSheets.length === 0) {
             noSheetsMessage.style.display = 'block';
             sheetsList.style.display = 'none';
@@ -1412,12 +1441,15 @@ document.addEventListener('DOMContentLoaded', function() {
             adminSheetsList.innerHTML = '';
         }
         
+        // Sort sheets by creation date (newest first)
         savedSheets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
         savedSheets.forEach(sheet => {
+            // For viewer mode
             const sheetItem = createSheetListItem(sheet, false);
             sheetsList.appendChild(sheetItem);
             
+            // For admin mode
             if (adminSheetsList) {
                 const adminSheetItem = createSheetListItem(sheet, true);
                 adminSheetsList.appendChild(adminSheetItem);
@@ -1434,47 +1466,9 @@ document.addEventListener('DOMContentLoaded', function() {
                           sheet.date ? formatDateTime(new Date(sheet.date)) : 
                           formatDateTime(new Date(sheet.createdAt));
         
-        let participantsHTML = '';
-        const participants = sheet.participants || [];
-        participants.slice(0, 3).forEach(participant => {
-            const photoHTML = window.profileManager?.getProfilePhotoHTML(participant, 'small') || '';
-            participantsHTML += `<span class="sheet-participant">${photoHTML}</span>`;
-        });
-        
-        if (participants.length > 3) {
-            participantsHTML += `<span class="more-participants">+${participants.length - 3} more</span>`;
-        }
-        
-        const sheetVersion = sheet.version || "1.6";
-        let versionBadgeClass, versionText;
-        
-        if (parseFloat(sheetVersion) >= 1.9) {
-            versionBadgeClass = 'v1_9';
-            versionText = 'v1.9';
-        } else if (parseFloat(sheetVersion) >= 1.8) {
-            versionBadgeClass = 'v1_8';
-            versionText = 'v1.8';
-        } else if (parseFloat(sheetVersion) >= 1.7) {
-            versionBadgeClass = 'v1_7';
-            versionText = 'v1.7';
-        } else {
-            versionBadgeClass = 'v1_6';
-            versionText = 'v1.6';
-        }
-        
         sheetInfo.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div>
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <strong>${sheet.name}</strong>
-                        <span class="version-badge ${versionBadgeClass}" title="Sheet version: ${sheetVersion}">${versionText}</span>
-                    </div>
-                    <div class="sheet-date">Updated: ${displayDate}</div>
-                    <div class="sheet-participants" style="margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap;">
-                        ${participantsHTML}
-                    </div>
-                </div>
-            </div>
+            <strong>${sheet.name}</strong>
+            <div class="sheet-date">Updated: ${displayDate}</div>
         `;
         
         const sheetActions = document.createElement('div');
@@ -1527,17 +1521,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (newName && newName.trim() !== '') {
             const trimmedName = newName.trim();
             
+            // Update the sheet name
             sheet.name = trimmedName;
             sheet.lastUpdated = formatDateTime(new Date());
             
+            // Save to localStorage
             localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
             
+            // Force sync to Firebase
             if (window.firebaseSync && window.firebaseSync.isInitialized) {
                 window.firebaseSync.saveToCloud(savedSheets);
             }
             
+            // Update UI
             loadSavedSheets();
             
+            // Update current sheet if it's open
             if (currentSheetData && currentSheetData.id === sheetId) {
                 currentSheetData.name = trimmedName;
                 sheetName.textContent = trimmedName;
@@ -1553,6 +1552,7 @@ document.addEventListener('DOMContentLoaded', function() {
         savedSheets = savedSheets.filter(sheet => sheet.id !== sheetId);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
+        // Sync to Firebase after deletion
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveToCloud(savedSheets);
         }
@@ -1566,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Sheet deleted successfully!');
     }
     
-        function openSheet(sheetId) {
+    function openSheet(sheetId) {
         const sheet = savedSheets.find(s => s.id === sheetId);
         if (!sheet) {
             alert('Sheet not found!');
@@ -1574,17 +1574,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         currentSheetData = JSON.parse(JSON.stringify(sheet));
+        
+        // Sort participants alphabetically when opening sheet
+        currentSheetData.participants.sort(alphabeticalSort);
         selectedParticipants = currentSheetData.participants;
+        
         sheetName.textContent = currentSheetData.name;
         
         renderExpenseTable();
         
         let totalSpent = 0;
         let totalMeals = 0;
+        let oneMealCount = 0, twoMealsCount = 0, threeMealsCount = 0;
         
         selectedParticipants.forEach(participant => {
             totalSpent += currentSheetData.expenses[participant].spent;
             totalMeals += currentSheetData.expenses[participant].meals;
+            
+            switch(currentSheetData.expenses[participant].meals) {
+                case 1: oneMealCount++; break;
+                case 2: twoMealsCount++; break;
+                case 3: threeMealsCount++; break;
+            }
         });
         
         const costPerMeal = totalMeals > 0 ? totalSpent / totalMeals : 0;
@@ -1592,7 +1603,11 @@ document.addEventListener('DOMContentLoaded', function() {
         totalParticipantsElement.textContent = selectedParticipants.length;
         document.getElementById('totalSpentCell').textContent = totalSpent.toFixed(2) + ' SAR';
         totalSpentElement.textContent = totalSpent.toFixed(2) + ' SAR';
+        totalMealsElement.textContent = totalMeals;
         costPerMealElement.textContent = costPerMeal.toFixed(2) + ' SAR';
+        oneMealCountElement.textContent = oneMealCount;
+        twoMealsCountElement.textContent = twoMealsCount;
+        threeMealsCountElement.textContent = threeMealsCount;
         
         selectedParticipants.forEach(participant => {
             const spentAmount = currentSheetData.expenses[participant].spent;
@@ -1604,6 +1619,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const toBePaidCell = document.querySelector(`td[data-participant="${participant}"]`);
             if (toBePaidCell) {
                 toBePaidCell.textContent = toBePaid.toFixed(2) + ' SAR';
+                // Use CSS variables instead of hardcoded colors
                 if (toBePaid > 0) {
                     toBePaidCell.style.color = 'var(--danger-color)';
                 } else if (toBePaid < 0) {
@@ -1619,14 +1635,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sheetSection.style.display = 'block';
         participantsSection.style.display = 'none';
         editParticipantsSection.style.display = 'none';
-        
-        // Apply meals column visibility based on current mode
-        if (currentMode === 'viewer') {
-            showMealsColumn(false); // Hide meals in viewer mode
-        } else if (currentMode === 'admin' && isAdmin) {
-            showMealsColumn(true); // Show meals in admin mode
-        }
-        
         sheetSection.scrollIntoView({ behavior: 'smooth' });
     }
     
@@ -1650,10 +1658,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Ensure calculations are done
         if (isAdmin && (!currentSheetData.totalSpent || currentSheetData.totalSpent === 0)) {
             calculateShares();
         }
         
+        // Use the PDF generator
         if (window.generateExpensePDF) {
             window.generateExpensePDF(currentSheetData, selectedParticipants, isAdmin && currentMode === 'admin');
         } else {
@@ -1676,201 +1686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ==================== CONTROL PANEL FUNCTIONS ====================
-    
-    function showControlPanel() {
-        if (!isAdmin) return;
-        
-        console.log('Opening Control Panel...');
-        
-        loadDefaultParticipants();
-        updateSheetSummary();
-        
-        newPasswordInput.value = '';
-        confirmPasswordInput.value = '';
-        
-        controlPanelModal.style.display = 'flex';
-    }
-    
-    function hideControlPanel() {
-        controlPanelModal.style.display = 'none';
-    }
-    
-    function loadDefaultParticipants() {
-        const defaultParticipantsList = document.getElementById('defaultParticipantsList');
-        if (!defaultParticipantsList) {
-            console.error('defaultParticipantsList element not found!');
-            return;
-        }
-        
-        console.log('Loading default participants...');
-        
-        const participants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || defaultParticipants;
-        console.log('Participants to display:', participants);
-        
-        defaultParticipantsList.innerHTML = '';
-        
-        if (participants.length === 0) {
-            defaultParticipantsList.innerHTML = '<li style="text-align: center; color: var(--secondary-color); padding: 20px;">No default participants added yet.</li>';
-            return;
-        }
-        
-        participants.forEach(participant => {
-            const participantItem = document.createElement('li');
-            participantItem.className = 'default-participant-item';
-            
-            let photoHTML = '';
-            if (window.profileManager && window.profileManager.getProfilePhotoHTML) {
-                photoHTML = window.profileManager.getProfilePhotoHTML(participant, 'small');
-            } else {
-                const initials = participant.charAt(0).toUpperCase();
-                photoHTML = `<div class="profile-photo-initials" style="width: 30px; height: 30px; background-color: #3498db; color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 14px;">${initials}</div>`;
-            }
-            
-            participantItem.innerHTML = `
-                <div class="default-participant-info clickable-profile" data-name="${participant}">
-                    ${photoHTML}
-                    <span class="default-participant-name">${participant}</span>
-                </div>
-                <div class="default-participant-actions">
-                    <button class="edit-profile-btn" data-name="${participant}" title="Edit Profile">✏️</button>
-                    <button class="remove-default-participant-btn" data-name="${participant}" title="Remove Participant">🗑️</button>
-                </div>
-            `;
-            
-            const profileInfo = participantItem.querySelector('.default-participant-info');
-            profileInfo.addEventListener('click', (e) => {
-                if (!e.target.matches('button')) {
-                    if (window.profileManager && window.profileManager.showProfileCard) {
-                        window.profileManager.showProfileCard(participant, true);
-                    } else {
-                        alert(`Profile for: ${participant}\n\nNote: Profile Manager not fully loaded.`);
-                    }
-                }
-            });
-            
-            const editBtn = participantItem.querySelector('.edit-profile-btn');
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (window.profileManager && window.profileManager.showProfileCard) {
-                    window.profileManager.showProfileCard(participant, true);
-                } else {
-                    alert(`Edit profile for: ${participant}\n\nNote: Profile Manager not fully loaded.`);
-                }
-            });
-            
-            const removeBtn = participantItem.querySelector('.remove-default-participant-btn');
-            removeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                removeDefaultParticipant(participant);
-            });
-            
-            defaultParticipantsList.appendChild(participantItem);
-        });
-    }
-    
-    function addDefaultParticipant() {
-        const name = controlPanelParticipantInput.value.trim();
-        
-        if (!name) {
-            alert('Please enter a participant name');
-            return;
-        }
-        
-        const participants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || defaultParticipants;
-        
-        if (participants.includes(name)) {
-            alert('This participant already exists in the default list');
-            return;
-        }
-        
-        participants.push(name);
-        localStorage.setItem('hisaabKitaabDefaultParticipants', JSON.stringify(participants));
-        
-        controlPanelParticipantInput.value = '';
-        
-        defaultParticipants = participants;
-        
-        loadDefaultParticipants();
-        
-        alert(`"${name}" added to default participants list`);
-    }
-    
-    function removeDefaultParticipant(name) {
-        if (!confirm(`Remove "${name}" from default participants list?`)) {
-            return;
-        }
-        
-        let participants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || defaultParticipants;
-        participants = participants.filter(p => p !== name);
-        
-        localStorage.setItem('hisaabKitaabDefaultParticipants', JSON.stringify(participants));
-        
-        defaultParticipants = participants;
-        
-        loadDefaultParticipants();
-        
-        alert(`"${name}" removed from default participants list`);
-    }
-    
-    function updateSheetSummary() {
-        const savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
-        
-        totalSheetsCount.textContent = savedSheets.length;
-        
-        if (savedSheets.length > 0) {
-            const sortedSheets = [...savedSheets].sort((a, b) => 
-                new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
-            );
-            
-            const latestSheet = sortedSheets[0];
-            const latestDate = latestSheet.lastUpdated || latestSheet.date || latestSheet.createdAt;
-            
-            if (latestDate) {
-                const date = new Date(latestDate);
-                latestSheetDate.textContent = date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-            } else {
-                latestSheetDate.textContent = 'Unknown';
-            }
-        } else {
-            latestSheetDate.textContent = 'None';
-        }
-    }
-    
-    function changeAdminPassword() {
-        const newPassword = newPasswordInput.value.trim();
-        const confirmPassword = confirmPasswordInput.value.trim();
-        
-        if (!newPassword || !confirmPassword) {
-            alert('Please fill in both password fields');
-            return;
-        }
-        
-        if (newPassword.length < 6) {
-            alert('Password must be at least 6 characters long');
-            return;
-        }
-        
-        if (newPassword !== confirmPassword) {
-            alert('Passwords do not match');
-            return;
-        }
-        
-        localStorage.setItem('hisaabKitaabAdminPassword', newPassword);
-        
-        ADMIN_PASSWORD = newPassword;
-        
-        newPasswordInput.value = '';
-        confirmPasswordInput.value = '';
-        
-        alert('Admin password changed successfully!');
-    }
-    
-    // Make functions available globally
+    // Make functions available globally for PDF generator
     window.showPDFLoading = showPDFLoading;
     window.hidePDFLoading = hidePDFLoading;
     window.loadSavedSheets = loadSavedSheets;

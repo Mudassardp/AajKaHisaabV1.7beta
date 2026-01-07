@@ -6,7 +6,10 @@
     <title>HisaabKitaabApp</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Cropper.js for image cropping -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="js/profile-manager.js"></script>
 </head>
 <body>
     <div class="container">
@@ -23,12 +26,17 @@
                 </div>
                 
                 <div class="header-controls">
+                    <!-- Control Panel Button (Admin Only) -->
+                    <button id="controlPanelBtn" class="btn btn-small btn-info" style="display: none;">
+                        <span class="control-icon">⚙️</span> Control Panel
+                    </button>
+                    
+                    <!-- Dark/Light Mode Toggle -->
                     <button id="themeToggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
                         <span class="theme-icon">🌙</span>
                     </button>
                     
                     <div id="userStatus" class="user-status" style="display: none;">
-                        <button id="controlPanelBtn" class="btn btn-small" style="display: none;">Control Panel</button>
                         <button id="logoutBtn" class="btn btn-small">Logout</button>
                     </div>
                 </div>
@@ -38,6 +46,7 @@
         </header>
         
         <div class="main-content">
+            <!-- Viewer Mode Content -->
             <div id="viewerContent" class="mode-content active">
                 <div class="existing-sheets-section">
                     <h2 class="section-title">Existing Expense Sheets</h2>
@@ -48,6 +57,7 @@
                 </div>
             </div>
             
+            <!-- Admin Mode Content -->
             <div id="adminContent" class="mode-content">
                 <div id="loginSection" class="login-section">
                     <div class="action-buttons">
@@ -70,6 +80,7 @@
                 </div>
             </div>
             
+            <!-- Admin Login Modal -->
             <div id="adminLoginModal" class="modal">
                 <div class="modal-content">
                     <h3>Admin Login</h3>
@@ -82,76 +93,15 @@
                 </div>
             </div>
 
-            <div id="controlPanelModal" class="modal">
-                <div class="modal-content control-panel-modal">
-                    <h3>Control Panel</h3>
-                    
-                    <div class="control-panel-section">
-                        <h4 class="section-title">Default Participants</h4>
-                        <p class="control-panel-description">Edit the default participant list. Changes here won't affect existing sheets. Click on a participant to edit their profile.</p>
-                        
-                        <div class="add-participant-form">
-                            <input type="text" id="controlPanelParticipantInput" placeholder="Enter new participant name">
-                            <button id="addDefaultParticipantBtn" class="btn btn-small">Add Participant</button>
-                        </div>
-                        
-                        <ul id="defaultParticipantsList" class="default-participants-list">
-                            <!-- Default participants will be loaded here -->
-                        </ul>
-                    </div>
-                    
-                    <div class="control-panel-section">
-                        <h4 class="section-title">Backup & Export</h4>
-                        <div class="export-options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
-                            <button id="exportAllSheetsBtn" class="btn btn-info" style="padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.5rem;">📦</span>
-                                Export All Sheets
-                                <small style="font-size: 0.8rem; opacity: 0.8;">Excel format</small>
-                            </button>
-                            <button id="backupAllDataBtn" class="btn btn-success" style="padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.5rem;">💾</span>
-                                Backup All Data
-                                <small style="font-size: 0.8rem; opacity: 0.8;">JSON + Excel</small>
-                            </button>
-                            <button id="importDataBtn" class="btn btn-warning" style="padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.5rem;">📤</span>
-                                Import Data
-                                <small style="font-size: 0.8rem; opacity: 0.8;">Restore backup</small>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="control-panel-section">
-                        <h4 class="section-title">Existing Sheets Summary</h4>
-                        <div class="summary-info">
-                            <div class="summary-item">
-                                <span>Total Sheets:</span>
-                                <span id="totalSheetsCount">0</span>
-                            </div>
-                            <div class="summary-item">
-                                <span>Latest Sheet:</span>
-                                <span id="latestSheetDate">None</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="control-panel-section">
-                        <h4 class="section-title">Change Admin Password</h4>
-                        <div class="password-change-form">
-                            <input type="password" id="newPasswordInput" placeholder="New password (min 6 characters)" class="form-input">
-                            <input type="password" id="confirmPasswordInput" placeholder="Confirm new password" class="form-input">
-                            <button id="changePasswordBtn" class="btn btn-warning">Change Password</button>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-buttons">
-                        <button id="closeControlPanelBtn" class="btn">Close Control Panel</button>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Participants Section (Admin Only) -->
             <div id="participantsSection" class="participants-section">
                 <h2 class="section-title">Select Participants</h2>
+                <div class="color-legend">
+                    <div class="legend-item">
+                        <span>Default participants have unique colors</span>
+                    </div>
+                </div>
+                
                 <ul id="participantsList" class="participants-list"></ul>
                 
                 <div class="add-participant-section">
@@ -167,6 +117,7 @@
                 </div>
             </div>
             
+            <!-- Sheet Section -->
             <div id="sheetSection" class="sheet-section">
                 <div class="sheet-header">
                     <div id="sheetName" class="sheet-name"></div>
@@ -185,10 +136,10 @@
                             <th>To Be Paid (SAR)</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody"></tbody>
+                    <tbody id="tableBody">
+                    </tbody>
                 </table>
                 
-                <!-- SIMPLIFIED SUMMARY SECTION for v1.9 -->
                 <div class="summary-box">
                     <h3 class="section-title">Expense Summary</h3>
                     <div class="summary-item">
@@ -199,9 +150,27 @@
                         <span>Total Spent:</span>
                         <span class="currency" id="totalSpent">0.00 SAR</span>
                     </div>
+                    <div id="totalMealsSummary" class="summary-item">
+                        <span>Total Meals:</span>
+                        <span class="currency" id="totalMeals">0</span>
+                    </div>
                     <div class="summary-item">
                         <span>Cost Per Meal:</span>
                         <span class="currency" id="costPerMeal">0.00 SAR</span>
+                    </div>
+                    <div class="meals-summary">
+                        <div class="summary-item">
+                            <span>1 Meal Participants:</span>
+                            <span id="oneMealCount">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>2 Meals Participants:</span>
+                            <span id="twoMealsCount">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>All Meals Participants:</span>
+                            <span id="threeMealsCount">0</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -209,20 +178,6 @@
                     <h3 class="section-title">Settlement Suggestions</h3>
                     <div id="settlementList" class="settlement-list">
                         <div class="no-settlements">Calculate shares to see settlement suggestions</div>
-                    </div>
-                </div>
-                
-                <!-- Export options - Only shown in admin mode (controlled by JavaScript) -->
-                <div id="sheetExportOptions" class="sheet-export-options" style="margin-top: 20px; padding: 15px; background-color: var(--hover-bg); border-radius: 8px; border-left: 4px solid var(--info-color); display: none;">
-                    <h4 style="margin-bottom: 10px; color: var(--info-color);">
-                        <span style="font-size: 1.2rem; margin-right: 8px;">📊</span>
-                        Export Options
-                    </h4>
-                    <div class="action-buttons" style="justify-content: flex-start; gap: 10px;">
-                        <button id="exportSheetBtn" class="btn btn-small btn-info">
-                            <span style="font-size: 1rem; margin-right: 5px;">📥</span>
-                            Export This Sheet
-                        </button>
                     </div>
                 </div>
                 
@@ -234,8 +189,10 @@
                 </div>
             </div>
             
+            <!-- Edit Participants Section (Admin Only) -->
             <div id="editParticipantsSection" class="edit-participants-section">
                 <h2 class="section-title">Edit Participants</h2>
+                
                 <div class="add-participant-section">
                     <h3>Add New Participant</h3>
                     <div class="add-participant-form">
@@ -243,8 +200,10 @@
                         <button id="editAddCustomParticipantBtn" class="btn btn-small">Add Participant</button>
                     </div>
                 </div>
+                
                 <h3>Current Participants</h3>
                 <ul id="editParticipantsList" class="edit-participants-list"></ul>
+                
                 <div class="action-buttons">
                     <button id="updateParticipantsBtn" class="btn btn-success">Update Participants & Recalculate</button>
                     <button id="cancelEditBtn" class="btn">Cancel</button>
@@ -252,6 +211,7 @@
             </div>
         </div>
         
+        <!-- Delete Confirmation Modal -->
         <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <h3>Delete Sheet</h3>
@@ -262,139 +222,160 @@
                 </div>
             </div>
         </div>
-
-        <div id="exportModal" class="modal">
-            <div class="modal-content" style="max-width: 500px;">
-                <h3>Export Options</h3>
-                <div id="exportModalContent"></div>
-                <div class="modal-buttons" style="margin-top: 20px;">
-                    <button id="cancelExportBtn" class="btn">Cancel</button>
+        
+        <!-- Control Panel Modal -->
+        <div id="controlPanelModal" class="modal">
+            <div class="modal-content control-panel-modal">
+                <h3>Control Panel</h3>
+                
+                <!-- Default Participants Management -->
+                <div class="control-panel-section">
+                    <h4>Default Participants List</h4>
+                    <p class="section-description">Add, edit, or remove default participants. Changes here won't affect existing sheets.</p>
+                    
+                    <div class="add-participant-control">
+                        <input type="text" id="newDefaultParticipantInput" placeholder="Enter participant name" class="form-input">
+                        <button id="addDefaultParticipantBtn" class="btn btn-small">Add to Default List</button>
+                    </div>
+                    
+                    <ul id="defaultParticipantsList" class="default-participants-list">
+                        <!-- Default participants will be loaded here -->
+                    </ul>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button id="closeControlPanelBtn" class="btn">Close Control Panel</button>
                 </div>
             </div>
         </div>
-
-        <div id="importModal" class="modal">
-            <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
-                <h3>Import Data</h3>
-                <div class="import-steps">
-                    <div class="import-step active" id="step1">
-                        <h4>Step 1: Select File</h4>
-                        <div class="file-upload-area" style="border: 2px dashed var(--border-color); border-radius: 8px; padding: 40px 20px; text-align: center; margin: 20px 0; cursor: pointer;" id="fileDropArea">
-                            <span style="font-size: 3rem; color: var(--primary-color);">📁</span>
-                            <p style="margin: 15px 0; font-weight: bold;">Drop backup file here or click to browse</p>
-                            <p style="color: var(--secondary-color); font-size: 0.9rem;">Supported formats: .xlsx, .csv, .json</p>
-                            <input type="file" id="importFileInput" accept=".xlsx,.csv,.json,.txt" style="display: none;">
-                            <button id="browseImportFileBtn" class="btn btn-small" style="margin-top: 10px;">Browse Files</button>
-                        </div>
-                    </div>
-                    <div class="import-step" id="step2" style="display: none;">
-                        <h4>Step 2: Preview Data</h4>
-                        <div id="importPreview" style="max-height: 300px; overflow-y: auto; margin: 15px 0; padding: 15px; background-color: var(--hover-bg); border-radius: 5px;"></div>
-                        <div id="importStats" style="display: none;"></div>
-                    </div>
-                    <div class="import-step" id="step3" style="display: none;">
-                        <h4>Step 3: Confirm Import</h4>
-                        <div id="importConflicts" style="display: none;">
-                            <div class="conflict-warning" style="background-color: color-mix(in srgb, var(--warning-color) 20%, transparent); padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid var(--warning-color);">
-                                <strong>⚠️ Conflicts Detected:</strong>
-                                <div id="conflictList"></div>
-                            </div>
-                        </div>
-                        <div class="import-options" style="margin: 20px 0;">
-                            <label style="display: block; margin-bottom: 10px;">
-                                <input type="radio" name="importOption" value="merge" checked>
-                                Merge with existing data (keep both)
-                            </label>
-                            <label style="display: block; margin-bottom: 10px;">
-                                <input type="radio" name="importOption" value="replace">
-                                Replace existing data
-                            </label>
-                            <label style="display: block;">
-                                <input type="radio" name="importOption" value="skip">
-                                Skip duplicates
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
-                    <button id="prevImportStepBtn" class="btn" style="display: none;">← Previous</button>
-                    <div>
-                        <button id="cancelImportBtn" class="btn">Cancel</button>
-                        <button id="nextImportStepBtn" class="btn btn-info">Next →</button>
-                        <button id="confirmImportBtn" class="btn btn-success" style="display: none;">Confirm Import</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        
+        <!-- Profile Card Modal -->
         <div id="profileCardModal" class="modal">
             <div class="modal-content profile-card-modal">
-                <div class="profile-card-header">
-                    <div id="profileLargePhoto" class="profile-photo-large"></div>
-                    <h3 id="profileFullName">Participant Name</h3>
+                <div class="profile-header">
+                    <div id="profileAvatar" class="profile-avatar-container">
+                        <!-- Profile image or initials will be inserted here -->
+                    </div>
+                    <h3 id="profileName">Participant Name</h3>
                 </div>
+                
                 <div class="profile-details">
-                    <div class="profile-detail-item">
-                        <span class="detail-label">Mobile Number:</span>
-                        <span id="profileMobile" class="detail-value">Not Available</span>
+                    <div class="profile-field">
+                        <label>Mobile Number:</label>
+                        <span id="profileMobile">Not provided</span>
                     </div>
-                    <div class="profile-detail-item">
-                        <span class="detail-label">Bank Name:</span>
-                        <span id="profileBank" class="detail-value">Not Available</span>
+                    
+                    <div class="profile-field">
+                        <label>Bank(s):</label>
+                        <span id="profileBanks">Not provided</span>
                     </div>
-                    <div class="profile-detail-item">
-                        <span class="detail-label">IBAN:</span>
-                        <span id="profileIBAN" class="detail-value">Not Available</span>
-                    </div>
-                </div>
-                <div id="profileEditForm" class="profile-edit-form" style="display: none;">
-                    <h4>Edit Profile</h4>
-                    <input type="text" id="editProfileName" placeholder="Full Name" class="form-input">
-                    <input type="tel" id="editProfileMobile" placeholder="Mobile Number" class="form-input">
-                    <input type="text" id="editProfileBank" placeholder="Bank Name" class="form-input">
-                    <input type="text" id="editProfileIBAN" placeholder="IBAN" class="form-input">
-                    <div class="photo-upload-section">
-                        <small style="color: var(--secondary-color); display: block; margin-bottom: 15px; text-align: center;">📷 Max photo size: 100KB</small>
-                        <label for="profilePhotoUpload" class="photo-upload-button" style="display: block; padding: 12px; background-color: var(--primary-color); color: white; border-radius: 5px; text-align: center; cursor: pointer; font-weight: 600; margin-bottom: 10px;">📁 Choose Photo to Upload</label>
-                        <input type="file" id="profilePhotoUpload" accept="image/*" style="display: none;">
-                        <button id="removeProfilePhotoBtn" class="btn btn-small btn-danger" style="width: 100%; padding: 12px;">🗑️ Remove Current Photo</button>
+                    
+                    <div class="profile-field">
+                        <label>Bank Accounts:</label>
+                        <div id="profileBankAccountsContainer" class="bank-accounts-container">
+                            <!-- Bank accounts with labels will be dynamically added here -->
+                            <div class="no-data">Not provided</div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-buttons">
+                
+                <div class="profile-actions">
                     <button id="editProfileBtn" class="btn btn-info" style="display: none;">Edit Profile</button>
-                    <button id="saveProfileBtn" class="btn btn-success" style="display: none;">Save Changes</button>
-                    <button id="cancelEditProfileBtn" class="btn" style="display: none;">Cancel</button>
-                    <button id="closeProfileCardBtn" class="btn">Close</button>
+                    <button id="closeProfileBtn" class="btn">Close Profile</button>
+                </div>
+                
+                <!-- Edit Profile Form (Admin Only) -->
+<div id="editProfileForm" class="edit-profile-form" style="display: none;">
+    <h4>Edit Profile</h4>
+    <input type="hidden" id="editProfileParticipant">
+    
+    <div class="form-group">
+        <label>Profile Photo:</label>
+        <div class="profile-photo-upload">
+            <div id="profileImagePreview" class="profile-image-preview">
+                <div id="currentProfileImage" class="current-profile-image"></div>
+            </div>
+            <input type="file" id="profileImageUpload" accept="image/*" class="file-input" style="display: none;">
+            <div class="photo-upload-buttons">
+                <button id="uploadPhotoBtn" class="btn btn-small">Upload Photo</button>
+                <button id="removePhotoBtn" class="btn btn-small btn-danger" style="display: none;">Remove Photo</button>
+            </div>
+            <small>Click "Upload Photo" to add/change profile picture. You can crop the image after selecting.</small>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Mobile Number:</label>
+        <input type="text" id="editMobile" class="form-input" placeholder="e.g., +966 5X XXX XXXX">
+    </div>
+    
+    <div class="form-group">
+        <label>Bank Accounts (one per line, format: Bank Name - IBAN):</label>
+        <textarea id="editBankAccounts" class="form-input" rows="4" placeholder="Alinma Bank - SA44 2000 0001 2345 6789 1234&#10;Al Rajhi Bank - SA44 3000 0001 2345 6789 1234"></textarea>
+        <small>Enter each bank account on a new line in format: "Bank Name - IBAN"</small>
+    </div>
+    
+    <!-- Preferred Bank Selection - THIS IS THE NEW SECTION -->
+    <div class="form-group">
+        <label>Preferred Bank for Settlements:</label>
+        <select id="editPreferredBank" class="form-input">
+            <option value="">No Preference (Use any available bank)</option>
+            <!-- Bank options will be dynamically added here -->
+        </select>
+        <small>Select your preferred bank for settlements. This helps prioritize same-bank transfers.</small>
+    </div>
+    
+    <div class="form-buttons">
+        <button id="saveProfileBtn" class="btn btn-success">Save Profile</button>
+        <button id="cancelEditProfileBtn" class="btn">Cancel</button>
+    </div>
+</div>
+        
+        <!-- Image Cropper Modal -->
+        <div id="imageCropperModal" class="modal">
+            <div class="modal-content cropper-modal">
+                <h3>Crop Profile Image</h3>
+                <div class="cropper-container">
+                    <img id="cropperImage" src="" alt="Image to crop" style="max-width: 100%;">
+                </div>
+                <div class="cropper-controls">
+                    <div class="cropper-zoom">
+                        <button id="zoomOutBtn" class="btn btn-small">-</button>
+                        <span>Zoom</span>
+                        <button id="zoomInBtn" class="btn btn-small">+</button>
+                    </div>
+                    <div class="cropper-rotate">
+                        <button id="rotateLeftBtn" class="btn btn-small">↺</button>
+                        <button id="rotateRightBtn" class="btn btn-small">↻</button>
+                    </div>
+                </div>
+                <div class="cropper-buttons">
+                    <button id="cropImageBtn" class="btn btn-success">Crop & Save</button>
+                    <button id="cancelCropBtn" class="btn">Cancel</button>
                 </div>
             </div>
         </div>
         
         <footer>
-            <p>HisaabKitaab©2025(created by Mudassar)-v1.9</p>
+            <p>HisaabKitaab©2025(created by Mudassar)-v2.2</p>
         </footer>
     </div>
 
+    <!-- PDF Loading Overlay -->
     <div id="pdfLoadingOverlay" class="pdf-loading" style="display: none;">
         <div class="pdf-loading-spinner"></div>
         <div class="pdf-loading-text">Generating PDF...</div>
     </div>
 
-    <div id="exportLoadingOverlay" class="export-loading" style="display: none;">
-        <div class="export-loading-spinner"></div>
-        <div class="export-loading-text">Generating Export...</div>
-        <div class="export-progress">
-            <div class="export-progress-bar"></div>
-        </div>
-    </div>
-
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+
+    <!-- Your scripts -->
     <script src="js/firebase-sync.js"></script>
     <script src="js/pdf-generator.js"></script>
-    <script src="js/profile-manager.js"></script>
-    <script src="js/export-manager.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
