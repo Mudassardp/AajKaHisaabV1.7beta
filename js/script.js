@@ -1106,91 +1106,92 @@ function generateSettlementSuggestions() {
 }
     
     function renderSettlementList(settlements) {
-        settlementList.innerHTML = '';
-        if (settlements.length === 0) {
-            settlementList.innerHTML = '<div class="no-settlements">All balances are settled! 🎉</div>';
-        } else {
-            settlements.forEach(settlement => {
-                const settlementItem = document.createElement('div');
-                settlementItem.className = 'settlement-item';
+    settlementList.innerHTML = '';
+    if (settlements.length === 0) {
+        settlementList.innerHTML = '<div class="no-settlements">All balances are settled! 🎉</div>';
+    } else {
+        settlements.forEach(settlement => {
+            const settlementItem = document.createElement('div');
+            settlementItem.className = 'settlement-item';
+            
+            // Check if we're in admin mode AND the user is logged in as admin
+            const showAdminControls = isAdmin && currentMode === 'admin';
+            
+            // Create bank match indicator if applicable
+            let bankInfo = '';
+            if (settlement.bankMatch && settlement.bank) {
+                const preferredText = settlement.preferredMatch ? ' (Preferred)' : '';
+                bankInfo = `<div class="bank-match-indicator" style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                    <span style="background-color: color-mix(in srgb, var(--success-color) 20%, transparent); padding: 2px 8px; border-radius: 3px; border: 1px solid var(--success-color); white-space: nowrap;">
+                        Same Bank: ${settlement.bank}${preferredText}
+                    </span>
+                </div>`;
+            }
+            
+            if (showAdminControls) {
+                // Admin mode with toggle button
+                const isPaid = settlement.status === 'paid';
+                const statusClass = isPaid ? 'paid' : 'not-paid';
+                const statusText = isPaid ? 'Paid' : 'Not Paid';
                 
-                // Check if we're in admin mode AND the user is logged in as admin
-                const showAdminControls = isAdmin && currentMode === 'admin';
-                
-                // Create bank match indicator if applicable
-                let bankInfo = '';
-                if (settlement.bankMatch && settlement.bank) {
-                    bankInfo = `<div class="bank-match-indicator" style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px;">
-                        <span style="background-color: color-mix(in srgb, var(--success-color) 20%, transparent); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--success-color);">
-                            Same Bank: ${settlement.bank}
-                        </span>
-                    </div>`;
-                }
-                
-                if (showAdminControls) {
-                    // Admin mode with toggle button
-                    const isPaid = settlement.status === 'paid';
-                    const statusClass = isPaid ? 'paid' : 'not-paid';
-                    const statusText = isPaid ? 'Paid' : 'Not Paid';
-                    
-                    settlementItem.innerHTML = `
-                        <div class="settlement-details">
-                            <div class="settlement-first-line">
-                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
-                                <span class="settlement-arrow">→</span>
-                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
-                            </div>
-                            <div class="settlement-second-line">
-                                <span class="settlement-amount">${settlement.amount} SAR</span>
-                                <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
-                                    ${statusText}
-                                </button>
-                            </div>
-                            ${bankInfo}
+                settlementItem.innerHTML = `
+                    <div class="settlement-details">
+                        <div class="settlement-first-line">
+                            <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
+                            <span class="settlement-arrow">→</span>
+                            <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
                         </div>
-                    `;
-                    
-                    const toggleBtn = settlementItem.querySelector('.settlement-toggle-btn');
-                    toggleBtn.addEventListener('click', function() {
-                        const newStatus = currentSheetData.settlements[this.dataset.key].status === 'paid' ? 'not-paid' : 'paid';
-                        currentSheetData.settlements[this.dataset.key].status = newStatus;
-                        
-                        // Update button appearance
-                        if (newStatus === 'paid') {
-                            this.className = 'settlement-toggle-btn paid';
-                            this.textContent = 'Paid';
-                        } else {
-                            this.className = 'settlement-toggle-btn not-paid';
-                            this.textContent = 'Not Paid';
-                        }
-                        
-                        saveSheet();
-                    });
-                } else {
-                    // Viewer mode or admin in viewer tab - show static status
-                    const statusClass = settlement.status === 'paid' ? 'status-paid' : 'status-not-paid';
-                    const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
-                    
-                    settlementItem.innerHTML = `
-                        <div class="settlement-details">
-                            <div class="settlement-first-line">
-                                <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
-                                <span class="settlement-arrow">→</span>
-                                <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
-                            </div>
-                            <div class="settlement-second-line">
-                                <span class="settlement-amount">${settlement.amount} SAR</span>
-                                <span class="settlement-status ${statusClass}">${statusText}</span>
-                            </div>
-                            ${bankInfo}
+                        <div class="settlement-second-line">
+                            <span class="settlement-amount">${settlement.amount} SAR</span>
+                            <button class="settlement-toggle-btn ${statusClass}" data-key="${settlement.key}">
+                                ${statusText}
+                            </button>
                         </div>
-                    `;
-                }
+                        ${bankInfo}
+                    </div>
+                `;
                 
-                settlementList.appendChild(settlementItem);
-            });
-        }
+                const toggleBtn = settlementItem.querySelector('.settlement-toggle-btn');
+                toggleBtn.addEventListener('click', function() {
+                    const newStatus = currentSheetData.settlements[this.dataset.key].status === 'paid' ? 'not-paid' : 'paid';
+                    currentSheetData.settlements[this.dataset.key].status = newStatus;
+                    
+                    // Update button appearance
+                    if (newStatus === 'paid') {
+                        this.className = 'settlement-toggle-btn paid';
+                        this.textContent = 'Paid';
+                    } else {
+                        this.className = 'settlement-toggle-btn not-paid';
+                        this.textContent = 'Not Paid';
+                    }
+                    
+                    saveSheet();
+                });
+            } else {
+                // Viewer mode or admin in viewer tab - show static status
+                const statusClass = settlement.status === 'paid' ? 'status-paid' : 'status-not-paid';
+                const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
+                
+                settlementItem.innerHTML = `
+                    <div class="settlement-details">
+                        <div class="settlement-first-line">
+                            <span class="settlement-from" style="font-weight: 600;">${settlement.from}</span>
+                            <span class="settlement-arrow">→</span>
+                            <span class="settlement-to" style="font-weight: 600;">${settlement.to}</span>
+                        </div>
+                        <div class="settlement-second-line">
+                            <span class="settlement-amount">${settlement.amount} SAR</span>
+                            <span class="settlement-status ${statusClass}">${statusText}</span>
+                        </div>
+                        ${bankInfo}
+                    </div>
+                `;
+            }
+            
+            settlementList.appendChild(settlementItem);
+        });
     }
+}
     
     function saveSheet() {
         if (!currentSheetData || !isAdmin) return;
