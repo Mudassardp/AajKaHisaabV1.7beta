@@ -1,4 +1,4 @@
-// profile-manager.js v2.2 with Preferred Bank Support
+// profile-manager.js v2.2 with Preferred Bank Support and Cloud Sync
 class ProfileManager {
     constructor() {
         this.profiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
@@ -29,12 +29,28 @@ class ProfileManager {
             }
         });
         
-        this.saveProfiles();
+        this.saveProfilesLocally();
     }
 
     // Save profiles to localStorage
-    saveProfiles() {
+    saveProfilesLocally() {
         localStorage.setItem('hisaabKitaabProfiles', JSON.stringify(this.profiles));
+    }
+
+    // Save profiles and sync to cloud
+    async saveProfilesToCloud() {
+        // Save locally first
+        this.saveProfilesLocally();
+        
+        // Then sync to cloud if available
+        if (window.firebaseSync && window.firebaseSync.isInitialized) {
+            try {
+                await window.firebaseSync.saveProfilesToCloud(this.profiles);
+                console.log('Profiles synced to cloud');
+            } catch (error) {
+                console.error('Failed to sync profiles to cloud:', error);
+            }
+        }
     }
 
     // Setup event listeners for profile-related elements
@@ -63,8 +79,8 @@ class ProfileManager {
         });
 
         // Save profile
-        document.getElementById('saveProfileBtn')?.addEventListener('click', () => {
-            this.saveCurrentProfile();
+        document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
+            await this.saveCurrentProfile();
         });
 
         document.getElementById('cancelEditProfileBtn')?.addEventListener('click', () => {
@@ -181,8 +197,8 @@ class ProfileManager {
         };
     }
 
-    // Save profile data
-    saveProfile(participantName, profileData) {
+    // Save profile data (locally and to cloud)
+    async saveProfile(participantName, profileData) {
         console.log('Saving profile for:', participantName);
         
         // Validate photo data
@@ -199,11 +215,17 @@ class ProfileManager {
             lastUpdated: new Date().toISOString()
         };
         
-        this.saveProfiles();
+        // Save locally
+        this.saveProfilesLocally();
+        
+        // Sync to cloud
+        await this.saveProfilesToCloud();
         
         // Verify the save
         const savedProfile = this.getProfile(participantName);
-        console.log('Profile saved successfully:', savedProfile);
+        console.log('Profile saved and synced successfully:', savedProfile);
+        
+        return savedProfile;
     }
 
     // Parse bank accounts text
@@ -705,8 +727,8 @@ class ProfileManager {
         }
     }
 
-    // Save current profile
-    saveCurrentProfile() {
+    // Save current profile (with cloud sync)
+    async saveCurrentProfile() {
         const participant = document.getElementById('editProfileParticipant').value;
         
         console.log('Saving profile for:', participant);
@@ -719,8 +741,8 @@ class ProfileManager {
                           document.getElementById('editPreferredBank').value : ''
         };
         
-        // Save the profile
-        this.saveProfile(participant, profileData);
+        // Save the profile (this will also sync to cloud)
+        await this.saveProfile(participant, profileData);
         
         // Clear the state variable
         this.currentProfilePhoto = '';
@@ -732,7 +754,7 @@ class ProfileManager {
             this.openProfileCard(participant);
         }, 100);
         
-        alert('Profile saved successfully!');
+        alert('Profile saved and synced to cloud!');
         
         // Update any UI that shows this participant's avatar
         this.updateParticipantAvatars(participant);

@@ -1,4 +1,4 @@
-// firebase-sync.js - v2.2 with Profile Image Support
+// firebase-sync.js - v2.2 with Profile Image and Profile Data Sync
 class FirebaseSync {
     constructor() {
         this.isInitialized = false;
@@ -8,7 +8,7 @@ class FirebaseSync {
     // Initialize Firebase
     initialize() {
         try {
-            console.log('Starting Firebase initialization v2.2...');
+            console.log('Starting Firebase initialization v2.2 with Profile Sync...');
             
             // Your Firebase configuration
             const firebaseConfig = {
@@ -27,15 +27,19 @@ class FirebaseSync {
             this.storage = firebase.storage();
             
             this.isInitialized = true;
-            console.log('Firebase initialized successfully v2.2');
+            console.log('Firebase initialized successfully v2.2 with Profile Sync');
             
             this.showSyncStatus('Connected to shared cloud', 'success');
             
-            // Listen for real-time updates from other users
-            this.setupRealTimeListener();
+            // Listen for real-time updates for sheets
+            this.setupSheetsRealTimeListener();
+            
+            // Listen for real-time updates for profiles
+            this.setupProfilesRealTimeListener();
             
             // Load initial data from cloud
-            this.loadFromCloud();
+            this.loadSheetsFromCloud();
+            this.loadProfilesFromCloud();
             
         } catch (error) {
             console.error('Firebase initialization failed:', error);
@@ -43,76 +47,144 @@ class FirebaseSync {
         }
     }
 
-    // Listen for real-time updates from other users
-    setupRealTimeListener() {
+    // Listen for real-time updates for sheets from other users
+    setupSheetsRealTimeListener() {
         this.db.ref('sharedSheets').on('value', (snapshot) => {
             const cloudData = snapshot.val();
-            console.log('Real-time update received:', cloudData);
+            console.log('Real-time sheets update received:', cloudData);
             
             if (cloudData && Array.isArray(cloudData)) {
-                this.replaceLocalData(cloudData);
-                this.showSyncStatus('Sheet updated from cloud', 'info');
+                this.replaceLocalSheets(cloudData);
+                this.showSyncStatus('Sheets updated from cloud', 'info');
             }
         });
     }
 
-    // Save data to shared cloud
-    async saveToCloud(data) {
+    // Listen for real-time updates for profiles from other users
+    setupProfilesRealTimeListener() {
+        this.db.ref('sharedProfiles').on('value', (snapshot) => {
+            const cloudProfiles = snapshot.val();
+            console.log('Real-time profiles update received:', cloudProfiles);
+            
+            if (cloudProfiles) {
+                this.replaceLocalProfiles(cloudProfiles);
+                this.showSyncStatus('Profiles updated from cloud', 'info');
+            }
+        });
+    }
+
+    // Save sheets data to shared cloud
+    async saveSheetsToCloud(data) {
         if (!this.isInitialized || this.isSyncing) {
-            console.log('Cannot sync - not ready');
+            console.log('Cannot sync sheets - not ready');
             return;
         }
         
         try {
             this.isSyncing = true;
-            this.showSyncStatus('Syncing to shared cloud...', 'syncing');
+            this.showSyncStatus('Syncing sheets to cloud...', 'syncing');
             
-            console.log('Saving data to shared cloud...', data);
+            console.log('Saving sheets to shared cloud...', data);
             await this.db.ref('sharedSheets').set(data);
             
-            this.showSyncStatus('Synced to shared cloud', 'success');
-            console.log('Data saved to shared cloud successfully');
+            this.showSyncStatus('Sheets synced to cloud', 'success');
+            console.log('Sheets data saved to shared cloud successfully');
             
         } catch (error) {
-            console.error('Failed to save to shared cloud:', error);
-            this.showSyncStatus('Sync failed: ' + error.message, 'error');
+            console.error('Failed to save sheets to shared cloud:', error);
+            this.showSyncStatus('Sheets sync failed: ' + error.message, 'error');
         } finally {
             this.isSyncing = false;
         }
     }
 
-    // Load data from shared cloud
-    async loadFromCloud() {
+    // Save profiles data to shared cloud
+    async saveProfilesToCloud(profiles) {
+        if (!this.isInitialized || this.isSyncing) {
+            console.log('Cannot sync profiles - not ready');
+            return;
+        }
+        
+        try {
+            this.isSyncing = true;
+            this.showSyncStatus('Syncing profiles to cloud...', 'syncing');
+            
+            console.log('Saving profiles to shared cloud...', profiles);
+            await this.db.ref('sharedProfiles').set(profiles);
+            
+            this.showSyncStatus('Profiles synced to cloud', 'success');
+            console.log('Profiles data saved to shared cloud successfully');
+            
+        } catch (error) {
+            console.error('Failed to save profiles to shared cloud:', error);
+            this.showSyncStatus('Profiles sync failed: ' + error.message, 'error');
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    // Load sheets data from shared cloud
+    async loadSheetsFromCloud() {
         if (!this.isInitialized) {
-            console.log('Cannot load - not ready');
+            console.log('Cannot load sheets - not ready');
             return;
         }
         
         try {
             this.showSyncStatus('Loading shared sheets...', 'syncing');
             
-            console.log('Loading data from shared cloud...');
+            console.log('Loading sheets from shared cloud...');
             const snapshot = await this.db.ref('sharedSheets').once('value');
             const cloudData = snapshot.val();
             
-            console.log('Shared cloud data received:', cloudData);
+            console.log('Shared cloud sheets data received:', cloudData);
             
             if (cloudData && Array.isArray(cloudData)) {
                 // Replace local data with shared data
-                this.replaceLocalData(cloudData);
+                this.replaceLocalSheets(cloudData);
                 this.showSyncStatus('Shared sheets loaded', 'success');
             } else {
                 this.showSyncStatus('No shared sheets found', 'info');
             }
             
         } catch (error) {
-            console.error('Failed to load from shared cloud:', error);
-            this.showSyncStatus('Cloud load failed: ' + error.message, 'error');
+            console.error('Failed to load sheets from shared cloud:', error);
+            this.showSyncStatus('Sheets cloud load failed: ' + error.message, 'error');
         }
     }
 
-    // Replace local data with shared data
-    replaceLocalData(cloudData) {
+    // Load profiles data from shared cloud
+    async loadProfilesFromCloud() {
+        if (!this.isInitialized) {
+            console.log('Cannot load profiles - not ready');
+            return;
+        }
+        
+        try {
+            this.showSyncStatus('Loading shared profiles...', 'syncing');
+            
+            console.log('Loading profiles from shared cloud...');
+            const snapshot = await this.db.ref('sharedProfiles').once('value');
+            const cloudProfiles = snapshot.val();
+            
+            console.log('Shared cloud profiles data received:', cloudProfiles);
+            
+            if (cloudProfiles) {
+                // Replace local data with shared data
+                this.replaceLocalProfiles(cloudProfiles);
+                this.showSyncStatus('Shared profiles loaded', 'success');
+            } else {
+                this.showSyncStatus('No shared profiles found', 'info');
+            }
+            
+        } catch (error) {
+            console.error('Failed to load profiles from shared cloud:', error);
+            this.showSyncStatus('Profiles cloud load failed: ' + error.message, 'error');
+        }
+    }
+
+    // Replace local sheets with shared data
+    replaceLocalSheets(cloudData) {
         // Save shared data to localStorage
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(cloudData));
         
@@ -120,12 +192,45 @@ class FirebaseSync {
         if (window.loadSavedSheets) {
             window.loadSavedSheets();
         }
+        
+        // If we have a current sheet open, check if it needs updating
+        if (window.currentSheetData) {
+            const updatedSheet = cloudData.find(sheet => sheet.id === window.currentSheetData.id);
+            if (updatedSheet) {
+                window.currentSheetData = updatedSheet;
+                // Trigger UI update if needed
+                if (window.renderExpenseTable) {
+                    window.renderExpenseTable();
+                }
+            }
+        }
     }
 
-    // Merge data (for backward compatibility)
-    mergeData(cloudData) {
-        console.log('mergeData called - using replaceLocalData instead');
-        this.replaceLocalData(cloudData);
+    // Replace local profiles with shared data
+    replaceLocalProfiles(cloudProfiles) {
+        // Save shared data to localStorage
+        localStorage.setItem('hisaabKitaabProfiles', JSON.stringify(cloudProfiles));
+        
+        // Refresh Profile Manager if it exists
+        if (window.profileManager) {
+            window.profileManager.loadProfiles();
+            console.log('Profiles updated from cloud, refreshing Profile Manager');
+        }
+        
+        // Trigger UI updates for avatars
+        this.updateAllProfileAvatars();
+    }
+
+    // Update all avatars in the UI when profiles change
+    updateAllProfileAvatars() {
+        // This function can be called to refresh avatars when profiles update
+        if (window.profileManager && window.updateParticipantAvatars) {
+            // Update default participants list
+            const defaultParticipants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || [];
+            defaultParticipants.forEach(participant => {
+                window.profileManager.updateParticipantAvatars(participant);
+            });
+        }
     }
 
     // Upload profile image to Firebase Storage
@@ -157,22 +262,6 @@ class FirebaseSync {
         } catch (error) {
             console.error('Failed to upload profile image:', error);
             throw error;
-        }
-    }
-
-    // Download profile image from Firebase Storage (if needed)
-    async getProfileImageUrl(participantName) {
-        if (!this.isInitialized) {
-            return null;
-        }
-        
-        try {
-            // This would need a specific storage structure
-            // For now, return null - images are stored in localStorage as data URLs
-            return null;
-        } catch (error) {
-            console.error('Failed to get profile image:', error);
-            return null;
         }
     }
 
@@ -227,15 +316,46 @@ class FirebaseSync {
         }
     }
 
-    // Manual sync trigger
+    // Manual sync trigger for both sheets and profiles
     async manualSync() {
         if (!this.isInitialized) {
             this.showSyncStatus('Cloud sync not initialized', 'error');
             return;
         }
         
-        const localData = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
-        await this.saveToCloud(localData);
+        // Sync sheets
+        const localSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
+        await this.saveSheetsToCloud(localSheets);
+        
+        // Sync profiles
+        const localProfiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
+        await this.saveProfilesToCloud(localProfiles);
+    }
+
+    // Sync a single profile update
+    async syncProfileUpdate(participantName, profileData) {
+        if (!this.isInitialized) {
+            return;
+        }
+        
+        try {
+            // Get current profiles
+            const profiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
+            
+            // Update the specific profile
+            profiles[participantName] = profileData;
+            
+            // Save locally
+            localStorage.setItem('hisaabKitaabProfiles', JSON.stringify(profiles));
+            
+            // Sync to cloud
+            await this.saveProfilesToCloud(profiles);
+            
+            console.log('Profile synced to cloud:', participantName);
+            
+        } catch (error) {
+            console.error('Failed to sync profile:', error);
+        }
     }
 }
 

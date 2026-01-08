@@ -1,4 +1,4 @@
-// script.js - Updated v2.2 (without profile management code)
+// script.js - Updated v2.2 (with Profile Sync Fix)
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements (keeping only essential ones)
     const userStatus = document.getElementById('userStatus');
@@ -85,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sort default participants alphabetically on initialization
     defaultParticipants.sort(alphabeticalSort);
     
+    // Flag to track if Firebase is initialized
+    let isFirebaseInitialized = false;
+    
     // Initialize Application
     initApp();
     
@@ -94,17 +97,33 @@ document.addEventListener('DOMContentLoaded', function() {
         checkAdminStatus();
         applyTheme();
         
-        // Initialize Firebase sync
+        // Initialize Profile Manager FIRST (with local data)
+        if (window.profileManager) {
+            window.profileManager.init();
+            console.log('Profile Manager initialized with local data');
+        }
+        
+        // Initialize Firebase sync - this will load cloud data and override local
         setTimeout(() => {
             if (window.firebaseSync) {
                 window.firebaseSync.initialize();
+                isFirebaseInitialized = true;
+                console.log('Firebase Sync initialized');
+                
+                // After Firebase initializes, we need to refresh Profile Manager
+                // to ensure it has the latest data from cloud
+                setTimeout(() => {
+                    if (window.profileManager) {
+                        window.profileManager.loadProfiles();
+                        console.log('Profile Manager refreshed after Firebase sync');
+                        
+                        // Update UI elements that show profiles
+                        updateCreateParticipantsList();
+                        updateDefaultParticipantsList();
+                    }
+                }, 2000); // Give Firebase time to load data
             }
         }, 1000);
-        
-        // Initialize Profile Manager
-        if (window.profileManager) {
-            window.profileManager.init();
-        }
     }
     
     function setupEventListeners() {
@@ -121,10 +140,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Theme Toggle
         themeToggleBtn.addEventListener('click', toggleTheme);
 
-        // Sync button
+        // Sync button - now syncs BOTH sheets and profiles
         document.getElementById('manualSyncBtn')?.addEventListener('click', () => {
             if (window.firebaseSync) {
                 window.firebaseSync.manualSync();
+                
+                // Refresh Profile Manager after sync
+                setTimeout(() => {
+                    if (window.profileManager) {
+                        window.profileManager.loadProfiles();
+                        updateCreateParticipantsList();
+                        updateDefaultParticipantsList();
+                    }
+                }, 1000);
             }
         });
         
@@ -1214,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Auto-sync to cloud
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveToCloud(savedSheets);
+            window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
         
         alert('Sheet saved successfully!');
@@ -1535,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Force sync to Firebase
             if (window.firebaseSync && window.firebaseSync.isInitialized) {
-                window.firebaseSync.saveToCloud(savedSheets);
+                window.firebaseSync.saveSheetsToCloud(savedSheets);
             }
             
             // Update UI
@@ -1559,7 +1587,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Sync to Firebase after deletion
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveToCloud(savedSheets);
+            window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
         
         loadSavedSheets();
@@ -1695,4 +1723,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showPDFLoading = showPDFLoading;
     window.hidePDFLoading = hidePDFLoading;
     window.loadSavedSheets = loadSavedSheets;
+    window.renderExpenseTable = renderExpenseTable; // Added for Firebase sync
+    window.currentSheetData = currentSheetData; // Make it accessible globally
 });
