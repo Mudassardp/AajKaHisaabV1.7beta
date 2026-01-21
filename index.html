@@ -1,17 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- PWA REQUIRED TAGS -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HisaabKitaabApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HisaabKitaab</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- App Icon -->
+    <link rel="icon" href="icons/icon-192x192.png" type="image/png">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HisaabKitaab">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#3498db">
+    <meta name="msapplication-TileColor" content="#3498db">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Cropper.js for image cropping -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script src="js/profile-manager.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body>
+    <!-- Simple Splash Screen -->
+    <div id="splash" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#3498db; color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999; transition:opacity 0.3s;">
+        <h1 style="font-size:2.5rem; margin-bottom:20px;">HisaabKitaab</h1>
+        <p style="font-size:1.2rem;">Loading...</p>
+    </div>
+
     <div class="container">
         <header>
             <div class="header-top">
@@ -26,12 +56,10 @@
                 </div>
                 
                 <div class="header-controls">
-                    <!-- Control Panel Button (Admin Only) -->
                     <button id="controlPanelBtn" class="btn btn-small btn-info" style="display: none;">
                         <span class="control-icon">⚙️</span> Control Panel
                     </button>
                     
-                    <!-- Dark/Light Mode Toggle -->
                     <button id="themeToggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
                         <span class="theme-icon">🌙</span>
                     </button>
@@ -42,7 +70,7 @@
                 </div>
             </div>
             
-            <h1>HisaabKitaabApp</h1>
+            <h1>HisaabKitaab</h1>
         </header>
         
         <div class="main-content">
@@ -120,7 +148,12 @@
             <!-- Sheet Section -->
             <div id="sheetSection" class="sheet-section">
                 <div class="sheet-header">
-                    <div id="sheetName" class="sheet-name"></div>
+                    <div class="sheet-name-publish-container">
+                        <div id="sheetName" class="sheet-name"></div>
+                        <button id="togglePublishBtn" class="btn btn-small btn-warning" style="display: none;">
+                            <span id="publishIcon">📢</span> <span id="publishText">Publish</span>
+                        </button>
+                    </div>
                     <div id="adminSheetActions" class="sheet-actions" style="display: none;">
                         <button id="editParticipantsBtn" class="btn btn-info">Edit Participants</button>
                         <button id="deleteSheetBtn" class="btn btn-danger">Delete Sheet</button>
@@ -182,8 +215,8 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button id="calculateBtn" class="btn btn-success" style="display: none;">Calculate Shares</button>
-                    <button id="saveBtn" class="btn btn-warning" style="display: none;">Save</button>
+                    <button id="calculateBtn" class="btn btn-success">Calculate Shares</button>
+                    <button id="saveBtn" class="btn btn-warning">Save</button>
                     <button id="sharePdfBtn" class="btn btn-info">Share as PDF</button>
                     <button id="closeSheetBtn" class="btn">Close Sheet</button>
                 </div>
@@ -226,7 +259,7 @@
         <!-- Control Panel Modal -->
         <div id="controlPanelModal" class="modal">
             <div class="modal-content control-panel-modal">
-                <h3>Control Panel</h3>
+                <h3>Control Panel v3.0</h3>
                 
                 <!-- Default Participants Management -->
                 <div class="control-panel-section">
@@ -238,9 +271,23 @@
                         <button id="addDefaultParticipantBtn" class="btn btn-small">Add to Default List</button>
                     </div>
                     
-                    <ul id="defaultParticipantsList" class="default-participants-list">
-                        <!-- Default participants will be loaded here -->
-                    </ul>
+                    <ul id="defaultParticipantsList" class="default-participants-list"></ul>
+                </div>
+                
+                <!-- Deleted Sheets Bin -->
+                <div class="control-panel-section">
+                    <h4>Deleted Sheets Bin</h4>
+                    <p class="section-description">Restore or permanently delete sheets that have been deleted.</p>
+                    
+                    <div id="deletedSheetsBinContainer" style="max-height: 300px; overflow-y: auto;">
+                        <div id="emptyBinMessage" class="no-sheets">Bin is empty</div>
+                        <ul id="deletedSheetsList" class="sheets-list" style="display: none;"></ul>
+                    </div>
+                    
+                    <div class="bin-actions" style="margin-top: 15px; display: none;" id="binActions">
+                        <button id="emptyBinBtn" class="btn btn-small btn-danger">Empty Bin</button>
+                        <button id="restoreAllBtn" class="btn btn-small btn-success">Restore All</button>
+                    </div>
                 </div>
                 
                 <div class="modal-buttons">
@@ -253,9 +300,7 @@
         <div id="profileCardModal" class="modal">
             <div class="modal-content profile-card-modal">
                 <div class="profile-header">
-                    <div id="profileAvatar" class="profile-avatar-container">
-                        <!-- Profile image or initials will be inserted here -->
-                    </div>
+                    <div id="profileAvatar" class="profile-avatar-container"></div>
                     <h3 id="profileName">Participant Name</h3>
                 </div>
                 
@@ -273,7 +318,6 @@
                     <div class="profile-field">
                         <label>Bank Accounts:</label>
                         <div id="profileBankAccountsContainer" class="bank-accounts-container">
-                            <!-- Bank accounts with labels will be dynamically added here -->
                             <div class="no-data">Not provided</div>
                         </div>
                     </div>
@@ -285,51 +329,51 @@
                 </div>
                 
                 <!-- Edit Profile Form (Admin Only) -->
-<div id="editProfileForm" class="edit-profile-form" style="display: none;">
-    <h4>Edit Profile</h4>
-    <input type="hidden" id="editProfileParticipant">
-    
-    <div class="form-group">
-        <label>Profile Photo:</label>
-        <div class="profile-photo-upload">
-            <div id="profileImagePreview" class="profile-image-preview">
-                <div id="currentProfileImage" class="current-profile-image"></div>
+                <div id="editProfileForm" class="edit-profile-form" style="display: none;">
+                    <h4>Edit Profile</h4>
+                    <input type="hidden" id="editProfileParticipant">
+                    
+                    <div class="form-group">
+                        <label>Profile Photo:</label>
+                        <div class="profile-photo-upload">
+                            <div id="profileImagePreview" class="profile-image-preview">
+                                <div id="currentProfileImage" class="current-profile-image"></div>
+                            </div>
+                            <input type="file" id="profileImageUpload" accept="image/*" class="file-input" style="display: none;">
+                            <div class="photo-upload-buttons">
+                                <button id="uploadPhotoBtn" class="btn btn-small">Upload Photo</button>
+                                <button id="removePhotoBtn" class="btn btn-small btn-danger" style="display: none;">Remove Photo</button>
+                            </div>
+                            <small>Click "Upload Photo" to add/change profile picture. You can crop the image after selecting.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mobile Number:</label>
+                        <input type="text" id="editMobile" class="form-input" placeholder="e.g., +966 5X XXX XXXX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Bank Accounts (one per line, format: Bank Name - IBAN):</label>
+                        <textarea id="editBankAccounts" class="form-input" rows="4" placeholder="Alinma Bank - SA44 2000 0001 2345 6789 1234&#10;Al Rajhi Bank - SA44 3000 0001 2345 6789 1234"></textarea>
+                        <small>Enter each bank account on a new line in format: "Bank Name - IBAN"</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Preferred Bank for Settlements:</label>
+                        <select id="editPreferredBank" class="form-input">
+                            <option value="">No Preference (Use any available bank)</option>
+                        </select>
+                        <small>Select your preferred bank for settlements. This helps prioritize same-bank transfers.</small>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button id="saveProfileBtn" class="btn btn-success">Save Profile</button>
+                        <button id="cancelEditProfileBtn" class="btn">Cancel</button>
+                    </div>
+                </div>
             </div>
-            <input type="file" id="profileImageUpload" accept="image/*" class="file-input" style="display: none;">
-            <div class="photo-upload-buttons">
-                <button id="uploadPhotoBtn" class="btn btn-small">Upload Photo</button>
-                <button id="removePhotoBtn" class="btn btn-small btn-danger" style="display: none;">Remove Photo</button>
-            </div>
-            <small>Click "Upload Photo" to add/change profile picture. You can crop the image after selecting.</small>
         </div>
-    </div>
-    
-    <div class="form-group">
-        <label>Mobile Number:</label>
-        <input type="text" id="editMobile" class="form-input" placeholder="e.g., +966 5X XXX XXXX">
-    </div>
-    
-    <div class="form-group">
-        <label>Bank Accounts (one per line, format: Bank Name - IBAN):</label>
-        <textarea id="editBankAccounts" class="form-input" rows="4" placeholder="Alinma Bank - SA44 2000 0001 2345 6789 1234&#10;Al Rajhi Bank - SA44 3000 0001 2345 6789 1234"></textarea>
-        <small>Enter each bank account on a new line in format: "Bank Name - IBAN"</small>
-    </div>
-    
-    <!-- Preferred Bank Selection - THIS IS THE NEW SECTION -->
-    <div class="form-group">
-        <label>Preferred Bank for Settlements:</label>
-        <select id="editPreferredBank" class="form-input">
-            <option value="">No Preference (Use any available bank)</option>
-            <!-- Bank options will be dynamically added here -->
-        </select>
-        <small>Select your preferred bank for settlements. This helps prioritize same-bank transfers.</small>
-    </div>
-    
-    <div class="form-buttons">
-        <button id="saveProfileBtn" class="btn btn-success">Save Profile</button>
-        <button id="cancelEditProfileBtn" class="btn">Cancel</button>
-    </div>
-</div>
         
         <!-- Image Cropper Modal -->
         <div id="imageCropperModal" class="modal">
@@ -357,7 +401,7 @@
         </div>
         
         <footer>
-            <p>HisaabKitaab©2025(created by Mudassar)-v2.2</p>
+            <p>HisaabKitaab©2025(created by Mudassar)-v3.0</p>
         </footer>
     </div>
 
@@ -367,15 +411,37 @@
         <div class="pdf-loading-text">Generating PDF...</div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <!-- Remove firebase-auth if not using authentication -->
-
     <!-- Your scripts -->
+    <script src="js/pwa-install.js"></script>
+    <script src="js/profile-manager.js"></script>
     <script src="js/firebase-sync.js"></script>
     <script src="js/pdf-generator.js"></script>
     <script src="js/script.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Hide splash screen after load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('splash').style.display = 'none';
+                }, 300);
+            }, 1000);
+        });
+    </script>
 </body>
 </html>

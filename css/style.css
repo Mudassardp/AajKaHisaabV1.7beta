@@ -1,412 +1,161 @@
+/* ===== PWA MOBILE APP STYLES ===== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Dark Mode Variables */
+/* Dark/Light Mode Variables */
 :root {
     --bg-color: #f5f7fa;
     --container-bg: white;
     --text-color: #333;
-    --border-color: #eaeaea;
+    --border-color: #e0e0e0;
     --primary-color: #3498db;
-    --secondary-color: #2c3e50;
+    --secondary-color: #7f8c8d;
     --success-color: #2ecc71;
     --warning-color: #f39c12;
     --danger-color: #e74c3c;
     --info-color: #9b59b6;
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    --hover-bg: #f5f7fa;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    --hover-bg: #f8f9fa;
 }
 
 .dark-mode {
-    --bg-color: #1a1a2e;
-    --container-bg: #16213e;
-    --text-color: #e6e6e6;
-    --border-color: #2d3748;
-    --primary-color: #4d96ff;
-    --secondary-color: #a0aec0;
-    --success-color: #68d391;
-    --warning-color: #f6ad55;
-    --danger-color: #fc8181;
-    --info-color: #a862d1;
+    --bg-color: #121212;
+    --container-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #333;
+    --primary-color: #4dabf7;
+    --secondary-color: #aaa;
+    --success-color: #51cf66;
+    --warning-color: #ff922b;
+    --danger-color: #ff6b6b;
+    --info-color: #cc5de8;
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    --hover-bg: #2d3748;
+    --hover-bg: #2d2d2d;
 }
 
-.dark-mode #expenseTable th {
-    background-color: #2d3748;
-    color: #e2e8f0;
-    border-bottom: 2px solid var(--primary-color);
-}
-
+/* Mobile App Body */
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    line-height: 1.6;
-    padding: 20px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
     min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* For screens larger than 500px - up to 800px */
-@media (min-width: 501px) and (max-width: 800px) {
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-    }
-    
-    .container {
-        max-width: 800px;
-        width: 100%;
-        margin: 0 auto;
-    }
-    
-    /* Header layout for bigger screens */
-    .header-top {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-    
-    .mode-tabs-container {
-        grid-column: 1 / 2;
-        grid-row: 1 / 2;
-        justify-content: flex-start;
-        margin: 0;
-    }
-    
-    .mode-tabs {
-        background-color: var(--hover-bg);
-        border-radius: 5px;
-        padding: 4px;
-        display: flex;
-    }
-    
-    .mode-tab {
-        padding: 8px 16px;
-        font-size: 0.95rem;
-        min-width: 110px;
-    }
-    
-    .sync-tab-btn {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-        justify-self: end;
-        margin: 0;
-    }
-    
-    .header-controls {
-        grid-column: 1 / 3;
-        grid-row: 2 / 3;
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        margin: 0;
-        padding-top: 10px;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .header-controls-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .header-controls-right {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    /* Dark mode button next to control panel */
-    .theme-toggle-btn {
-        margin: 0;
-    }
-    
-    /* Action buttons in one line for bigger screens */
-    .action-buttons {
-        flex-direction: row !important;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-    }
-    
-    .action-buttons .btn {
-        flex: 0 0 auto;
-    }
-    
-    /* Settlement section for bigger screens - single line */
-    .settlement-details {
-        flex-direction: row !important;
-        flex-wrap: nowrap;
-        align-items: center;
-        padding: 0;
-        border-bottom: none;
-        margin-bottom: 0;
-        gap: 10px;
-    }
-    
-    .settlement-first-line {
-        flex: 2;
-        margin-bottom: 0;
-        justify-content: flex-start;
-    }
-    
-    .settlement-second-line {
-        flex: 3;
-        margin-top: 0;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-    
-    .settlement-bank-info {
-        flex: 1;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        border-top: none !important;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .bank-match-indicator {
-        justify-content: center;
-        margin-top: 0 !important;
-    }
-    
-    .bank-match-indicator span {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        white-space: nowrap;
-    }
-    
-    /* Settlement items adjustments */
-    .settlement-item {
-        padding: 10px 12px;
-    }
-    
-    .settlement-from,
-    .settlement-to {
-        font-size: 0.85rem;
-    }
-    
-    .settlement-arrow {
-        font-size: 0.85rem;
-        margin: 0 5px;
-    }
-    
-    .settlement-amount,
-    .settlement-status,
-    .settlement-toggle-btn {
-        min-width: 70px;
-        max-width: 90px;
-        padding: 4px 8px;
-        font-size: 0.8rem;
-    }
-}
-
-/* For very large screens (above 800px) */
-@media (min-width: 801px) {
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-    }
-    
-    .container {
-        max-width: 800px;
-        width: 100%;
-        margin: 0 auto;
-    }
-    
-    /* Same header layout as 501-800px screens */
-    .header-top {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-    
-    .mode-tabs-container {
-        grid-column: 1 / 2;
-        grid-row: 1 / 2;
-        justify-content: flex-start;
-        margin: 0;
-    }
-    
-    .mode-tabs {
-        background-color: var(--hover-bg);
-        border-radius: 5px;
-        padding: 4px;
-        display: flex;
-    }
-    
-    .mode-tab {
-        padding: 8px 16px;
-        font-size: 0.95rem;
-        min-width: 110px;
-    }
-    
-    .sync-tab-btn {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-        justify-self: end;
-        margin: 0;
-    }
-    
-    .header-controls {
-        grid-column: 1 / 3;
-        grid-row: 2 / 3;
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        margin: 0;
-        padding-top: 10px;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .header-controls-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .header-controls-right {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    /* Dark mode button next to control panel */
-    .theme-toggle-btn {
-        margin: 0;
-    }
-    
-    /* Action buttons in one line for bigger screens */
-    .action-buttons {
-        flex-direction: row !important;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-    }
-    
-    .action-buttons .btn {
-        flex: 0 0 auto;
-    }
-    
-    /* Settlement section for bigger screens - single line */
-    .settlement-details {
-        flex-direction: row !important;
-        flex-wrap: nowrap;
-        align-items: center;
-        padding: 0;
-        border-bottom: none;
-        margin-bottom: 0;
-        gap: 10px;
-    }
-    
-    .settlement-first-line {
-        flex: 2;
-        margin-bottom: 0;
-        justify-content: flex-start;
-    }
-    
-    .settlement-second-line {
-        flex: 3;
-        margin-top: 0;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-    
-    .settlement-bank-info {
-        flex: 1;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        border-top: none !important;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .bank-match-indicator {
-        justify-content: center;
-        margin-top: 0 !important;
-    }
-    
-    .bank-match-indicator span {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        white-space: nowrap;
-    }
-    
-    /* Settlement items adjustments */
-    .settlement-item {
-        padding: 10px 12px;
-    }
-    
-    .settlement-from,
-    .settlement-to {
-        font-size: 0.85rem;
-    }
-    
-    .settlement-arrow {
-        font-size: 0.85rem;
-        margin: 0 5px;
-    }
-    
-    .settlement-amount,
-    .settlement-status,
-    .settlement-toggle-btn {
-        min-width: 70px;
-        max-width: 90px;
-        padding: 4px 8px;
-        font-size: 0.8rem;
-    }
-}
-
-/* For all screens */
+/* App Container - Mobile App Look */
 .container {
+    width: 100%;
+    min-height: 100vh;
     margin: 0 auto;
-    background-color: var(--container-bg);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 30px;
+    background: var(--container-bg);
     position: relative;
+    padding: 15px;
+    padding-top: max(15px, env(safe-area-inset-top));
+    padding-bottom: max(15px, env(safe-area-inset-bottom));
 }
 
+/* Header - Mobile App Style */
 header {
     text-align: center;
-    margin-bottom: 30px;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 25px;
     padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--container-bg);
+    z-index: 100;
+    backdrop-filter: blur(10px);
 }
 
 .header-top {
     display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.mode-tabs-container {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
     gap: 10px;
+}
+
+.mode-tabs {
+    display: flex;
+    background: var(--hover-bg);
+    border-radius: 12px;
+    padding: 4px;
+    flex: 1;
+}
+
+.mode-tab {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.mode-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.sync-tab-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .header-controls {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin-left: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
 }
 
-/* Create left and right sections for header controls */
-.header-controls-left {
+.theme-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--hover-bg);
 }
 
 .header-controls-right {
@@ -415,292 +164,186 @@ header {
     gap: 10px;
 }
 
-#controlPanelBtn {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    min-height: 32px;
+#controlPanelBtn, #logoutBtn {
+    padding: 10px 16px;
+    font-size: 14px;
+    height: 44px;
     display: flex;
     align-items: center;
-    gap: 5px;
-}
-
-.control-icon {
-    font-size: 0.9rem;
-}
-
-.theme-toggle-btn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.3s, background-color 0.3s;
-}
-
-.theme-toggle-btn:hover {
-    background-color: var(--hover-bg);
-    transform: rotate(30deg);
-}
-
-.mode-tabs-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 0 auto;
-    flex-wrap: wrap;
-}
-
-.mode-tabs {
-    display: flex;
-    background-color: var(--hover-bg);
-    border-radius: 5px;
-    padding: 4px;
-}
-
-.mode-tab {
-    padding: 8px 16px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-radius: 3px;
-    font-weight: 600;
-    color: var(--secondary-color);
-    transition: all 0.3s;
-    font-size: 0.95rem;
-    min-width: 110px;
-    text-align: center;
-}
-
-.mode-tab.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.sync-tab-btn {
-    background-color: var(--success-color);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-    font-size: 0.95rem;
-    min-width: 110px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.sync-tab-btn:hover {
-    background-color: color-mix(in srgb, var(--success-color) 80%, black);
-    transform: translateY(-2px);
-}
-
-.sync-icon {
-    font-size: 1rem;
-}
-
-.user-status {
-    margin-left: 10px;
+    gap: 6px;
 }
 
 h1 {
     color: var(--primary-color);
-    font-size: 2.5rem;
+    font-size: 28px;
     margin-bottom: 5px;
+    font-weight: 700;
 }
 
+/* Main Content */
 .main-content {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
+    padding-bottom: 20px;
 }
 
-.mode-content {
-    display: none;
-}
-
-.mode-content.active {
-    display: block;
-}
-
-.login-section {
-    text-align: center;
-    padding: 30px 20px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border: 1px dashed var(--border-color);
-}
-
-.create-section, .existing-sheets-section {
-    text-align: center;
+/* Mobile App Cards */
+.create-section, .existing-sheets-section, .login-section {
+    background: var(--container-bg);
+    border-radius: 16px;
     padding: 20px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border: 1px dashed var(--border-color);
-}
-
-.btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-    font-weight: 600;
-}
-
-.btn:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
-    transform: translateY(-2px);
-}
-
-.btn-success {
-    background-color: var(--success-color);
-}
-
-.btn-success:hover {
-    background-color: color-mix(in srgb, var(--success-color) 80%, black);
-}
-
-.btn-warning {
-    background-color: var(--warning-color);
-}
-
-.btn-warning:hover {
-    background-color: color-mix(in srgb, var(--warning-color) 80%, black);
-}
-
-.btn-danger {
-    background-color: var(--danger-color);
-}
-
-.btn-danger:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 80%, black);
-}
-
-.btn-info {
-    background-color: var(--info-color);
-}
-
-.btn-info:hover {
-    background-color: color-mix(in srgb, var(--info-color) 80%, black);
-}
-
-.btn-small {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-}
-
-#logoutBtn {
-    background-color: var(--danger-color);
-    border-color: var(--danger-color);
-}
-
-#logoutBtn:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 80%, black);
-    border-color: color-mix(in srgb, var(--danger-color) 80%, black);
-}
-
-.participants-section, .sheet-section, .edit-participants-section {
-    display: none;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
 }
 
 .section-title {
     color: var(--primary-color);
+    font-size: 18px;
     margin-bottom: 15px;
-    font-size: 1.3rem;
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 8px;
+    font-weight: 600;
+}
+
+/* Buttons - Mobile Touch Friendly */
+.btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    font-size: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    transition: all 0.2s;
+    text-align: center;
+    touch-action: manipulation;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-success { background: var(--success-color); }
+.btn-warning { background: var(--warning-color); }
+.btn-danger { background: var(--danger-color); }
+.btn-info { background: var(--info-color); }
+
+.btn-small {
+    padding: 12px 18px;
+    font-size: 14px;
+    width: auto;
     display: inline-block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
 }
 
-/* Add gap between admin sections */
-.create-section {
-    margin-bottom: 10px;
+/* Action Buttons Grid */
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
 }
 
-.color-legend {
-    display: none;
-}
-
-.legend-item {
+/* Sheets List - Mobile Cards */
+.sheets-list {
+    list-style: none;
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sheet-item {
+    background: var(--container-bg);
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.sheet-item:active {
+    background: var(--hover-bg);
+    transform: scale(0.99);
+}
+
+.sheet-item strong {
+    font-size: 16px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.sheet-date {
+    font-size: 12px;
     color: var(--secondary-color);
 }
 
-.sheet-header {
+/* Sheet Item Actions - Updated for better spacing */
+.sheet-item-actions {
     display: flex;
-    justify-content: space-between;
+    gap: 15px; /* Increased spacing */
     align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
 }
 
-.sheet-name {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-weight: 600;
-    color: var(--text-color);
-    border-left: 4px solid var(--primary-color);
-    flex-grow: 1;
-    font-size: 1.1rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sheet-actions {
+.rename-sheet-btn, .delete-sheet-btn {
+    background: none !important;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s, transform 0.2s;
+    width: 36px;
+    height: 36px;
     display: flex;
-    gap: 10px;
-    margin-left: 15px;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
 }
 
+.rename-sheet-btn {
+    color: var(--primary-color);
+}
+
+.rename-sheet-btn:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 15%, transparent) !important;
+    transform: scale(1.1);
+}
+
+.delete-sheet-btn {
+    color: var(--danger-color);
+}
+
+.delete-sheet-btn:hover {
+    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent) !important;
+    transform: scale(1.1);
+}
+
+/* Participants List */
 .participants-list {
-    list-style-type: none;
+    list-style: none;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
 }
 
 .participant {
-    background-color: var(--hover-bg);
+    background: var(--container-bg);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--border-color);
-    transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-}
-
-.participant:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow);
+    gap: 10px;
 }
 
 .participant-with-avatar {
@@ -711,583 +354,318 @@ h1 {
 }
 
 .participant-avatar-small {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 16px;
     color: white;
-    cursor: pointer;
     flex-shrink: 0;
-    object-fit: cover;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .participant-name {
     font-weight: 600;
-    color: var(--text-color);
-    cursor: pointer;
-    display: block;
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1;
+    flex: 1;
 }
 
-.participant-name:hover {
-    color: var(--primary-color);
-    text-decoration: underline;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-}
-
-.checkbox-container input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--primary-color);
-}
-
-.add-participant-section {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    border-radius: 8px;
-    border: 1px dashed var(--primary-color);
-}
-
-.add-participant-form {
+/* Select All Section */
+.select-all-section {
     display: flex;
     gap: 10px;
-    align-items: center;
+    margin: 15px 0;
     justify-content: center;
     flex-wrap: wrap;
 }
 
-.add-participant-form input {
-    padding: 10px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    font-size: 1rem;
-    min-width: 200px;
-    background-color: var(--container-bg);
-    color: var(--text-color);
-}
-
-.add-participant-form input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-}
-
-.custom-participant {
-    background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
-    border: 1px solid var(--primary-color);
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-    flex-wrap: wrap;
-}
-
+/* Expense Table - Mobile Friendly */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin: 20px 0;
+    background: var(--container-bg);
+    border-radius: 12px;
+    overflow: hidden;
     border: 1px solid var(--border-color);
 }
 
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
 th {
-    background-color: #f8f9fa;
+    background: var(--hover-bg);
+    padding: 16px 12px;
+    text-align: left;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-color);
+    font-size: 14px;
 }
 
-tr:hover {
-    background-color: var(--hover-bg);
+td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+tr:last-child td {
+    border-bottom: none;
 }
 
 .amount-cell {
     text-align: right;
+    font-family: 'Courier New', monospace;
 }
 
 .meals-cell {
     text-align: center;
 }
 
-.total-row {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    font-weight: bold;
-}
-
-.total-row td {
-    border-top: 2px solid var(--primary-color);
-}
-
-input[type="number"] {
+input[type="number"], select {
     width: 100%;
-    padding: 8px 10px;
+    padding: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    text-align: right;
-    background-color: var(--container-bg);
-    color: var(--text-color);
-}
-
-input[type="number"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-}
-
-select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--container-bg);
-    color: var(--text-color);
-    cursor: pointer;
-}
-
-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-}
-
-.summary-box {
-    background-color: var(--hover-bg);
-    padding: 15px;
     border-radius: 8px;
-    margin-top: 20px;
-    border-left: 4px solid var(--primary-color);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-size: 16px;
 }
 
-.summary-box h3 {
-    margin-bottom: 10px;
-    color: var(--primary-color);
-    font-size: 1.3rem;
+/* Summary Box */
+.summary-box {
+    background: var(--container-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
 }
 
 .summary-item {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 5px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.currency {
-    font-weight: bold;
-    color: var(--text-color);
+.summary-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
+/* Hide meals summary items */
 .meals-summary {
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-top: 10px;
-    border-left: 3px solid var(--primary-color);
+    display: none !important;
 }
 
+#totalMealsSummary {
+    display: none !important;
+}
+
+/* Settlement Section */
 .settlement-section {
-    background-color: var(--hover-bg);
+    background: var(--container-bg);
     padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-    border-left: 4px solid var(--info-color);
-}
-
-.settlement-section h3 {
-    font-size: 1.3rem;
-    color: var(--info-color);
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
 }
 
 .settlement-list {
-    list-style-type: none;
-    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .settlement-item {
-    background-color: var(--container-bg);
-    padding: 12px 15px;
-    margin-bottom: 8px;
-    border-radius: 8px;
+    background: var(--container-bg);
+    padding: 16px;
+    border-radius: 12px;
     border: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: transform 0.2s, box-shadow 0.2s;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.settlement-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
 }
 
 .settlement-details {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settlement-first-line {
+    display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .settlement-from, .settlement-to {
-    flex: 2;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 5px;
-    font-size: 0.9rem;
-    color: var(--text-color);
     font-weight: 600;
+    font-size: 14px;
 }
 
 .settlement-arrow {
     color: var(--secondary-color);
-    font-weight: bold;
-    margin: 0 5px;
-    flex-shrink: 0;
+}
+
+.settlement-second-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 .settlement-amount {
-    font-weight: bold;
-    color: var(--text-color);
-    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: 1px solid var(--primary-color);
-    min-width: 90px;
-    max-width: 120px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.settlement-status {
-    font-weight: bold;
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: 1px solid;
-    min-width: 90px;
-    max-width: 120px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.status-paid {
-    color: var(--success-color);
-    background-color: color-mix(in srgb, var(--success-color) 15%, transparent);
-    border-color: var(--success-color);
-}
-
-.status-not-paid {
-    color: var(--danger-color);
-    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
-    border-color: var(--danger-color);
-}
-
-.settlement-toggle-btn {
-    font-weight: bold;
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: 1px solid;
-    min-width: 90px;
-    max-width: 120px;
-    text-align: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-}
-
-.settlement-toggle-btn.paid {
-    color: var(--success-color);
-    background-color: color-mix(in srgb, var(--success-color) 15%, transparent);
-    border-color: var(--success-color);
-}
-
-.settlement-toggle-btn.paid:hover {
-    background-color: color-mix(in srgb, var(--success-color) 25%, transparent);
-    transform: scale(1.05);
-}
-
-.settlement-toggle-btn.not-paid {
-    color: var(--danger-color);
-    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
-    border-color: var(--danger-color);
-}
-
-.settlement-toggle-btn.not-paid:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 25%, transparent);
-    transform: scale(1.05);
-}
-
-.no-settlements {
-    text-align: center;
-    color: var(--secondary-color);
-    padding: 20px;
-    font-style: italic;
-}
-
-/* Settlement bank info styles */
-.settlement-bank-info {
-    width: 100%;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-color);
-}
-
-.bank-match-indicator {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
-
-.bank-match-indicator span {
-    font-size: 0.75rem;
-    color: var(--success-color);
-    background-color: color-mix(in srgb, var(--success-color) 20%, transparent);
-    padding: 4px 8px;
-    border-radius: 3px;
-    border: 1px solid var(--success-color);
-    text-align: center;
-    white-space: nowrap;
-    max-width: 100%;
-}
-
-.sheets-list {
-    list-style-type: none;
-    margin-top: 15px;
-}
-
-.sheet-item {
-    background-color: var(--container-bg);
-    padding: 12px 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.sheet-item:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 5%, transparent);
-}
-
-.sheet-date {
-    color: var(--secondary-color);
-    font-size: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sheet-item-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.delete-sheet-btn, .rename-sheet-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 5px;
-    border-radius: 3px;
-    transition: background-color 0.2s;
-}
-
-.delete-sheet-btn {
-    color: var(--danger-color);
-}
-
-.delete-sheet-btn:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
-}
-
-.rename-sheet-btn {
-    color: var(--primary-color);
-}
-
-.rename-sheet-btn:hover {
-    background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
-}
-
-.no-sheets {
-    text-align: center;
-    color: var(--secondary-color);
-    padding: 20px;
-}
-
-.edit-participants-list {
-    list-style-type: none;
-    margin-bottom: 20px;
-}
-
-.edit-participant-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    margin-bottom: 10px;
-    background-color: var(--hover-bg);
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-}
-
-.edit-participant-name {
+    background: var(--hover-bg);
+    padding: 8px 12px;
+    border-radius: 8px;
     font-weight: 600;
-    color: var(--text-color);
+    font-size: 14px;
 }
 
-.remove-participant-btn {
-    background: none;
-    border: none;
+.settlement-toggle-btn, .settlement-status {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 80px;
+}
+
+.settlement-toggle-btn.paid, .status-paid {
+    background: color-mix(in srgb, var(--success-color) 20%, transparent);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.settlement-toggle-btn.not-paid, .status-not-paid {
+    background: color-mix(in srgb, var(--danger-color) 20%, transparent);
     color: var(--danger-color);
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 5px;
-    border-radius: 3px;
-    transition: background-color 0.2s;
+    border: 1px solid var(--danger-color);
 }
 
-.remove-participant-btn:hover {
-    background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
-}
-
+/* Modals - Mobile Bottom Sheets */
 .modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
     justify-content: center;
-    align-items: center;
-    overflow-y: auto;
+    align-items: flex-end;
+    z-index: 1000;
     padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 
 .modal-content {
-    background-color: var(--container-bg);
-    padding: 30px;
-    border-radius: 10px;
-    max-width: 500px;
-    width: 90%;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    max-height: 90vh;
+    background: var(--container-bg);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-height: 80vh;
     overflow-y: auto;
+    padding: 25px;
+    animation: slideUp 0.3s ease;
 }
 
-.control-panel-modal,
-.profile-card-modal {
-    max-width: 600px;
-    max-height: 85vh;
-}
-
-.cropper-modal {
-    max-width: 700px;
-    max-height: 90vh;
-}
-
-.modal h3 {
-    margin-bottom: 15px;
-    color: var(--primary-color);
-}
-
-.modal p {
-    margin-bottom: 20px;
-    color: var(--text-color);
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-buttons {
     display: flex;
     gap: 10px;
-    justify-content: center;
+    margin-top: 20px;
 }
 
+.modal-buttons .btn {
+    flex: 1;
+}
+
+/* Form Inputs */
 .form-input {
     width: 100%;
-    padding: 12px 15px;
+    padding: 16px;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
-    font-size: 1rem;
-    margin-bottom: 15px;
-    background-color: var(--container-bg);
+    border-radius: 12px;
+    background: var(--container-bg);
     color: var(--text-color);
+    font-size: 16px;
+    margin-bottom: 15px;
 }
 
-.form-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+/* Profile Card */
+.profile-avatar-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
 }
 
-.file-input {
-    margin: 10px 0;
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: bold;
+    background-size: cover;
+    background-position: center;
 }
 
+.profile-field {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--hover-bg);
+    border-radius: 12px;
+}
+
+/* Footer */
 footer {
-    margin-top: 40px;
     text-align: center;
-    color: var(--secondary-color);
-    font-size: 0.9rem;
-    border-top: 1px solid var(--border-color);
+    margin-top: 30px;
     padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    color: var(--secondary-color);
+    font-size: 12px;
 }
 
+/* PDF Loading */
 .pdf-loading {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    z-index: 2000;
-    display: flex;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: none; /* Changed from flex to none */
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
+    z-index: 2000;
 }
 
 .pdf-loading-spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid var(--border-color);
-    border-top: 5px solid var(--primary-color);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-.pdf-loading-text {
-    color: var(--text-color);
-    font-size: 16px;
-    font-weight: 600;
+    margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -1295,7 +673,23 @@ footer {
     100% { transform: rotate(360deg); }
 }
 
-/* Control Panel Styles */
+.pdf-loading-text {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* No Data Messages */
+.no-sheets, .no-settlements, .no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--secondary-color);
+    font-style: italic;
+}
+
+/* ===== CONTROL PANEL FIXES ===== */
+
+/* Control Panel Section */
 .control-panel-section {
     margin: 20px 0;
     padding: 15px;
@@ -1364,18 +758,22 @@ footer {
     cursor: pointer;
 }
 
+/* FIXED: Control Panel Avatar - This fixes the stretching issue */
 .default-participant-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: white;
-    flex-shrink: 0;
-    object-fit: cover;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    color: white !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
 .default-participant-name {
@@ -1422,68 +820,7 @@ footer {
     background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
 }
 
-/* Profile Card Styles */
-.profile-card-modal {
-    max-width: 500px;
-    text-align: left;
-}
-
-.profile-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.profile-avatar-container {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 15px;
-    position: relative;
-}
-
-.profile-avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    object-fit: cover;
-    background-size: cover;
-    background-position: center;
-}
-
-.profile-details {
-    margin: 20px 0;
-}
-
-.profile-field {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: var(--hover-bg);
-    border-radius: 8px;
-    border-left: 3px solid var(--primary-color);
-}
-
-.profile-field label {
-    display: block;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    font-size: 0.95rem;
-}
-
-.profile-field span {
-    display: block;
-    color: var(--text-color);
-    word-break: break-word;
-    line-height: 1.5;
-}
-
+/* Bank Accounts in Profile */
 .bank-accounts-container {
     display: flex;
     flex-direction: column;
@@ -1542,22 +879,6 @@ footer {
 .bank-copy-btn:hover {
     background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
     transform: scale(1.1);
-}
-
-.no-data {
-    color: var(--secondary-color);
-    font-style: italic;
-    text-align: center;
-    padding: 10px;
-}
-
-.profile-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
 }
 
 /* Edit Profile Form */
@@ -1638,7 +959,7 @@ footer {
     justify-content: center;
 }
 
-/* Image Cropper Modal Styles */
+/* Image Cropper */
 .cropper-container {
     width: 100%;
     height: 400px;
@@ -1684,400 +1005,242 @@ footer {
     margin-top: 20px;
 }
 
-/* Table cell avatars */
-td:first-child .participant-with-avatar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-}
-
-/* Ensure all avatars stay perfectly round */
-.participant-avatar-small,
-.default-participant-avatar,
-.profile-avatar,
-.profile-image-preview,
-.current-profile-image {
-    aspect-ratio: 1 / 1;
-    box-sizing: border-box;
-}
-
-/* Fix for avatar image display */
-.participant-avatar-small,
-.profile-avatar,
-.default-participant-avatar,
-.current-profile-image {
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-}
-
-/* Ensure avatars are properly displayed in tables */
-td:first-child .participant-with-avatar .participant-avatar-small {
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-}
-
-/* Preferred Bank Styles */
-.bank-account-item.preferred {
-    border-left: 3px solid var(--success-color) !important;
-    background-color: color-mix(in srgb, var(--success-color) 10%, transparent) !important;
-}
-
-.preferred-badge {
-    color: var(--success-color);
-    font-size: 0.8rem;
-    margin-left: 8px;
-    font-weight: bold;
-}
-
-/* Settlement preferred match indicator */
-.preferred-match-indicator {
-    font-size: 0.75rem;
-    color: var(--success-color);
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.preferred-match-indicator::before {
-    content: "★";
-    font-size: 0.9rem;
-}
-
-/* MOBILE RESPONSIVENESS - For screens ≤500px */
-@media (max-width: 500px) {
+/* Responsive Design */
+@media (min-width: 768px) {
     .container {
-        padding: 15px;
-        max-width: 100%;
-    }
-    
-    h1 {
-        font-size: 2rem;
-    }
-    
-    .section-title {
-        font-size: 1.1rem;
-    }
-    
-    .header-top {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-    
-    .mode-tabs-container {
-        order: 1;
-        margin: 0;
-        margin-top: 5px;
-        margin-bottom: -20px;
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        flex-wrap: nowrap;
-    }
-    
-    .mode-tabs {
-        flex: 1;
-        display: flex;
-    }
-    
-    .mode-tab {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        min-width: auto;
-        flex: 1;
-    }
-    
-    .sync-tab-btn {
-        flex: 0 0 auto;
-        min-width: 80px;
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        margin-bottom: 0px;
-    }
-    
-    .header-controls {
-        order: 2;
-        margin-left: 0;
-        margin-top: 8px;
-        justify-content: space-between;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-    
-    .header-controls-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex: 1;
-    }
-    
-    .header-controls-right {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex: 1;
-        justify-content: flex-end;
-    }
-    
-    /* Dark mode button next to control panel for mobile too */
-    .theme-toggle-btn {
-        margin: 0;
-    }
-    
-    #logoutBtn, #controlPanelBtn {
-        padding: 4px 8px;
-        font-size: 0.75rem;
-        min-width: 60px;
-        margin-top: 0px;
-        margin-bottom: 0px;
-        height: 32px;
-    }
-    
-    .theme-toggle-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 1.2rem;
-    }
-    
-    .participants-list {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-    
-    th, td {
-        padding: 6px 8px;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .add-participant-form {
-        flex-direction: column;
-    }
-    
-    .add-participant-form input {
-        min-width: auto;
-        width: 100%;
-    }
-    
-    table {
-        display: block;
-        overflow-x: auto;
-    }
-    
-    /* Settlement card layout for mobile */
-    .settlement-details {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 10px;
-        width: 100%;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border-color);
-        margin-bottom: 8px;
-    }
-    
-    .settlement-first-line {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        flex-wrap: nowrap;
-        margin-bottom: 8px;
-        width: 100%;
-    }
-    
-    .settlement-from,
-    .settlement-to,
-    .settlement-arrow {
-        display: inline-block;
-        white-space: nowrap;
-    }
-    
-    .settlement-from,
-    .settlement-to {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--text-color);
-    }
-    
-    .settlement-arrow {
-        color: var(--secondary-color);
-        font-weight: bold;
-        margin: 0 3px;
-        font-size: 0.9rem;
-    }
-    
-    .settlement-second-line {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .settlement-amount,
-    .settlement-status,
-    .settlement-toggle-btn {
-        min-width: 80px;
-        padding: 6px 10px;
-        font-size: 0.8rem;
-        margin: 0;
-        display: inline-block;
-    }
-    
-    .settlement-arrow {
-        display: inline-block !important;
-    }
-    
-    .settlement-from, .settlement-to, .settlement-arrow, .settlement-amount, .settlement-status, .settlement-toggle-btn {
-        flex: none !important;
-    }
-    
-    .sheet-name {
-        font-size: 1rem;
+        max-width: 500px;
+        margin: 0 auto;
+        border-radius: 0;
+        box-shadow: none;
     }
     
     .modal-content {
+        max-width: 500px;
+        border-radius: 20px;
+        margin: auto;
+    }
+    
+    .modal {
+        align-items: center;
         padding: 20px;
-        width: 95%;
-    }
-    
-    .control-panel-modal,
-    .profile-card-modal {
-        max-width: 95%;
-        padding: 15px;
-    }
-    
-    .profile-avatar-container {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .profile-avatar {
-        font-size: 1.8rem;
-    }
-    
-    .profile-image-preview {
-        width: 120px;
-        height: 120px;
-        font-size: 2.5rem;
-    }
-    
-    .bank-account-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .bank-copy-btn {
-        align-self: flex-start;
-    }
-    
-    .form-buttons {
-        flex-direction: column;
-    }
-    
-    .default-participant-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .default-participant-actions {
-        align-self: flex-end;
-    }
-    
-    .cropper-modal {
-        max-width: 95%;
-        padding: 15px;
-    }
-    
-    .cropper-container {
-        height: 250px;
-    }
-    
-    /* Bank match indicator for mobile */
-    .bank-match-indicator {
-        justify-content: center !important;
-        margin-top: 8px !important;
-        width: 100% !important;
-    }
-    
-    .bank-match-indicator span {
-        font-size: 0.7rem !important;
-        padding: 3px 6px !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-        max-width: 100% !important;
-    }
-    
-    /* Ensure settlement details has proper spacing for bank info */
-    .settlement-details {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-    }
-    
-    .settlement-second-line {
-        margin-top: 8px !important;
-        width: 100% !important;
-        justify-content: center !important;
-    }
-    
-    .settlement-bank-info {
-        margin-top: 8px !important;
-        padding-top: 8px !important;
-        border-top: 1px solid var(--border-color) !important;
-        width: 100% !important;
     }
 }
 
-/* Force perfect circles on all screens */
+/* Prevent text selection on interactive elements */
+.btn, .sheet-item, .participant, .mode-tab {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* iOS Safe Areas */
+@supports (padding: max(0px)) {
+    .container {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+    }
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+}
+
+/* Disable pull-to-refresh */
+body {
+    overscroll-behavior-y: none;
+}
+
+/* Fix for iOS 100vh issue */
+@supports (-webkit-touch-callout: none) {
+    body, .container {
+        min-height: -webkit-fill-available;
+    }
+}
+
+/* Avatar fix for all avatar types */
+.participant-avatar-small,
+.profile-avatar,
+.default-participant-avatar,
+.current-profile-image {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    object-fit: cover !important;
+}
+
+/* Mobile-specific adjustments */
 @media (max-width: 500px) {
+    .default-participant-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 12px !important;
+    }
+    
     .participant-avatar-small {
         width: 32px !important;
         height: 32px !important;
-        min-width: 32px;
-        min-height: 32px;
+        font-size: 14px !important;
     }
     
-    .default-participant-avatar {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px;
-        min-height: 36px;
-    }
-    
-    .profile-avatar-container {
-        width: 80px !important;
-        height: 80px !important;
-        min-width: 80px;
-        min-height: 80px;
-    }
-    
-    .profile-image-preview {
-        width: 120px !important;
-        height: 120px !important;
-        min-width: 120px;
-        min-height: 120px;
+    .sheet-item-actions {
+        gap: 10px;
     }
 }
 
-/* Print styles for PDF generation */
-@media print {
-    .participant-avatar-small,
-    .default-participant-avatar,
-    .profile-avatar {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        border-radius: 50% !important;
-    }
+/* ===== CRITICAL FIXES FOR HIDDEN SECTIONS ===== */
+
+/* Participants Section - Should be hidden by default */
+.participants-section {
+    display: none;
+    margin-top: 20px;
+}
+
+/* Sheet Section - Should be hidden by default */
+.sheet-section {
+    display: none;
+    margin-top: 20px;
+}
+
+/* Edit Participants Section - Should be hidden by default */
+.edit-participants-section {
+    display: none;
+    margin-top: 20px;
+}
+
+/* Mode Content Sections */
+.mode-content {
+    display: none;
+}
+
+.mode-content.active {
+    display: block;
+}
+
+/* Hide action buttons that should be hidden */
+.action-buttons .btn {
+    display: none;
+}
+
+.action-buttons .btn:not([style*="display: none"]) {
+    display: inline-block !important;
+}
+
+/* Ensure create button is visible in admin mode */
+#createBtn {
+    display: block !important;
+}
+
+/* Ensure save and calculate buttons are hidden by default */
+#calculateBtn, #saveBtn {
+    display: none !important;
+}
+
+/* Share PDF and Close Sheet buttons should be visible when needed */
+#sharePdfBtn, #closeSheetBtn {
+    display: inline-block !important;
+}
+
+/* Hide sheet actions by default */
+#adminSheetActions {
+    display: none !important;
+}
+
+/* Summary should be visible when sheet is open */
+.summary-box, .settlement-section {
+    display: block;
+}
+
+/* Fix for total meals summary visibility */
+#totalMealsSummary {
+    display: none;
+}
+
+/* Fix for modal displays */
+.modal {
+    display: none;
+}
+
+.modal[style*="display: flex"] {
+    display: flex !important;
+}
+
+/* ===== V3.1 UPDATES ===== */
+
+/* Sheet header with publish button */
+.sheet-name-publish-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sheet-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    flex: 1;
+}
+
+/* Publish button */
+#togglePublishBtn {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Calculate and Save buttons visibility fix */
+.action-buttons #calculateBtn,
+.action-buttons #saveBtn {
+    display: inline-block !important;
+}
+
+/* Same bank indicator - colorless */
+.bank-match-indicator {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background-color: var(--hover-bg);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.bank-match-indicator span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Deleted sheets bin styles */
+.bin-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.bin-sheet-item {
+    background-color: color-mix(in srgb, var(--danger-color) 10%, transparent) !important;
+    border-left: 3px solid var(--danger-color) !important;
+}
+
+.bin-sheet-item .bin-sheet-date {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.bin-sheet-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Version indicator */
+footer p {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
 }
