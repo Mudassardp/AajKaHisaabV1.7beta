@@ -258,7 +258,7 @@
                 const statusBg = settlement.status === 'paid' ? '#e8f6f3' : '#fdedec';
                 const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
                 
-                // Add bank match indicator if applicable - COLORLESS VERSION
+                // Add bank match indicator if applicable - UPDATED: Colorless version
                 let bankMatchHtml = '';
                 if (settlement.bankMatch && settlement.bank) {
                     let preferredText = '';
@@ -266,7 +266,7 @@
                         preferredText = ' (Preferred)';
                     }
                     bankMatchHtml = `
-                        <div style="margin-top: 5px; font-size: 11px; color: #666; background-color: #f5f5f5; padding: 3px 8px; border-radius: 3px; border: 1px solid #ddd;">
+                        <div style="margin-top: 5px; font-size: 11px; color: #666; font-style: italic;">
                             Same Bank: ${settlement.bank}${preferredText}
                         </div>
                     `;
@@ -300,7 +300,7 @@
         // Footer
         const footer = `
             <div style="text-align: center; margin-top: 25px; padding-top: 12px; border-top: 1px solid #eaeaea; color: #7f8c8d; font-size: 8px;">
-                <p>Generated with HisaabKitaabApp (created by Mudassar) • ${new Date().toLocaleString()} • v3.1</p>
+                <p>Generated with HisaabKitaabApp (created by Mudassar) • ${new Date().toLocaleString()} • v3.4</p>
             </div>
         `;
         

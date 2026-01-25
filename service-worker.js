@@ -1,17 +1,19 @@
 // Service Worker for HisaabKitaab PWA
-const CACHE_NAME = 'hisaabkitaab-v3.0-pwa';
+const CACHE_NAME = 'hisaabkitaab-v3.3-pwa';
+const BASE_PATH = '/AajKaHisaab/'; // Updated for GitHub Pages
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/script.js',
-  '/js/profile-manager.js',
-  '/js/pdf-generator.js',
-  '/js/firebase-sync.js',
-  '/js/pwa-install.js',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'css/style.css',
+  BASE_PATH + 'js/script.js',
+  BASE_PATH + 'js/profile-manager.js',
+  BASE_PATH + 'js/pdf-generator.js',
+  BASE_PATH + 'js/firebase-sync.js',
+  BASE_PATH + 'js/pwa-install.js',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'icons/icon-192x192.png',
+  BASE_PATH + 'icons/icon-512x512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js',
@@ -25,8 +27,10 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Caching app shell');
-        return cache.addAll(urlsToCache);
+        console.log('Caching app shell for GitHub Pages:', BASE_PATH);
+        return cache.addAll(urlsToCache.map(url => 
+          url.startsWith('http') ? url : new URL(url, self.location.origin).href
+        ));
       })
   );
 });
@@ -76,7 +80,7 @@ self.addEventListener('fetch', event => {
           return response;
         }).catch(() => {
           if (event.request.headers.get('accept').includes('text/html')) {
-            return caches.match('/index.html');
+            return caches.match(BASE_PATH + 'index.html');
           }
         });
       })

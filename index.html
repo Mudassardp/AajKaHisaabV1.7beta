@@ -9,14 +9,14 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- App Icon -->
-    <link rel="icon" href="icons/icon-192x192.png" type="image/png">
+    <!-- App Icon - Using emoji as fallback -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
     
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HisaabKitaab">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
     
     <!-- Theme Colors -->
     <meta name="theme-color" content="#3498db">
@@ -25,7 +25,7 @@
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     
-    <!-- External Libraries -->
+    <!-- External Libraries with fallbacks -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
@@ -42,367 +42,507 @@
         <p style="font-size:1.2rem;">Loading...</p>
     </div>
 
+    <!-- Mobile App Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button id="homeBtn" class="nav-btn active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Home</span>
+        </button>
+        <button id="sheetsBtn" class="nav-btn">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Sheets</span>
+        </button>
+        <button id="createBtnNav" class="nav-btn nav-create" style="display: none;">
+            <span class="nav-icon">➕</span>
+            <span class="nav-text">Create</span>
+        </button>
+        <button id="refreshBtn" class="nav-btn">
+            <span class="nav-icon">⟳</span>
+            <span class="nav-text">Refresh</span>
+        </button>
+        <button id="settingsBtn" class="nav-btn">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Settings</span>
+        </button>
+    </nav>
+
     <div class="container">
-        <header>
-            <div class="header-top">
-                <div class="mode-tabs-container">
-                    <div class="mode-tabs">
-                        <button id="viewerTab" class="mode-tab active">Viewer Mode</button>
-                        <button id="adminTab" class="mode-tab">Admin Mode</button>
-                    </div>
-                    <button id="manualSyncBtn" class="sync-tab-btn">
-                        <span class="sync-icon">🔄</span> Sync
-                    </button>
-                </div>
-                
-                <div class="header-controls">
-                    <button id="controlPanelBtn" class="btn btn-small btn-info" style="display: none;">
-                        <span class="control-icon">⚙️</span> Control Panel
-                    </button>
-                    
-                    <button id="themeToggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
-                        <span class="theme-icon">🌙</span>
-                    </button>
-                    
-                    <div id="userStatus" class="user-status" style="display: none;">
-                        <button id="logoutBtn" class="btn btn-small">Logout</button>
-                    </div>
-                </div>
-            </div>
-            
-            <h1>HisaabKitaab</h1>
+        <!-- Mobile App Header -->
+        <header class="mobile-header">
+            <h1>HisaabKitaabApp</h1>
         </header>
         
-        <div class="main-content">
-            <!-- Viewer Mode Content -->
-            <div id="viewerContent" class="mode-content active">
-                <div class="existing-sheets-section">
-                    <h2 class="section-title">Existing Expense Sheets</h2>
-                    <div id="sheetsListContainer">
-                        <div class="no-sheets" id="noSheetsMessage">No saved sheets found.</div>
-                        <ul id="sheetsList" class="sheets-list" style="display: none;"></ul>
-                    </div>
+        <!-- Home Page Content -->
+        <div id="homeContent" class="page-content active">
+            <div class="welcome-section">
+                <!-- Removed welcome text as requested -->
+                
+                <div class="quick-actions">
+                    <button id="createQuickBtn" class="btn btn-primary btn-large" style="display: none;">
+                        <span class="btn-icon">➕</span> Create New Hisaab
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Admin Mode Content -->
-            <div id="adminContent" class="mode-content">
-                <div id="loginSection" class="login-section">
-                    <div class="action-buttons">
-                        <button id="loginAsAdminBtn" class="btn btn-info">Login as Admin</button>
-                    </div>
-                </div>
-
-                <div id="adminSections" style="display: none;">
-                    <div class="create-section">
-                        <button id="createBtn" class="btn">Create New Hisaab</button>
+                
+                <div class="recent-sheets-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Recent Sheets</h3>
                     </div>
                     
-                    <div class="existing-sheets-section">
-                        <h2 class="section-title">Existing Expense Sheets</h2>
-                        <div id="adminSheetsListContainer">
-                            <div class="no-sheets" id="adminNoSheetsMessage">No saved sheets found.</div>
-                            <ul id="adminSheetsList" class="sheets-list" style="display: none;"></ul>
+                    <div id="recentSheetsList" class="recent-sheets-list">
+                        <div class="no-recent-sheets">No recent sheets found.</div>
+                    </div>
+                    
+                    <div class="view-all-container">
+                        <button id="viewAllSheetsBtn" class="btn btn-text view-all-btn">See All</button>
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <div class="stats-grid">
+                        <div class="stat-card" id="defaultParticipantsCard">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-number" id="totalParticipantsCount">0</div>
+                            <div class="stat-label">Default Participants</div>
+                        </div>
+                        <div class="stat-card" id="totalSheetsCard">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-number" id="totalSheetsCount">0</div>
+                            <div class="stat-label">Total Sheets</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Admin Login Modal -->
-            <div id="adminLoginModal" class="modal">
-                <div class="modal-content">
-                    <h3>Admin Login</h3>
-                    <p>Please enter the admin password to access editing features:</p>
-                    <input type="password" id="adminPasswordInput" placeholder="Enter admin password" class="form-input">
-                    <div class="modal-buttons" style="margin-top: 20px;">
-                        <button id="confirmAdminLoginBtn" class="btn btn-success">Login</button>
-                        <button id="cancelAdminLoginBtn" class="btn">Cancel</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Participants Section (Admin Only) -->
-            <div id="participantsSection" class="participants-section">
-                <h2 class="section-title">Select Participants</h2>
-                <div class="color-legend">
-                    <div class="legend-item">
-                        <span>Default participants have unique colors</span>
-                    </div>
-                </div>
-                
-                <ul id="participantsList" class="participants-list"></ul>
-                
-                <div class="add-participant-section">
-                    <h3>Add Custom Participant</h3>
-                    <div class="add-participant-form">
-                        <input type="text" id="customParticipantInput" placeholder="Enter participant name">
-                        <button id="addCustomParticipantBtn" class="btn btn-small">Add Participant</button>
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <button id="createSheetBtn" class="btn btn-success">Create Sheet with Selected Participants</button>
+        </div>
+        
+        <!-- Sheets Page Content -->
+        <div id="sheetsContent" class="page-content">
+            <div class="page-header">
+                <h2 class="page-title">All Sheets</h2>
+                <div class="page-actions">
+                    <button id="syncSheetsBtn" class="btn btn-small btn-info" style="display: none;">
+                        <span class="btn-icon">⟳</span> Sync
+                    </button>
                 </div>
             </div>
             
-            <!-- Sheet Section -->
-            <div id="sheetSection" class="sheet-section">
-                <div class="sheet-header">
-                    <div class="sheet-name-publish-container">
-                        <div id="sheetName" class="sheet-name"></div>
-                        <button id="togglePublishBtn" class="btn btn-small btn-warning" style="display: none;">
-                            <span id="publishIcon">📢</span> <span id="publishText">Publish</span>
+            <div class="sheets-filter" id="sheetsFilterContainer">
+                <div class="filter-tabs" id="filterTabsContainer">
+                    <button id="allSheetsTab" class="filter-tab active">All Sheets</button>
+                    <button id="publishedSheetsTab" class="filter-tab">Published</button>
+                    <button id="unpublishedSheetsTab" class="filter-tab">Unpublished</button>
+                </div>
+            </div>
+            
+            <div class="existing-sheets-section">
+                <div id="sheetsListContainer">
+                    <div class="no-sheets" id="noSheetsMessage">No saved sheets found.</div>
+                    <ul id="sheetsList" class="sheets-list" style="display: none;"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Page Content -->
+        <div id="createContent" class="page-content">
+            <div class="page-header">
+                <h2 class="page-title">Create New Hisaab</h2>
+                <div class="page-actions">
+                    <button id="cancelCreateBtn" class="btn btn-small">Cancel</button>
+                </div>
+            </div>
+            
+            <!-- Participants Selection Section -->
+            <div id="createParticipantsSection">
+                <div class="section-card">
+                    <h3 class="section-title">Select Participants</h3>
+                    <div class="color-legend">
+                        <div class="legend-item">
+                            <span>Default participants have unique colors</span>
+                        </div>
+                    </div>
+                    
+                    <div class="select-all-section">
+                        <button id="selectAllBtn" class="btn btn-small btn-success">✓ Select All</button>
+                        <button id="deselectAllBtn" class="btn btn-small btn-warning">✗ Deselect All</button>
+                    </div>
+                    
+                    <ul id="createParticipantsList" class="participants-list"></ul>
+                    
+                    <div class="add-participant-section">
+                        <h3>Add Custom Participant</h3>
+                        <div class="add-participant-form">
+                            <input type="text" id="customParticipantInput" placeholder="Enter participant name" class="large-input">
+                            <button id="addCustomParticipantBtn" class="btn btn-small">Add Participant</button>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="createSheetBtn" class="btn btn-success btn-large">
+                            <span class="btn-icon">📋</span> Create Sheet
                         </button>
                     </div>
-                    <div id="adminSheetActions" class="sheet-actions" style="display: none;">
-                        <button id="editParticipantsBtn" class="btn btn-info">Edit Participants</button>
-                        <button id="deleteSheetBtn" class="btn btn-danger">Delete Sheet</button>
-                    </div>
                 </div>
-                
-                <table id="expenseTable">
-                    <thead>
-                        <tr>
-                            <th>Participant</th>
-                            <th>Spent (SAR)</th>
-                            <th>Meals</th>
-                            <th>To Be Paid (SAR)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                    </tbody>
-                </table>
-                
-                <div class="summary-box">
-                    <h3 class="section-title">Expense Summary</h3>
-                    <div class="summary-item">
-                        <span>Total Participants:</span>
-                        <span class="currency" id="totalParticipants">0</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Total Spent:</span>
-                        <span class="currency" id="totalSpent">0.00 SAR</span>
-                    </div>
-                    <div id="totalMealsSummary" class="summary-item">
-                        <span>Total Meals:</span>
-                        <span class="currency" id="totalMeals">0</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Cost Per Meal:</span>
-                        <span class="currency" id="costPerMeal">0.00 SAR</span>
-                    </div>
-                    <div class="meals-summary">
-                        <div class="summary-item">
-                            <span>1 Meal Participants:</span>
-                            <span id="oneMealCount">0</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>2 Meals Participants:</span>
-                            <span id="twoMealsCount">0</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>All Meals Participants:</span>
-                            <span id="threeMealsCount">0</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settlement-section">
-                    <h3 class="section-title">Settlement Suggestions</h3>
-                    <div id="settlementList" class="settlement-list">
-                        <div class="no-settlements">Calculate shares to see settlement suggestions</div>
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <button id="calculateBtn" class="btn btn-success">Calculate Shares</button>
-                    <button id="saveBtn" class="btn btn-warning">Save</button>
-                    <button id="sharePdfBtn" class="btn btn-info">Share as PDF</button>
-                    <button id="closeSheetBtn" class="btn">Close Sheet</button>
-                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Page Content -->
+        <div id="settingsContent" class="page-content">
+            <div class="page-header">
+                <h2 class="page-title">Settings</h2>
             </div>
             
-            <!-- Edit Participants Section (Admin Only) -->
-            <div id="editParticipantsSection" class="edit-participants-section">
-                <h2 class="section-title">Edit Participants</h2>
-                
-                <div class="add-participant-section">
-                    <h3>Add New Participant</h3>
-                    <div class="add-participant-form">
-                        <input type="text" id="editCustomParticipantInput" placeholder="Enter participant name">
-                        <button id="editAddCustomParticipantBtn" class="btn btn-small">Add Participant</button>
+            <div class="settings-section">
+                <div class="section-card">
+                    <h3 class="section-title">Account</h3>
+                    
+                    <div id="loginSection" class="login-section" style="display: none;">
+                        <p class="section-description">Login as admin to access editing features.</p>
+                        <button id="loginAsAdminBtn" class="btn btn-info btn-block">
+                            <span class="btn-icon">🔐</span> Login as Admin
+                        </button>
+                    </div>
+
+                    <div id="adminSection" style="display: none;">
+                        <div class="user-info">
+                            <div class="user-avatar">A</div>
+                            <div class="user-details">
+                                <div class="user-name">Admin User</div>
+                                <div class="user-role">Administrator</div>
+                            </div>
+                        </div>
+                        <button id="logoutBtn" class="btn btn-danger btn-block">
+                            <span class="btn-icon">🚪</span> Logout
+                        </button>
                     </div>
                 </div>
                 
-                <h3>Current Participants</h3>
-                <ul id="editParticipantsList" class="edit-participants-list"></ul>
-                
-                <div class="action-buttons">
-                    <button id="updateParticipantsBtn" class="btn btn-success">Update Participants & Recalculate</button>
-                    <button id="cancelEditBtn" class="btn">Cancel</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Delete Confirmation Modal -->
-        <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <h3>Delete Sheet</h3>
-                <p>Are you sure you want to delete this expense sheet? This action cannot be undone.</p>
-                <div class="modal-buttons">
-                    <button id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
-                    <button id="cancelDeleteBtn" class="btn">Cancel</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Control Panel Modal -->
-        <div id="controlPanelModal" class="modal">
-            <div class="modal-content control-panel-modal">
-                <h3>Control Panel v3.0</h3>
-                
-                <!-- Default Participants Management -->
-                <div class="control-panel-section">
-                    <h4>Default Participants List</h4>
-                    <p class="section-description">Add, edit, or remove default participants. Changes here won't affect existing sheets.</p>
+                <div class="section-card">
+                    <h3 class="section-title">App Settings</h3>
                     
-                    <div class="add-participant-control">
-                        <input type="text" id="newDefaultParticipantInput" placeholder="Enter participant name" class="form-input">
-                        <button id="addDefaultParticipantBtn" class="btn btn-small">Add to Default List</button>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-icon">🌙</span>
+                            <div class="setting-details">
+                                <div class="setting-name">Dark Mode</div>
+                                <div class="setting-description">Switch between light and dark theme</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="themeToggle">
+                            <span class="slider"></span>
+                        </label>
                     </div>
                     
-                    <ul id="defaultParticipantsList" class="default-participants-list"></ul>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-icon">⟳</span>
+                            <div class="setting-details">
+                                <div class="setting-name">Auto Sync</div>
+                                <div class="setting-description">Automatically sync with cloud</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="autoSyncToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <button id="defaultParticipantsBtn" class="btn btn-info btn-block">
+                        <span class="btn-icon">👥</span> Default Participant List
+                    </button>
+                    
+                    <button id="manualSyncBtn" class="btn btn-success btn-block">
+                        <span class="btn-icon">⟳</span> Sync Now
+                    </button>
+                    
+                    <!-- PWA Install Button (Added in Settings) -->
+                    <!-- This will be dynamically added by script.js -->
                 </div>
                 
-                <!-- Deleted Sheets Bin -->
-                <div class="control-panel-section">
-                    <h4>Deleted Sheets Bin</h4>
-                    <p class="section-description">Restore or permanently delete sheets that have been deleted.</p>
+                <!-- Deleted Sheets Bin Section - MOVED TO SETTINGS -->
+                <div id="deletedSheetsBinSection" class="section-card" style="display: none;">
+                    <h3 class="section-title">Deleted Sheets Bin</h3>
+                    <p class="section-description" style="margin-bottom: 15px; color: var(--secondary-color); font-size: 0.9rem;">
+                        Restore or permanently delete sheets that have been deleted.
+                    </p>
                     
-                    <div id="deletedSheetsBinContainer" style="max-height: 300px; overflow-y: auto;">
+                    <div id="deletedSheetsBinContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
                         <div id="emptyBinMessage" class="no-sheets">Bin is empty</div>
                         <ul id="deletedSheetsList" class="sheets-list" style="display: none;"></ul>
                     </div>
                     
-                    <div class="bin-actions" style="margin-top: 15px; display: none;" id="binActions">
+                    <div class="bin-actions" style="display: none;" id="binActions">
                         <button id="emptyBinBtn" class="btn btn-small btn-danger">Empty Bin</button>
                         <button id="restoreAllBtn" class="btn btn-small btn-success">Restore All</button>
                     </div>
                 </div>
                 
-                <div class="modal-buttons">
-                    <button id="closeControlPanelBtn" class="btn">Close Control Panel</button>
+                <div class="section-card">
+                    <h3 class="section-title">About</h3>
+                    <div class="about-info">
+                        <div class="app-version">HisaabKitaabApp v3.0</div>
+                        <div class="app-description">Expense management system for shared accounts</div>
+                        <div class="app-creator">Created by Mudassar©2025</div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Profile Card Modal -->
-        <div id="profileCardModal" class="modal">
-            <div class="modal-content profile-card-modal">
-                <div class="profile-header">
-                    <div id="profileAvatar" class="profile-avatar-container"></div>
-                    <h3 id="profileName">Participant Name</h3>
+        <!-- Sheet Section (Same as before but with mobile app styling) -->
+        <div id="sheetSection" class="page-content sheet-section">
+            <div class="page-header">
+                <h2 class="page-title" id="mobileSheetName">Sheet Name</h2>
+                <div class="header-right">
+                    <button id="togglePublishBtn" class="btn btn-small btn-warning" style="display: none;">
+                        <span id="publishIcon">📢</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- UPDATED: Added sheet actions at the top -->
+            <div id="adminSheetActions" class="sheet-actions-top" style="display: none;">
+                <button id="editParticipantsBtn" class="btn btn-info">Edit Participants</button>
+                <button id="deleteSheetBtn" class="btn btn-danger">Delete</button>
+            </div>
+            
+            <div class="sheet-content">
+                <div class="sheet-header-info">
+                    <div class="sheet-meta">
+                        <span class="meta-item" id="sheetDate">Date: --/--/----</span>
+                        <span class="meta-item" id="sheetParticipants">Participants: 0</span>
+                    </div>
                 </div>
                 
-                <div class="profile-details">
-                    <div class="profile-field">
-                        <label>Mobile Number:</label>
-                        <span id="profileMobile">Not provided</span>
-                    </div>
-                    
-                    <div class="profile-field">
-                        <label>Bank(s):</label>
-                        <span id="profileBanks">Not provided</span>
-                    </div>
-                    
-                    <div class="profile-field">
-                        <label>Bank Accounts:</label>
-                        <div id="profileBankAccountsContainer" class="bank-accounts-container">
-                            <div class="no-data">Not provided</div>
+                <div class="table-container">
+                    <table id="expenseTable">
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Spent (SAR)</th>
+                                <th>Meals</th>
+                                <th>To Be Paid (SAR)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="summary-box">
+                    <h3 class="section-title">Expense Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Participants:</span>
+                            <span class="summary-value" id="totalParticipants">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Spent:</span>
+                            <span class="summary-value" id="totalSpent">0.00 SAR</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Cost Per Meal:</span>
+                            <span class="summary-value" id="costPerMeal">0.00 SAR</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="profile-actions">
-                    <button id="editProfileBtn" class="btn btn-info" style="display: none;">Edit Profile</button>
-                    <button id="closeProfileBtn" class="btn">Close Profile</button>
+                <div class="settlement-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Settlement Suggestions</h3>
+                    </div>
+                    <div id="settlementList" class="settlement-list">
+                        <div class="no-settlements">Calculate shares to see settlement suggestions</div>
+                    </div>
                 </div>
                 
-                <!-- Edit Profile Form (Admin Only) -->
-                <div id="editProfileForm" class="edit-profile-form" style="display: none;">
-                    <h4>Edit Profile</h4>
-                    <input type="hidden" id="editProfileParticipant">
-                    
-                    <div class="form-group">
-                        <label>Profile Photo:</label>
-                        <div class="profile-photo-upload">
-                            <div id="profileImagePreview" class="profile-image-preview">
-                                <div id="currentProfileImage" class="current-profile-image"></div>
-                            </div>
-                            <input type="file" id="profileImageUpload" accept="image/*" class="file-input" style="display: none;">
-                            <div class="photo-upload-buttons">
-                                <button id="uploadPhotoBtn" class="btn btn-small">Upload Photo</button>
-                                <button id="removePhotoBtn" class="btn btn-small btn-danger" style="display: none;">Remove Photo</button>
-                            </div>
-                            <small>Click "Upload Photo" to add/change profile picture. You can crop the image after selecting.</small>
+                <div class="action-buttons-grid">
+                    <button id="calculateBtn" class="btn btn-success">Calculate</button>
+                    <button id="saveBtn" class="btn btn-warning">Save</button>
+                    <button id="sharePdfBtn" class="btn btn-info">Share PDF</button>
+                    <button id="closeSheetBtn" class="btn btn-primary">Close Sheet</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Participants Section -->
+        <div id="editParticipantsSection" class="page-content edit-participants-section">
+            <div class="page-header">
+                <div class="header-left">
+                    <button id="backToSheetBtn" class="btn btn-icon">
+                        <span class="btn-icon">←</span>
+                    </button>
+                    <h2 class="page-title">Edit Participants</h2>
+                </div>
+            </div>
+            
+            <div class="edit-participants-content">
+                <div class="section-card">
+                    <div class="add-participant-section">
+                        <h3>Add New Participant</h3>
+                        <div class="add-participant-form">
+                            <input type="text" id="editCustomParticipantInput" placeholder="Enter participant name" class="large-input">
+                            <button id="editAddCustomParticipantBtn" class="btn btn-small">Add Participant</button>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Mobile Number:</label>
-                        <input type="text" id="editMobile" class="form-input" placeholder="e.g., +966 5X XXX XXXX">
-                    </div>
+                    <h3>Current Participants</h3>
+                    <ul id="editParticipantsList" class="edit-participants-list"></ul>
                     
-                    <div class="form-group">
-                        <label>Bank Accounts (one per line, format: Bank Name - IBAN):</label>
-                        <textarea id="editBankAccounts" class="form-input" rows="4" placeholder="Alinma Bank - SA44 2000 0001 2345 6789 1234&#10;Al Rajhi Bank - SA44 3000 0001 2345 6789 1234"></textarea>
-                        <small>Enter each bank account on a new line in format: "Bank Name - IBAN"</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Preferred Bank for Settlements:</label>
-                        <select id="editPreferredBank" class="form-input">
-                            <option value="">No Preference (Use any available bank)</option>
-                        </select>
-                        <small>Select your preferred bank for settlements. This helps prioritize same-bank transfers.</small>
-                    </div>
-                    
-                    <div class="form-buttons">
-                        <button id="saveProfileBtn" class="btn btn-success">Save Profile</button>
-                        <button id="cancelEditProfileBtn" class="btn">Cancel</button>
+                    <div class="action-buttons">
+                        <button id="updateParticipantsBtn" class="btn btn-success">Update & Recalculate</button>
+                        <button id="cancelEditBtn" class="btn">Cancel</button>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Image Cropper Modal -->
-        <div id="imageCropperModal" class="modal">
-            <div class="modal-content cropper-modal">
-                <h3>Crop Profile Image</h3>
-                <div class="cropper-container">
-                    <img id="cropperImage" src="" alt="Image to crop" style="max-width: 100%;">
+    </div>
+
+    <!-- All Modals (Same as before) -->
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal">
+        <div class="modal-content">
+            <h3>Admin Login</h3>
+            <p>Please enter the admin password to access editing features:</p>
+            <input type="password" id="adminPasswordInput" placeholder="Enter admin password" class="form-input">
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="confirmAdminLoginBtn" class="btn btn-success">Login</button>
+                <button id="cancelAdminLoginBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Delete Sheet</h3>
+            <p>Are you sure you want to delete this expense sheet? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
+                <button id="cancelDeleteBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Default Participants List Modal -->
+    <div id="defaultParticipantsModal" class="modal">
+        <div class="modal-content default-participants-modal">
+            <h3>Default Participants List</h3>
+            <p class="section-description">Add, edit, or remove default participants. Changes here won't affect existing sheets.</p>
+            
+            <div class="add-participant-control">
+                <input type="text" id="newDefaultParticipantInput" placeholder="Enter participant name" class="form-input">
+                <button id="addDefaultParticipantBtn" class="btn btn-small">Add to Default List</button>
+            </div>
+            
+            <ul id="defaultParticipantsList" class="default-participants-list"></ul>
+            
+            <div class="modal-buttons">
+                <button id="closeDefaultParticipantsBtn" class="btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Card Modal -->
+    <div id="profileCardModal" class="modal">
+        <div class="modal-content profile-card-modal">
+            <div class="profile-header">
+                <div id="profileAvatar" class="profile-avatar-container"></div>
+                <h3 id="profileName">Participant Name</h3>
+            </div>
+            
+            <div class="profile-details">
+                <div class="profile-field">
+                    <label>Mobile Number:</label>
+                    <span id="profileMobile">Not provided</span>
                 </div>
-                <div class="cropper-controls">
-                    <div class="cropper-zoom">
-                        <button id="zoomOutBtn" class="btn btn-small">-</button>
-                        <span>Zoom</span>
-                        <button id="zoomInBtn" class="btn btn-small">+</button>
-                    </div>
-                    <div class="cropper-rotate">
-                        <button id="rotateLeftBtn" class="btn btn-small">↺</button>
-                        <button id="rotateRightBtn" class="btn btn-small">↻</button>
+                
+                <div class="profile-field">
+                    <label>Bank(s):</label>
+                    <span id="profileBanks">Not provided</span>
+                </div>
+                
+                <div class="profile-field">
+                    <label>Bank Accounts:</label>
+                    <div id="profileBankAccountsContainer" class="bank-accounts-container">
+                        <div class="no-data">Not provided</div>
                     </div>
                 </div>
-                <div class="cropper-buttons">
-                    <button id="cropImageBtn" class="btn btn-success">Crop & Save</button>
-                    <button id="cancelCropBtn" class="btn">Cancel</button>
+            </div>
+            
+            <div class="profile-actions">
+                <button id="editProfileBtn" class="btn btn-info" style="display: none;">Edit Profile</button>
+                <button id="closeProfileBtn" class="btn">Close Profile</button>
+            </div>
+            
+            <!-- Edit Profile Form (Admin Only) -->
+            <div id="editProfileForm" class="edit-profile-form" style="display: none;">
+                <h4>Edit Profile</h4>
+                <input type="hidden" id="editProfileParticipant">
+                
+                <div class="form-group">
+                    <label>Profile Photo:</label>
+                    <div class="profile-photo-upload">
+                        <div id="profileImagePreview" class="profile-image-preview">
+                            <div id="currentProfileImage" class="current-profile-image"></div>
+                        </div>
+                        <input type="file" id="profileImageUpload" accept="image/*" class="file-input" style="display: none;">
+                        <div class="photo-upload-buttons">
+                            <button id="uploadPhotoBtn" class="btn btn-small">Upload Photo</button>
+                            <button id="removePhotoBtn" class="btn btn-small btn-danger" style="display: none;">Remove Photo</button>
+                        </div>
+                        <small>Click "Upload Photo" to add/change profile picture. You can crop the image after selecting.</small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Mobile Number:</label>
+                    <input type="text" id="editMobile" class="form-input" placeholder="e.g., +966 5X XXX XXXX">
+                </div>
+                
+                <div class="form-group">
+                    <label>Bank Accounts (one per line, format: Bank Name - IBAN):</label>
+                    <textarea id="editBankAccounts" class="form-input" rows="4" placeholder="Alinma Bank - SA44 2000 0001 2345 6789 1234&#10;Al Rajhi Bank - SA44 3000 0001 2345 6789 1234"></textarea>
+                    <small>Enter each bank account on a new line in format: "Bank Name - IBAN"</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Preferred Bank for Settlements:</label>
+                    <select id="editPreferredBank" class="form-input">
+                        <option value="">No Preference (Use any available bank)</option>
+                    </select>
+                    <small>Select your preferred bank for settlements. This helps prioritize same-bank transfers.</small>
+                </div>
+                
+                <div class="form-buttons">
+                    <button id="saveProfileBtn" class="btn btn-success">Save Profile</button>
+                    <button id="cancelEditProfileBtn" class="btn">Cancel</button>
                 </div>
             </div>
         </div>
-        
-        <footer>
-            <p>HisaabKitaab©2025(created by Mudassar)-v3.0</p>
-        </footer>
+    </div>
+
+    <!-- Image Cropper Modal -->
+    <div id="imageCropperModal" class="modal">
+        <div class="modal-content cropper-modal">
+            <h3>Crop Profile Image</h3>
+            <div class="cropper-container">
+                <img id="cropperImage" src="" alt="Image to crop" style="max-width: 100%;">
+            </div>
+            <div class="cropper-controls">
+                <div class="cropper-zoom">
+                    <button id="zoomOutBtn" class="btn btn-small">-</button>
+                    <span>Zoom</span>
+                    <button id="zoomInBtn" class="btn btn-small">+</button>
+                </div>
+                <div class="cropper-rotate">
+                    <button id="rotateLeftBtn" class="btn btn-small">↺</button>
+                    <button id="rotateRightBtn" class="btn btn-small">↻</button>
+                </div>
+            </div>
+            <div class="cropper-buttons">
+                <button id="cropImageBtn" class="btn btn-success">Crop & Save</button>
+                <button id="cancelCropBtn" class="btn">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- PDF Loading Overlay -->
@@ -418,21 +558,8 @@
     <script src="js/pdf-generator.js"></script>
     <script src="js/script.js"></script>
     
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration - REMOVED FOR LOCAL TESTING -->
     <script>
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(function(registration) {
-                        console.log('Service Worker registered with scope:', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('Service Worker registration failed:', error);
-                    });
-            });
-        }
-        
         // Hide splash screen after load
         window.addEventListener('load', function() {
             setTimeout(function() {
