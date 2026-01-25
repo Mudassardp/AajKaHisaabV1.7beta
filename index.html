@@ -57,7 +57,7 @@
             <span class="nav-text">Create</span>
         </button>
         <button id="refreshBtn" class="nav-btn">
-            <span class="nav-icon">⟳</span>
+            <span class="nav-icon">🔄</span>
             <span class="nav-text">Refresh</span>
         </button>
         <button id="settingsBtn" class="nav-btn">
@@ -120,7 +120,7 @@
                 <h2 class="page-title">All Sheets</h2>
                 <div class="page-actions">
                     <button id="syncSheetsBtn" class="btn btn-small btn-info" style="display: none;">
-                        <span class="btn-icon">⟳</span> Sync
+                        <span class="btn-icon">🔄</span> Sync
                     </button>
                 </div>
             </div>
@@ -234,7 +234,7 @@
                     
                     <div class="setting-item">
                         <div class="setting-info">
-                            <span class="setting-icon">⟳</span>
+                            <span class="setting-icon">🔄</span>
                             <div class="setting-details">
                                 <div class="setting-name">Auto Sync</div>
                                 <div class="setting-description">Automatically sync with cloud</div>
@@ -251,7 +251,7 @@
                     </button>
                     
                     <button id="manualSyncBtn" class="btn btn-success btn-block">
-                        <span class="btn-icon">⟳</span> Sync Now
+                        <span class="btn-icon">🔄</span> Sync Now
                     </button>
                     
                     <!-- PWA Install Button (Added in Settings) -->
@@ -558,7 +558,7 @@
     <script src="js/pdf-generator.js"></script>
     <script src="js/script.js"></script>
     
-    <!-- PWA Service Worker Registration - REMOVED FOR LOCAL TESTING -->
+    <!-- PWA Service Worker Registration -->
     <script>
         // Hide splash screen after load
         window.addEventListener('load', function() {
@@ -568,6 +568,17 @@
                     document.getElementById('splash').style.display = 'none';
                 }, 300);
             }, 1000);
+            
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js', {
+                    scope: '/AajKaHisaab/'
+                }).then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+            }
         });
     </script>
 </body>

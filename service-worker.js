@@ -1,5 +1,5 @@
 // Service Worker for HisaabKitaab PWA
-const CACHE_NAME = 'hisaabkitaab-v3.3-pwa';
+const CACHE_NAME = 'hisaabkitaab-v3.5-pwa';
 const BASE_PATH = '/AajKaHisaab/'; // Updated for GitHub Pages
 
 const urlsToCache = [
@@ -57,6 +57,23 @@ self.addEventListener('fetch', event => {
       event.request.url.includes('googleapis') ||
       event.request.url.includes('gstatic')) {
     return fetch(event.request);
+  }
+
+  // For GitHub Pages, handle the BASE_PATH
+  let requestUrl = event.request.url;
+  const url = new URL(requestUrl);
+  
+  // If request is for root but we're in AajKaHisaab folder, redirect
+  if (url.pathname === '/' || url.pathname === '/AajKaHisaab') {
+    event.respondWith(
+      caches.match(BASE_PATH + 'index.html').then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(BASE_PATH + 'index.html');
+      })
+    );
+    return;
   }
 
   event.respondWith(

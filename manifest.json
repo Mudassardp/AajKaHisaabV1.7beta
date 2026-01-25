@@ -2,12 +2,12 @@
   "name": "HisaabKitaab",
   "short_name": "HisaabKitaab",
   "description": "Expense management system for shared accounts",
-  "start_url": "/",
+  "start_url": "/AajKaHisaab/",
+  "scope": "/AajKaHisaab/",
   "display": "standalone",
   "background_color": "#f5f7fa",
   "theme_color": "#3498db",
   "orientation": "portrait",
-  "scope": "/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
