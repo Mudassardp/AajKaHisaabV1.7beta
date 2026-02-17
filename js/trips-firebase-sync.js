@@ -1,4 +1,4 @@
-// trips-firebase-sync.js - v1.0 - Trips Firebase Sync for HisaabKitaabApp v5.9
+// trips-firebase-sync.js - v1.1 - Trips Firebase Sync for HisaabKitaabApp v5.9
 // This file handles Firebase synchronization for trips data
 
 class TripsFirebaseSync {
@@ -6,18 +6,27 @@ class TripsFirebaseSync {
         this.isInitialized = false;
         this.isSyncing = false;
         this.db = null;
+        this.retryCount = 0;
+        this.maxRetries = 5;
     }
 
     // Initialize Firebase for trips
     initialize() {
         try {
-            console.log('Initializing Trips Firebase Sync v1.0...');
+            console.log('Initializing Trips Firebase Sync v1.1...');
             
-            // Check if Firebase is already initialized
-            if (window.firebaseSync && window.firebaseSync.isInitialized) {
+            // Check if Firebase is available
+            if (typeof firebase === 'undefined') {
+                console.warn('Firebase not available, will retry...');
+                this.retryInitialize();
+                return false;
+            }
+
+            // Try to get database from existing firebaseSync first
+            if (window.firebaseSync && window.firebaseSync.db) {
                 this.db = window.firebaseSync.db;
                 this.isInitialized = true;
-                console.log('Trips Firebase Sync initialized successfully');
+                console.log('Trips Firebase Sync initialized successfully using existing connection');
                 
                 // Set up real-time listener for trips
                 this.setupTripsRealTimeListener();
@@ -26,39 +35,85 @@ class TripsFirebaseSync {
                 this.loadTripsFromCloud();
                 
                 return true;
-            } else {
+            } 
+            // If firebaseSync not available, try to initialize directly
+            else if (firebase.apps.length > 0) {
+                this.db = firebase.database();
+                this.isInitialized = true;
+                console.log('Trips Firebase Sync initialized directly');
+                
+                // Set up real-time listener for trips
+                this.setupTripsRealTimeListener();
+                
+                // Load initial trips data from cloud
+                this.loadTripsFromCloud();
+                
+                return true;
+            }
+            else {
                 console.warn('Firebase not initialized yet, will retry...');
-                // Retry after 2 seconds
-                setTimeout(() => this.initialize(), 2000);
+                this.retryInitialize();
                 return false;
             }
         } catch (error) {
             console.error('Trips Firebase Sync initialization failed:', error);
+            this.retryInitialize();
             return false;
+        }
+    }
+
+    retryInitialize() {
+        if (this.retryCount < this.maxRetries) {
+            this.retryCount++;
+            console.log(`Retrying Trips Firebase Sync initialization (${this.retryCount}/${this.maxRetries})...`);
+            setTimeout(() => this.initialize(), 2000 * this.retryCount);
+        } else {
+            console.error('Trips Firebase Sync failed to initialize after', this.maxRetries, 'attempts');
         }
     }
 
     // Listen for real-time updates for trips from other users
     setupTripsRealTimeListener() {
-        if (!this.db) return;
+        if (!this.db) {
+            console.error('Cannot setup trips listener - database not initialized');
+            return;
+        }
         
+        console.log('Setting up trips real-time listener...');
+        
+        // Remove any existing listener
+        this.db.ref('sharedTrips').off();
+        
+        // Set up new listener
         this.db.ref('sharedTrips').on('value', (snapshot) => {
             const cloudData = snapshot.val();
             console.log('Real-time trips update received:', cloudData);
             
             if (cloudData && Array.isArray(cloudData)) {
                 this.replaceLocalTrips(cloudData);
-                this.showSyncStatus('Trips updated from cloud', 'info');
+                this.showSyncStatus('Trips updated from cloud', 'success');
+            } else if (cloudData === null) {
+                console.log('No trips data in cloud yet');
             }
         }, (error) => {
             console.error('Error in trips real-time listener:', error);
+            this.showSyncStatus('Trips sync error: ' + error.message, 'error');
         });
+        
+        console.log('Trips real-time listener setup complete');
     }
 
     // Save trips data to shared cloud
     async saveTripsToCloud(data) {
-        if (!this.isInitialized || !this.db || this.isSyncing) {
+        if (!this.isInitialized || !this.db) {
             console.log('Cannot sync trips - not ready');
+            // Try to initialize again
+            this.initialize();
+            return false;
+        }
+        
+        if (this.isSyncing) {
+            console.log('Already syncing trips, skipping...');
             return false;
         }
         
@@ -115,18 +170,38 @@ class TripsFirebaseSync {
 
     // Replace local trips with shared data
     replaceLocalTrips(cloudData) {
-        // Save shared data to localStorage
+        console.log('Replacing local trips with cloud data:', cloudData);
+        
+        // Get current local trips to preserve deleted ones
+        const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+        const localDeletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
+        
+        // Save shared data to localStorage (overwrite trips, but preserve deleted)
         localStorage.setItem('hisaabKitaabTrips', JSON.stringify(cloudData));
         
         // Refresh the trips UI
-        if (window.tripsManager && window.tripsManager.loadAllTrips) {
-            window.tripsManager.loadAllTrips();
-        }
-        if (window.tripsManager && window.tripsManager.loadRecentTrips) {
-            window.tripsManager.loadRecentTrips();
-        }
-        if (window.tripsManager && window.tripsManager.updateDeletedTripsBin) {
-            window.tripsManager.updateDeletedTripsBin();
+        if (window.tripsManager) {
+            if (window.tripsManager.loadAllTrips) {
+                window.tripsManager.loadAllTrips();
+            }
+            if (window.tripsManager.loadRecentTrips) {
+                window.tripsManager.loadRecentTrips();
+            }
+            if (window.tripsManager.updateDeletedTripsBin) {
+                window.tripsManager.updateDeletedTripsBin();
+            }
+            
+            // Update current trip data if it's open
+            if (window.tripsManager.currentTripData) {
+                const updatedCurrentTrip = cloudData.find(t => t.id === window.tripsManager.currentTripData.id);
+                if (updatedCurrentTrip) {
+                    window.tripsManager.currentTripData = updatedCurrentTrip;
+                    // Trigger UI update for current trip if needed
+                    if (window.tripsManager.updateCurrentTripDisplay) {
+                        window.tripsManager.updateCurrentTripDisplay();
+                    }
+                }
+            }
         }
         
         console.log('Local trips replaced with cloud data');
@@ -136,10 +211,15 @@ class TripsFirebaseSync {
     async manualSync() {
         if (!this.isInitialized || !this.db) {
             this.showSyncStatus('Trips cloud sync not initialized', 'error');
+            // Try to initialize
+            this.initialize();
             return false;
         }
         
-        // Get local trips
+        // First, load from cloud to get latest
+        await this.loadTripsFromCloud();
+        
+        // Then save local trips to cloud
         const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
         return await this.saveTripsToCloud(localTrips);
     }
@@ -161,6 +241,7 @@ class TripsFirebaseSync {
                 z-index: 10000;
                 max-width: 200px;
                 text-align: center;
+                transition: opacity 0.3s;
             `;
             document.body.appendChild(statusElement);
         }
@@ -185,18 +266,31 @@ class TripsFirebaseSync {
         statusElement.style.color = textColors[type] || textColors.info;
         statusElement.style.border = `1px solid ${textColors[type]}20`;
         statusElement.textContent = message;
+        statusElement.style.display = 'block';
         
         if (type === 'success') {
             setTimeout(() => {
                 if (statusElement.textContent === message) {
-                    statusElement.style.display = 'none';
+                    statusElement.style.opacity = '0';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                        statusElement.style.opacity = '1';
+                    }, 300);
                 }
             }, 3000);
-        } else {
-            statusElement.style.display = 'block';
         }
     }
 }
 
 // Create global instance
 window.tripsFirebaseSync = new TripsFirebaseSync();
+
+// Auto-initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for main Firebase to initialize
+    setTimeout(() => {
+        if (window.tripsFirebaseSync) {
+            window.tripsFirebaseSync.initialize();
+        }
+    }, 3000);
+});

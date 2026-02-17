@@ -17,6 +17,10 @@
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
         let deletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
         let currentTripData = null;
+
+        // Expose currentTripData globally for Firebase sync
+       window.tripsManager = window.tripsManager || {};
+       window.tripsManager.currentTripData = currentTripData;
         
         // Check admin status from main app
         let isAdmin = localStorage.getItem('hisaabKitaabAdmin') === 'true';
@@ -649,6 +653,7 @@
             }
             
             currentTripData = JSON.parse(JSON.stringify(trip));
+            window.tripsManager.currentTripData = currentTripData; // Add this line
             
             // Update trip detail UI
             tripDetailName.textContent = currentTripData.name;
