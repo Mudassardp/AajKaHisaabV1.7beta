@@ -1,4 +1,4 @@
-// script.js - Mobile App Redesign v4.5.5 - Fixed Create Button + Bin Sync
+// script.js - Mobile App Redesign v4.5.4 - Fixed Create Button
 document.addEventListener('DOMContentLoaded', function() {
     // ===== GLOBAL STATE =====
     let selectedParticipants = [];
@@ -397,10 +397,9 @@ document.addEventListener('DOMContentLoaded', function() {
         savedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // Sync to Firebase (both sheets and deleted sheets)
+        // Sync to Firebase
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveSheetsToCloud(savedSheets);
-            window.firebaseSync.saveDeletedSheetsToCloud(deletedSheets);
         }
         
         // If this is the current open sheet, navigate away
@@ -417,19 +416,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateDeletedSheetsBin();
         
         alert('Sheet moved to bin!');
-    }
-    
-    function deleteCurrentSheet() {
-        const sheetId = deleteModal.dataset.sheetId;
-        
-        if (!sheetId) {
-            alert('Sheet ID not found.');
-            hideDeleteConfirmation();
-            return;
-        }
-        
-        deleteSheetById(sheetId);
-        hideDeleteConfirmation();
     }
     
     // ===== PAGE MANAGEMENT =====
@@ -2001,10 +1987,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleSync() {
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.manualSync();
-            alert('Sync initiated! This will sync sheets, deleted sheets, and profiles.');
+            alert('Sync initiated!');
         } else {
             alert('Cloud sync not available.');
         }
+    }
+    
+    function deleteCurrentSheet() {
+        const sheetId = deleteModal.dataset.sheetId;
+        
+        if (!sheetId) {
+            alert('Sheet ID not found.');
+            hideDeleteConfirmation();
+            return;
+        }
+        
+        deleteSheetById(sheetId);
+        hideDeleteConfirmation();
     }
     
     function updateDeletedSheetsBin() {
@@ -2078,10 +2077,9 @@ document.addEventListener('DOMContentLoaded', function() {
         savedSheets.push(sheet);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // Sync to Firebase (both sheets and deleted sheets)
+        // Sync to Firebase
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveSheetsToCloud(savedSheets);
-            window.firebaseSync.saveDeletedSheetsToCloud(deletedSheets);
         }
         
         updateHomeStats();
@@ -2100,11 +2098,6 @@ document.addEventListener('DOMContentLoaded', function() {
         deletedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
         
-        // Sync to Firebase
-        if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveDeletedSheetsToCloud(deletedSheets);
-        }
-        
         updateDeletedSheetsBin();
         alert('Sheet permanently deleted!');
     }
@@ -2116,11 +2109,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         deletedSheets = [];
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
-        // Sync to Firebase
-        if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveDeletedSheetsToCloud(deletedSheets);
-        }
         
         updateDeletedSheetsBin();
         alert('Bin emptied successfully!');
@@ -2139,14 +2127,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        deletedSheets = [];
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
         // Sync to Firebase
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveSheetsToCloud(savedSheets);
-            window.firebaseSync.saveDeletedSheetsToCloud(deletedSheets);
         }
+        
+        deletedSheets = [];
+        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
         
         updateHomeStats();
         updateDeletedSheetsBin();
@@ -2350,5 +2337,4 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadSavedSheets = loadAllSheets;
     window.renderExpenseTable = renderExpenseTable;
     window.currentSheetData = currentSheetData;
-    window.updateDeletedSheetsBin = updateDeletedSheetsBin;
 });
