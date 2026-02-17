@@ -1,25 +1,20 @@
 HisaabKitaab-PWA/
-├── index.html
-├── manifest.json
-├── service-worker.js
-├── pwa-install.js
 │
-├── icons/ (Download all icons from below)
-│   ├── icon-72x72.png
-│   ├── icon-96x96.png
-│   ├── icon-128x128.png
-│   ├── icon-144x144.png
-│   ├── icon-152x152.png
-│   ├── icon-192x192.png
-│   ├── icon-384x384.png
-│   └── icon-512x512.png
+├── index.html                                  [UPDATED - v5.0]
+├── manifest.json                               [UNCHANGED]
+├── service-worker.js                           [UNCHANGED]
+├── pwa-install.js                              [UNCHANGED]
 │
-├── css/
-│   └── style.css
+├── icons/                                      [UNCHANGED]
 │
-└── js/
-    ├── script.js
-    ├── profile-manager.js
-    ├── pdf-generator.js
-    ├── firebase-sync.js
-    └── Firebaseconfig.js
+├── css/                                        
+│   ├── style.css                              [UNCHANGED - v4.5]
+│   └── trips.css                              [NEW - v1.0]
+│
+└── js/                                         
+    ├── script.js                               [UNCHANGED - v4.5.3]
+    ├── profile-manager.js                      [UNCHANGED - v2.2]
+    ├── pdf-generator.js                         [UNCHANGED - v4.3]
+    ├── firebase-sync.js                         [UNCHANGED - v2.2]
+    ├── Firebaseconfig.js                        [UNCHANGED]
+    └── trips.js                                 [NEW - v1.0]

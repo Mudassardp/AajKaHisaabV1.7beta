@@ -1,4 +1,4 @@
-/* ===== MOBILE APP REDESIGN - HisaabKitaabApp v3.3 ===== */
+/* ===== MOBILE APP REDESIGN - HisaabKitaabApp v4.5 ===== */
 * {
     margin: 0;
     padding: 0;
@@ -870,7 +870,7 @@ input[type="number"], select {
     color: var(--text-color);
 }
 
-/* Settlement Section */
+/* Settlement Section - UPDATED with checkbox styles */
 .settlement-section {
     background: var(--card-bg);
     padding: 20px;
@@ -900,14 +900,20 @@ input[type="number"], select {
 
 .settlement-details {
     display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.settlement-info {
+    flex: 1;
+    display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
 }
 
 .settlement-first-line {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
 }
@@ -919,76 +925,73 @@ input[type="number"], select {
 
 .settlement-arrow {
     color: var(--secondary-color);
-}
-
-.settlement-second-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+    font-size: 14px;
 }
 
 .settlement-amount {
     background: var(--hover-bg);
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 4px 10px;
+    border-radius: 16px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
+    display: inline-block;
 }
 
-/* FIXED: Settlement Toggle Button Styles - UPDATED */
-.settlement-toggle-btn {
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    min-width: 80px;
+/* NEW: Settlement Checkbox Styles */
+.settlement-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 70px;
+    justify-content: flex-end;
+}
+
+.settlement-checkbox {
+    width: 20px;
+    height: 20px;
     cursor: pointer;
-    border: none;
-    transition: all 0.2s;
+    accent-color: var(--success-color);
 }
 
-.settlement-toggle-btn.paid {
-    background: color-mix(in srgb, var(--success-color) 20%, transparent);
+.settlement-status-text {
+    font-size: 11px;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.settlement-status-text.paid {
     color: var(--success-color);
-    border: 1px solid var(--success-color);
 }
 
-.settlement-toggle-btn.paid:hover {
-    background: color-mix(in srgb, var(--success-color) 30%, transparent);
-}
-
-.settlement-toggle-btn.not-paid {
-    background: color-mix(in srgb, var(--danger-color) 20%, transparent);
+.settlement-status-text.not-paid {
     color: var(--danger-color);
-    border: 1px solid var(--danger-color);
-}
-
-.settlement-toggle-btn.not-paid:hover {
-    background: color-mix(in srgb, var(--danger-color) 30%, transparent);
 }
 
 /* For non-admin users */
-.settlement-status {
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    min-width: 80px;
+.settlement-status-display {
+    font-size: 11px;
+    font-weight: normal;
+    padding: 2px 0;
 }
 
-.status-paid {
-    background: color-mix(in srgb, var(--success-color) 20%, transparent);
+.settlement-status-display.paid {
     color: var(--success-color);
-    border: 1px solid var(--success-color);
 }
 
-.status-not-paid {
-    background: color-mix(in srgb, var(--danger-color) 20%, transparent);
+.settlement-status-display.not-paid {
     color: var(--danger-color);
-    border: 1px solid var(--danger-color);
+}
+
+/* Settlement note */
+.settlement-note {
+    background-color: color-mix(in srgb, var(--info-color) 10%, transparent);
+    color: var(--info-color);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    text-align: center;
+    border: 1px solid color-mix(in srgb, var(--info-color) 30%, transparent);
 }
 
 /* Action Buttons Grid - Updated for 4 buttons */
@@ -1257,6 +1260,17 @@ footer {
     
     .nav-create .nav-icon {
         font-size: 22px;
+    }
+    
+    /* Settlement responsive adjustments */
+    .settlement-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .settlement-checkbox-container {
+        align-self: flex-end;
     }
 }
 

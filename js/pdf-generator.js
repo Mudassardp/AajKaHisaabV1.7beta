@@ -1,4 +1,4 @@
-// PDF Generator for HisaabKitaab v3.1 - Always generates light mode
+// PDF Generator for HisaabKitaab v4.1 - Supports Equal Split & Optimized Settlements
 (function() {
     'use strict';
     
@@ -114,20 +114,23 @@
             box-sizing: border-box;
         `;
         
-        // Calculate totals if not already calculated
-        let totalSpent = currentSheetData.totalSpent || 0;
-        let totalMeals = currentSheetData.totalMeals || 0;
-        let costPerMeal = currentSheetData.costPerMeal || 0;
+        // Determine version and split type
+        const version = currentSheetData.version || 'v3.0';
+        const isV4 = version === 'v4.0';
+        const isEqualSplit = isV4 || currentSheetData.splitType === 'equal';
         
-        if (!currentSheetData.totalSpent) {
-            selectedParticipants.forEach(participant => {
-                totalSpent += currentSheetData.expenses[participant].spent || 0;
-                totalMeals += currentSheetData.expenses[participant].meals || 0;
-            });
-            costPerMeal = totalMeals > 0 ? totalSpent / totalMeals : 0;
-        }
+        // Calculate totals
+        let totalSpent = 0;
+        selectedParticipants.forEach(participant => {
+            totalSpent += currentSheetData.expenses[participant].spent || 0;
+        });
         
-        // Format date for display - Updated to YYYY/MM/DD format
+        // Calculate per person share for v4.0
+        const perPersonShare = isEqualSplit && selectedParticipants.length > 0 
+            ? totalSpent / selectedParticipants.length 
+            : (currentSheetData.perPersonShare || currentSheetData.costPerMeal || 0);
+        
+        // Format date for display
         function formatDateTime(date) {
             if (!date) return 'Unknown';
             const d = new Date(date);
@@ -154,14 +157,20 @@
             publishedStatus = '<div style="background-color: #fef9e7; color: #f39c12; padding: 5px 10px; border-radius: 4px; font-size: 12px; display: inline-block; margin-left: 10px; border: 1px solid #f39c12;">🔒 Unpublished</div>';
         }
         
+        // Add version indicator
+        const versionColor = isV4 ? '#9b59b6' : '#7f8c8d';
+        const versionText = isV4 ? 'Equal Split' : 'Meals-based Split';
+        const versionIndicator = `<span style="background-color: ${versionColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 10px;">${version} - ${versionText}</span>`;
+        
         // Header Section
         const header = `
-            <div style="text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 15px; margin-bottom: 20px; page-break-after: avoid;">
-                <h1 style="color: #2c3e50; font-size: 24px; margin-bottom: 5px; font-weight: bold;">HisaabKitaabApp v3.0</h1>
-                <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">Expense Management System</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #3498db;">
-                    <div style="display: flex; align-items: center;">
+            <div style="text-align: center; border-bottom: 2px solid ${isV4 ? '#9b59b6' : '#3498db'}; padding-bottom: 15px; margin-bottom: 20px; page-break-after: avoid;">
+                <h1 style="color: #2c3e50; font-size: 24px; margin-bottom: 5px; font-weight: bold;">HisaabKitaabApp ${version}</h1>
+                <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">${isV4 ? 'Equal Split Expense Management' : 'Expense Management System'}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border-radius: 5px; border-left: 4px solid ${isV4 ? '#9b59b6' : '#3498db'};">
+                    <div style="display: flex; align-items: center; flex-wrap: wrap;">
                         <strong style="color: #2c3e50; font-size: 16px;">${currentSheetData.name || 'Unnamed Sheet'}</strong>
+                        ${versionIndicator}
                         ${publishedStatus}
                     </div>
                     <span style="color: #7f8c8d; font-size: 12px;">Updated: ${displayDate}</span>
@@ -169,7 +178,7 @@
             </div>
         `;
         
-        // Summary Section - Only show required items
+        // Summary Section
         const summarySection = `
             <div style="margin-bottom: 20px; page-break-after: avoid;">
                 <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; font-weight: bold;">Expense Summary</h2>
@@ -183,45 +192,48 @@
                         <td style="padding: 6px 8px; border-bottom: 1px solid #eaeaea; text-align: right; font-weight: bold; color: #2c3e50;">${totalSpent.toFixed(2)} SAR</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eaeaea; font-weight: 600; color: #2c3e50;">Cost Per Meal:</td>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eaeaea; text-align: right; font-weight: bold; color: #2c3e50;">${costPerMeal.toFixed(2)} SAR</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eaeaea; font-weight: 600; color: #2c3e50;">${isV4 ? 'Per Person Share:' : 'Cost Per Meal:'}</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eaeaea; text-align: right; font-weight: bold; color: #2c3e50;">${perPersonShare.toFixed(2)} SAR</td>
                     </tr>
                 </table>
             </div>
         `;
         
-        // Individual Shares Section with Avatars - Removed meals column
+        // Individual Shares Section - NO MEALS COLUMN for v4.0
         let sharesSection = `
             <div style="margin-bottom: 20px; page-break-after: avoid;">
                 <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; font-weight: bold;">Individual Shares</h2>
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px; border: 1px solid #e0e0e0; page-break-inside: avoid;">
                     <thead>
                         <tr style="background-color: #f8f9fa;">
-                            <th style="padding: 8px 10px; text-align: left; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">Participant</th>
-                            <th style="padding: 8px 10px; text-align: right; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">Spent (SAR)</th>
-                            <th style="padding: 8px 10px; text-align: right; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db;">To Be Paid (SAR)</th>
+                            <th style="padding: 8px 10px; text-align: left; font-weight: bold; color: #2c3e50; border-bottom: 2px solid ${isV4 ? '#9b59b6' : '#3498db'};">Participant</th>
+                            <th style="padding: 8px 10px; text-align: right; font-weight: bold; color: #2c3e50; border-bottom: 2px solid ${isV4 ? '#9b59b6' : '#3498db'};">Spent (SAR)</th>
+                            <th style="padding: 8px 10px; text-align: right; font-weight: bold; color: #2c3e50; border-bottom: 2px solid ${isV4 ? '#9b59b6' : '#3498db'};">${isV4 ? 'Balance (SAR)' : 'To Be Paid (SAR)'}</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
         
         selectedParticipants.forEach(participant => {
-            const expense = currentSheetData.expenses[participant] || { spent: 0, meals: 3, toBePaid: 0 };
-            const toBePaidColor = expense.toBePaid > 0 ? '#e74c3c' : expense.toBePaid < 0 ? '#27ae60' : '#2c3e50';
-            const toBePaidSign = expense.toBePaid > 0 ? '+' : '';
+            const expense = currentSheetData.expenses[participant] || { spent: 0, toBePaid: 0 };
+            const balance = expense.toBePaid;
+            const balanceColor = balance > 0 ? '#e74c3c' : balance < 0 ? '#27ae60' : '#2c3e50';
+            const balanceSign = balance > 0 ? '+' : '';
             const avatarColor = generateAvatarColor(participant);
             const avatarInitials = generateAvatarInitials(participant);
             
             sharesSection += `
                         <tr>
-                            <td style="padding: 6px 8px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${avatarColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; flex-shrink: 0;">
-                                    ${avatarInitials}
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #e0e0e0;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${avatarColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; flex-shrink: 0;">
+                                        ${avatarInitials}
+                                    </div>
+                                    <span>${participant}</span>
                                 </div>
-                                <span>${participant}</span>
                             </td>
                             <td style="padding: 6px 8px; border-bottom: 1px solid #e0e0e0; text-align: right; font-weight: 600;">${expense.spent.toFixed(2)}</td>
-                            <td style="padding: 6px 8px; border-bottom: 1px solid #e0e0e0; text-align: right; font-weight: 600; color: ${toBePaidColor};">${toBePaidSign}${expense.toBePaid.toFixed(2)}</td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #e0e0e0; text-align: right; font-weight: 600; color: ${balanceColor};">${balanceSign}${balance.toFixed(2)}</td>
                         </tr>
             `;
         });
@@ -229,20 +241,35 @@
         // Total row
         sharesSection += `
                         <tr style="background-color: #e8f4fc; font-weight: bold;">
-                            <td style="padding: 8px 10px; border-top: 2px solid #3498db;">Total</td>
-                            <td style="padding: 8px 10px; border-top: 2px solid #3498db; text-align: right;">${totalSpent.toFixed(2)}</td>
-                            <td style="padding: 8px 10px; border-top: 2px solid #3498db; text-align: right;">0.00</td>
+                            <td style="padding: 8px 10px; border-top: 2px solid ${isV4 ? '#9b59b6' : '#3498db'};">Total</td>
+                            <td style="padding: 8px 10px; border-top: 2px solid ${isV4 ? '#9b59b6' : '#3498db'}; text-align: right;">${totalSpent.toFixed(2)}</td>
+                            <td style="padding: 8px 10px; border-top: 2px solid ${isV4 ? '#9b59b6' : '#3498db'}; text-align: right;">0.00</td>
                         </tr>
                     </tbody>
                 </table>
+                ${isV4 ? '<p style="font-size: 11px; color: #9b59b6; margin-top: 5px; font-style: italic;">Positive (+) = Owes money • Negative (-) = To be refunded</p>' : ''}
             </div>
         `;
         
-        // Settlements Section - FORCE TO NEW PAGE
+        // Settlements Section
         let settlementsSection = `
             <div style="margin-bottom: 20px; page-break-before: always; padding-top: 20px;">
                 <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; font-weight: bold;">Settlement Instructions</h2>
         `;
+        
+        // Add optimization note for v4.0
+        if (isV4) {
+            settlementsSection += `
+                <div style="background-color: #e8f4fc; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 3px solid #9b59b6;">
+                    <p style="margin: 0; color: #2c3e50; font-weight: 600; font-size: 13px;">
+                        ✅ OPTIMIZED SETTLEMENTS: Each person pays only ONE person
+                    </p>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">
+                        Total participants: ${selectedParticipants.length} • Equal share: ${perPersonShare.toFixed(2)} SAR per person
+                    </p>
+                </div>
+            `;
+        }
         
         const settlements = currentSheetData.settlements ? Object.values(currentSheetData.settlements) : [];
         
@@ -258,7 +285,7 @@
                 const statusBg = settlement.status === 'paid' ? '#e8f6f3' : '#fdedec';
                 const statusText = settlement.status === 'paid' ? 'Paid' : 'Not Paid';
                 
-                // Add bank match indicator if applicable - UPDATED: Colorless version
+                // Add bank match indicator if applicable
                 let bankMatchHtml = '';
                 if (settlement.bankMatch && settlement.bank) {
                     let preferredText = '';
@@ -272,17 +299,21 @@
                     `;
                 }
                 
+                const amount = typeof settlement.amount === 'number' 
+                    ? settlement.amount.toFixed(2) 
+                    : parseFloat(settlement.amount).toFixed(2);
+                
                 settlementsSection += `
-                    <div style="background-color: #f8f9fa; padding: 10px 12px; margin-bottom: 6px; border-radius: 5px; border-left: 3px solid #9b59b6; page-break-inside: avoid;">
+                    <div style="background-color: #f8f9fa; padding: 12px 15px; margin-bottom: 8px; border-radius: 5px; border-left: 3px solid ${isV4 ? '#9b59b6' : '#3498db'}; page-break-inside: avoid;">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
-                                <span>${settlement.from}</span>
+                                <span style="color: ${isV4 ? '#9b59b6' : '#2c3e50'};">${settlement.from}</span>
                                 <span style="color: #7f8c8d;">→</span>
-                                <span>${settlement.to}</span>
+                                <span style="color: ${isV4 ? '#9b59b6' : '#2c3e50'};">${settlement.to}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-weight: bold; color: #2c3e50; background-color: #e8f4fc; padding: 4px 8px; border-radius: 3px; border: 1px solid #3498db; font-size: 12px;">
-                                    ${settlement.amount} SAR
+                                    ${amount} SAR
                                 </span>
                                 <span style="font-weight: 600; padding: 4px 8px; border-radius: 3px; font-size: 11px; color: ${statusColor}; background-color: ${statusBg}; border: 1px solid ${statusColor};">
                                     ${statusText}
@@ -300,7 +331,8 @@
         // Footer
         const footer = `
             <div style="text-align: center; margin-top: 25px; padding-top: 12px; border-top: 1px solid #eaeaea; color: #7f8c8d; font-size: 8px;">
-                <p>Generated with HisaabKitaabApp (created by Mudassar) • ${new Date().toLocaleString()} • v3.4</p>
+                <p>Generated with HisaabKitaabApp ${version} (created by Mudassar) • ${new Date().toLocaleString()}</p>
+                ${isV4 ? '<p style="font-size: 8px; margin-top: 2px;">Equal Split • Each person pays only ONE person</p>' : ''}
             </div>
         `;
         

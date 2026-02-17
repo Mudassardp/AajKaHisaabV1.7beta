@@ -4,7 +4,7 @@
     <!-- PWA REQUIRED TAGS -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HisaabKitaab</title>
+    <title>HisaabKitaab v5.4</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -22,8 +22,10 @@
     <meta name="theme-color" content="#3498db">
     <meta name="msapplication-TileColor" content="#3498db">
     
-    <!-- Styles -->
+    <!-- Styles - Original v4.5 CSS (UNCHANGED) -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- New Trips v1.1 CSS -->
+    <link rel="stylesheet" href="css/trips.css">
     
     <!-- External Libraries with fallbacks -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -38,11 +40,11 @@
 <body>
     <!-- Simple Splash Screen -->
     <div id="splash" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#3498db; color:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999; transition:opacity 0.3s;">
-        <h1 style="font-size:2.5rem; margin-bottom:20px;">HisaabKitaab</h1>
+        <h1 style="font-size:2.5rem; margin-bottom:20px;">HisaabKitaab v5.4</h1>
         <p style="font-size:1.2rem;">Loading...</p>
     </div>
 
-    <!-- Mobile App Bottom Navigation -->
+    <!-- Mobile App Bottom Navigation - 5 tabs only (create button removed) -->
     <nav class="bottom-nav">
         <button id="homeBtn" class="nav-btn active">
             <span class="nav-icon">🏠</span>
@@ -52,9 +54,9 @@
             <span class="nav-icon">📄</span>
             <span class="nav-text">Sheets</span>
         </button>
-        <button id="createBtnNav" class="nav-btn nav-create" style="display: none;">
-            <span class="nav-icon">➕</span>
-            <span class="nav-text">Create</span>
+        <button id="tripsBtn" class="nav-btn">
+            <span class="nav-icon">✈️</span>
+            <span class="nav-text">Trips</span>
         </button>
         <button id="refreshBtn" class="nav-btn">
             <span class="nav-icon">🔄</span>
@@ -69,20 +71,20 @@
     <div class="container">
         <!-- Mobile App Header -->
         <header class="mobile-header">
-            <h1>HisaabKitaabApp</h1>
+            <h1>HisaabKitaabApp v5.4</h1>
         </header>
         
         <!-- Home Page Content -->
         <div id="homeContent" class="page-content active">
             <div class="welcome-section">
-                <!-- Removed welcome text as requested -->
-                
+                <!-- Quick Actions -->
                 <div class="quick-actions">
                     <button id="createQuickBtn" class="btn btn-primary btn-large" style="display: none;">
                         <span class="btn-icon">➕</span> Create New Hisaab
                     </button>
                 </div>
                 
+                <!-- Recent Sheets Section -->
                 <div class="recent-sheets-section">
                     <div class="section-header">
                         <h3 class="section-title">Recent Sheets</h3>
@@ -93,10 +95,30 @@
                     </div>
                     
                     <div class="view-all-container">
-                        <button id="viewAllSheetsBtn" class="btn btn-text view-all-btn">See All</button>
+                        <button id="viewAllSheetsBtn" class="btn btn-text view-all-btn">See All Sheets</button>
                     </div>
                 </div>
                 
+                <!-- Trips Section -->
+                <button id="createTripHomeBtn" class="btn btn-success btn-large">
+                    <span class="btn-icon">✈️</span> Create New Trip
+                </button>
+                
+                <div class="recent-trips-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Recent Trips</h3>
+                    </div>
+                    
+                    <div id="recentTripsList" class="recent-trips-list">
+                        <div class="no-recent-trips">No recent trips found.</div>
+                    </div>
+                    
+                    <div class="view-all-container">
+                        <button id="viewAllTripsBtn" class="btn btn-text view-all-btn">See All Trips</button>
+                    </div>
+                </div>
+                
+                <!-- Stats Section -->
                 <div class="stats-section">
                     <div class="stats-grid">
                         <div class="stat-card" id="defaultParticipantsCard">
@@ -109,12 +131,17 @@
                             <div class="stat-number" id="totalSheetsCount">0</div>
                             <div class="stat-label">Total Sheets</div>
                         </div>
+                        <div class="stat-card" id="totalTripsCard">
+                            <div class="stat-icon">✈️</div>
+                            <div class="stat-number" id="totalTripsCount">0</div>
+                            <div class="stat-label">Total Trips</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Sheets Page Content -->
+        <!-- Sheets Page Content (UNCHANGED) -->
         <div id="sheetsContent" class="page-content">
             <div class="page-header">
                 <h2 class="page-title">All Sheets</h2>
@@ -141,7 +168,52 @@
             </div>
         </div>
         
-        <!-- Create Page Content -->
+        <!-- Trips Page Content (SIMPLIFIED) -->
+        <div id="tripsContent" class="page-content">
+            <div class="page-header">
+                <h2 class="page-title">All Trips</h2>
+            </div>
+            
+            <div class="existing-trips-section">
+                <div id="tripsListContainer">
+                    <div class="no-trips" id="noTripsMessage">No trips found. Create your first trip!</div>
+                    <ul id="tripsList" class="trips-list" style="display: none;"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trip Detail Page Content (NO BACK BUTTON) -->
+        <div id="tripDetailSection" class="page-content trip-detail-section">
+            <div class="page-header">
+                <h2 class="page-title" id="tripDetailName">Trip Name</h2>
+                <div class="header-right">
+                    <button id="editTripBtn" class="btn btn-small btn-info" style="display: none;">✏️ Edit</button>
+                </div>
+            </div>
+            
+            <div class="trip-content">
+                <div class="trip-header-info">
+                    <div class="trip-meta">
+                        <span class="meta-item" id="tripDetailDate">Created: --/--/----</span>
+                        <span class="meta-item" id="tripDetailDescription">No description</span>
+                    </div>
+                </div>
+                
+                <div class="trip-placeholder">
+                    <div class="placeholder-icon">✈️</div>
+                    <h3>Trip Details Coming Soon!</h3>
+                    <p>This trip feature is under development.</p>
+                </div>
+                
+                <div class="action-buttons-grid">
+                    <button id="saveTripBtn" class="btn btn-warning">Save Trip</button>
+                    <button id="shareTripPdfBtn" class="btn btn-info">Share PDF</button>
+                    <button id="closeTripBtn" class="btn btn-primary">Close Trip</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Page Content (UNCHANGED) -->
         <div id="createContent" class="page-content">
             <div class="page-header">
                 <h2 class="page-title">Create New Hisaab</h2>
@@ -184,7 +256,7 @@
             </div>
         </div>
         
-        <!-- Settings Page Content -->
+        <!-- Settings Page Content (UNCHANGED) -->
         <div id="settingsContent" class="page-content">
             <div class="page-header">
                 <h2 class="page-title">Settings</h2>
@@ -253,12 +325,9 @@
                     <button id="manualSyncBtn" class="btn btn-success btn-block">
                         <span class="btn-icon">🔄</span> Sync Now
                     </button>
-                    
-                    <!-- PWA Install Button (Added in Settings) -->
-                    <!-- This will be dynamically added by script.js -->
                 </div>
                 
-                <!-- Deleted Sheets Bin Section - MOVED TO SETTINGS -->
+                <!-- Deleted Sheets Bin Section -->
                 <div id="deletedSheetsBinSection" class="section-card" style="display: none;">
                     <h3 class="section-title">Deleted Sheets Bin</h3>
                     <p class="section-description" style="margin-bottom: 15px; color: var(--secondary-color); font-size: 0.9rem;">
@@ -276,18 +345,36 @@
                     </div>
                 </div>
                 
+                <!-- Deleted Trips Bin Section -->
+                <div id="deletedTripsBinSection" class="section-card" style="display: none;">
+                    <h3 class="section-title">Deleted Trips Bin</h3>
+                    <p class="section-description" style="margin-bottom: 15px; color: var(--secondary-color); font-size: 0.9rem;">
+                        Restore or permanently delete trips that have been deleted.
+                    </p>
+                    
+                    <div id="deletedTripsBinContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                        <div id="emptyTripsBinMessage" class="no-trips">Trips bin is empty</div>
+                        <ul id="deletedTripsList" class="trips-list" style="display: none;"></ul>
+                    </div>
+                    
+                    <div class="bin-actions" style="display: none;" id="tripsBinActions">
+                        <button id="emptyTripsBinBtn" class="btn btn-small btn-danger">Empty Trips Bin</button>
+                        <button id="restoreAllTripsBtn" class="btn btn-small btn-success">Restore All Trips</button>
+                    </div>
+                </div>
+                
                 <div class="section-card">
                     <h3 class="section-title">About</h3>
                     <div class="about-info">
-                        <div class="app-version">HisaabKitaabApp v3.0</div>
-                        <div class="app-description">Expense management system for shared accounts</div>
+                        <div class="app-version">HisaabKitaabApp v5.4</div>
+                        <div class="app-description">Expense management system with Trips feature</div>
                         <div class="app-creator">Created by Mudassar©2025</div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Sheet Section (Same as before but with mobile app styling) -->
+        <!-- Sheet Section (UNCHANGED) -->
         <div id="sheetSection" class="page-content sheet-section">
             <div class="page-header">
                 <h2 class="page-title" id="mobileSheetName">Sheet Name</h2>
@@ -298,10 +385,8 @@
                 </div>
             </div>
             
-            <!-- UPDATED: Added sheet actions at the top -->
             <div id="adminSheetActions" class="sheet-actions-top" style="display: none;">
                 <button id="editParticipantsBtn" class="btn btn-info">Edit Participants</button>
-                <button id="deleteSheetBtn" class="btn btn-danger">Delete</button>
             </div>
             
             <div class="sheet-content">
@@ -363,7 +448,7 @@
             </div>
         </div>
         
-        <!-- Edit Participants Section -->
+        <!-- Edit Participants Section (UNCHANGED) -->
         <div id="editParticipantsSection" class="page-content edit-participants-section">
             <div class="page-header">
                 <div class="header-left">
@@ -396,7 +481,7 @@
         </div>
     </div>
 
-    <!-- All Modals (Same as before) -->
+    <!-- All Modals (UNCHANGED) -->
     <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal">
         <div class="modal-content">
@@ -413,11 +498,58 @@
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal">
         <div class="modal-content">
-            <h3>Delete Sheet</h3>
-            <p>Are you sure you want to delete this expense sheet? This action cannot be undone.</p>
+            <h3 id="deleteModalTitle">Delete Item</h3>
+            <p id="deleteModalMessage">Are you sure you want to delete this item? This action cannot be undone.</p>
             <div class="modal-buttons">
                 <button id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
                 <button id="cancelDeleteBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Sheet Modal -->
+    <div id="renameSheetModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3>Rename Sheet</h3>
+            <p style="margin-bottom: 15px; color: var(--secondary-color); font-size: 14px;">
+                Enter a new name for this sheet:
+            </p>
+            <input type="text" id="renameSheetInput" placeholder="Enter sheet name" class="form-input" style="width: 100%; margin-bottom: 20px;">
+            <div class="modal-buttons">
+                <button id="confirmRenameBtn" class="btn btn-success">Rename</button>
+                <button id="cancelRenameBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Trip Modal -->
+    <div id="renameTripModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3>Rename Trip</h3>
+            <p style="margin-bottom: 15px; color: var(--secondary-color); font-size: 14px;">
+                Enter a new name for this trip:
+            </p>
+            <input type="text" id="renameTripInput" placeholder="Enter trip name" class="form-input" style="width: 100%; margin-bottom: 10px;">
+            <textarea id="editTripDescriptionInput" placeholder="Enter trip description (optional)" class="form-input" style="width: 100%; margin-bottom: 20px; min-height: 80px;"></textarea>
+            <div class="modal-buttons">
+                <button id="confirmRenameTripBtn" class="btn btn-success">Save</button>
+                <button id="cancelRenameTripBtn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Trip Modal -->
+    <div id="createTripModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3>Create New Trip</h3>
+            <p style="margin-bottom: 15px; color: var(--secondary-color); font-size: 14px;">
+                Enter trip details:
+            </p>
+            <input type="text" id="createTripNameInput" placeholder="Enter trip name" class="form-input" style="width: 100%; margin-bottom: 10px;">
+            <textarea id="createTripDescriptionInput" placeholder="Enter trip description (optional)" class="form-input" style="width: 100%; margin-bottom: 20px; min-height: 80px;"></textarea>
+            <div class="modal-buttons">
+                <button id="confirmCreateTripBtn" class="btn btn-success">Create Trip</button>
+                <button id="cancelCreateTripBtn" class="btn">Cancel</button>
             </div>
         </div>
     </div>
@@ -557,6 +689,8 @@
     <script src="js/firebase-sync.js"></script>
     <script src="js/pdf-generator.js"></script>
     <script src="js/script.js"></script>
+    <!-- New Trips JS (v1.4) -->
+    <script src="js/trips.js"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>
@@ -569,15 +703,19 @@
                 }, 300);
             }, 1000);
             
-            // Register service worker for PWA
+            // Register service worker for PWA - with error handling for local development
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js', {
-                    scope: '/AajKaHisaab/'
-                }).then(function(registration) {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch(function(error) {
-                    console.log('Service Worker registration failed:', error);
-                });
+                try {
+                    navigator.serviceWorker.register('service-worker.js', {
+                        scope: '/AajKaHisaab/'
+                    }).then(function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    }).catch(function(error) {
+                        console.log('Service Worker registration failed (this is normal in local development):', error);
+                    });
+                } catch (e) {
+                    console.log('Service Worker registration error:', e);
+                }
             }
         });
     </script>
