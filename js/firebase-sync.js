@@ -1,4 +1,4 @@
-// firebase-sync.js - v2.2 with Profile Image and Profile Data Sync
+// firebase-sync.js - v2.3 with Bin Sync Support
 class FirebaseSync {
     constructor() {
         this.isInitialized = false;
@@ -8,7 +8,7 @@ class FirebaseSync {
     // Initialize Firebase
     initialize() {
         try {
-            console.log('Starting Firebase initialization v2.2 with Profile Sync...');
+            console.log('Starting Firebase initialization v2.3 with Bin Sync...');
             
             // Your Firebase configuration
             const firebaseConfig = {
@@ -27,18 +27,22 @@ class FirebaseSync {
             this.storage = firebase.storage();
             
             this.isInitialized = true;
-            console.log('Firebase initialized successfully v2.2 with Profile Sync');
+            console.log('Firebase initialized successfully v2.3 with Bin Sync');
             
             this.showSyncStatus('Connected to shared cloud', 'success');
             
             // Listen for real-time updates for sheets
             this.setupSheetsRealTimeListener();
             
+            // Listen for real-time updates for deleted sheets
+            this.setupDeletedSheetsRealTimeListener();
+            
             // Listen for real-time updates for profiles
             this.setupProfilesRealTimeListener();
             
             // Load initial data from cloud
             this.loadSheetsFromCloud();
+            this.loadDeletedSheetsFromCloud();
             this.loadProfilesFromCloud();
             
         } catch (error) {
@@ -56,6 +60,19 @@ class FirebaseSync {
             if (cloudData && Array.isArray(cloudData)) {
                 this.replaceLocalSheets(cloudData);
                 this.showSyncStatus('Sheets updated from cloud', 'info');
+            }
+        });
+    }
+
+    // Listen for real-time updates for deleted sheets
+    setupDeletedSheetsRealTimeListener() {
+        this.db.ref('sharedDeletedSheets').on('value', (snapshot) => {
+            const cloudData = snapshot.val();
+            console.log('Real-time deleted sheets update received:', cloudData);
+            
+            if (cloudData && Array.isArray(cloudData)) {
+                this.replaceLocalDeletedSheets(cloudData);
+                this.showSyncStatus('Deleted sheets updated from cloud', 'info');
             }
         });
     }
@@ -93,6 +110,31 @@ class FirebaseSync {
         } catch (error) {
             console.error('Failed to save sheets to shared cloud:', error);
             this.showSyncStatus('Sheets sync failed: ' + error.message, 'error');
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    // Save deleted sheets data to shared cloud
+    async saveDeletedSheetsToCloud(data) {
+        if (!this.isInitialized || this.isSyncing) {
+            console.log('Cannot sync deleted sheets - not ready');
+            return;
+        }
+        
+        try {
+            this.isSyncing = true;
+            this.showSyncStatus('Syncing deleted sheets to cloud...', 'syncing');
+            
+            console.log('Saving deleted sheets to shared cloud...', data);
+            await this.db.ref('sharedDeletedSheets').set(data);
+            
+            this.showSyncStatus('Deleted sheets synced to cloud', 'success');
+            console.log('Deleted sheets data saved to shared cloud successfully');
+            
+        } catch (error) {
+            console.error('Failed to save deleted sheets to shared cloud:', error);
+            this.showSyncStatus('Deleted sheets sync failed: ' + error.message, 'error');
         } finally {
             this.isSyncing = false;
         }
@@ -153,6 +195,36 @@ class FirebaseSync {
         }
     }
 
+    // Load deleted sheets data from shared cloud
+    async loadDeletedSheetsFromCloud() {
+        if (!this.isInitialized) {
+            console.log('Cannot load deleted sheets - not ready');
+            return;
+        }
+        
+        try {
+            this.showSyncStatus('Loading shared deleted sheets...', 'syncing');
+            
+            console.log('Loading deleted sheets from shared cloud...');
+            const snapshot = await this.db.ref('sharedDeletedSheets').once('value');
+            const cloudData = snapshot.val();
+            
+            console.log('Shared cloud deleted sheets data received:', cloudData);
+            
+            if (cloudData && Array.isArray(cloudData)) {
+                // Replace local data with shared data
+                this.replaceLocalDeletedSheets(cloudData);
+                this.showSyncStatus('Shared deleted sheets loaded', 'success');
+            } else {
+                this.showSyncStatus('No shared deleted sheets found', 'info');
+            }
+            
+        } catch (error) {
+            console.error('Failed to load deleted sheets from shared cloud:', error);
+            this.showSyncStatus('Deleted sheets cloud load failed: ' + error.message, 'error');
+        }
+    }
+
     // Load profiles data from shared cloud
     async loadProfilesFromCloud() {
         if (!this.isInitialized) {
@@ -203,6 +275,17 @@ class FirebaseSync {
                     window.renderExpenseTable();
                 }
             }
+        }
+    }
+
+    // Replace local deleted sheets with shared data
+    replaceLocalDeletedSheets(cloudData) {
+        // Save shared data to localStorage
+        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(cloudData));
+        
+        // Refresh the bin UI
+        if (window.updateDeletedSheetsBin) {
+            window.updateDeletedSheetsBin();
         }
     }
 
@@ -316,20 +399,33 @@ class FirebaseSync {
         }
     }
 
-    // Manual sync trigger for both sheets and profiles
+    // Manual sync trigger for all data
     async manualSync() {
         if (!this.isInitialized) {
             this.showSyncStatus('Cloud sync not initialized', 'error');
             return;
         }
         
-        // Sync sheets
-        const localSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
-        await this.saveSheetsToCloud(localSheets);
+        this.showSyncStatus('Manual sync started...', 'syncing');
         
-        // Sync profiles
-        const localProfiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
-        await this.saveProfilesToCloud(localProfiles);
+        try {
+            // Sync sheets
+            const localSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
+            await this.saveSheetsToCloud(localSheets);
+            
+            // Sync deleted sheets
+            const localDeletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
+            await this.saveDeletedSheetsToCloud(localDeletedSheets);
+            
+            // Sync profiles
+            const localProfiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
+            await this.saveProfilesToCloud(localProfiles);
+            
+            this.showSyncStatus('Manual sync completed', 'success');
+        } catch (error) {
+            console.error('Manual sync failed:', error);
+            this.showSyncStatus('Manual sync failed: ' + error.message, 'error');
+        }
     }
 
     // Sync a single profile update
