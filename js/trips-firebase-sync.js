@@ -1,5 +1,5 @@
-// trips-firebase-sync.js - v1.1 - Trips Firebase Sync for HisaabKitaabApp v5.9
-// This file handles Firebase synchronization for trips data
+// trips-firebase-sync.js - v1.2 - Trips Firebase Sync for HisaabKitaabApp v5.9
+// FIXED: Improved sync reliability for delete/restore operations
 
 class TripsFirebaseSync {
     constructor() {
@@ -8,12 +8,13 @@ class TripsFirebaseSync {
         this.db = null;
         this.retryCount = 0;
         this.maxRetries = 5;
+        this.pendingSyncTimeout = null;
     }
 
     // Initialize Firebase for trips
     initialize() {
         try {
-            console.log('Initializing Trips Firebase Sync v1.1...');
+            console.log('Initializing Trips Firebase Sync v1.2...');
             
             // Check if Firebase is available
             if (typeof firebase === 'undefined') {
@@ -94,6 +95,11 @@ class TripsFirebaseSync {
                 this.showSyncStatus('Trips updated from cloud', 'success');
             } else if (cloudData === null) {
                 console.log('No trips data in cloud yet');
+                // If cloud is empty, sync local data
+                const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+                if (localTrips.length > 0) {
+                    this.saveTripsToCloud(localTrips);
+                }
             }
         }, (error) => {
             console.error('Error in trips real-time listener:', error);
@@ -103,7 +109,7 @@ class TripsFirebaseSync {
         console.log('Trips real-time listener setup complete');
     }
 
-    // Save trips data to shared cloud
+    // Save trips data to shared cloud with debouncing
     async saveTripsToCloud(data) {
         if (!this.isInitialized || !this.db) {
             console.log('Cannot sync trips - not ready');
@@ -112,29 +118,40 @@ class TripsFirebaseSync {
             return false;
         }
         
-        if (this.isSyncing) {
-            console.log('Already syncing trips, skipping...');
-            return false;
+        // Debounce multiple rapid saves
+        if (this.pendingSyncTimeout) {
+            clearTimeout(this.pendingSyncTimeout);
         }
         
-        try {
-            this.isSyncing = true;
-            this.showSyncStatus('Syncing trips to cloud...', 'syncing');
-            
-            console.log('Saving trips to shared cloud...', data);
-            await this.db.ref('sharedTrips').set(data);
-            
-            this.showSyncStatus('Trips synced to cloud', 'success');
-            console.log('Trips data saved to shared cloud successfully');
-            return true;
-            
-        } catch (error) {
-            console.error('Failed to save trips to shared cloud:', error);
-            this.showSyncStatus('Trips sync failed: ' + error.message, 'error');
-            return false;
-        } finally {
-            this.isSyncing = false;
-        }
+        return new Promise((resolve) => {
+            this.pendingSyncTimeout = setTimeout(async () => {
+                if (this.isSyncing) {
+                    console.log('Already syncing trips, waiting...');
+                    setTimeout(() => this.saveTripsToCloud(data), 500);
+                    return;
+                }
+                
+                try {
+                    this.isSyncing = true;
+                    this.showSyncStatus('Syncing trips to cloud...', 'syncing');
+                    
+                    console.log('Saving trips to shared cloud...', data);
+                    await this.db.ref('sharedTrips').set(data);
+                    
+                    this.showSyncStatus('Trips synced to cloud', 'success');
+                    console.log('Trips data saved to shared cloud successfully');
+                    resolve(true);
+                    
+                } catch (error) {
+                    console.error('Failed to save trips to shared cloud:', error);
+                    this.showSyncStatus('Trips sync failed: ' + error.message, 'error');
+                    resolve(false);
+                } finally {
+                    this.isSyncing = false;
+                    this.pendingSyncTimeout = null;
+                }
+            }, 300); // 300ms debounce
+        });
     }
 
     // Load trips data from shared cloud
@@ -173,7 +190,6 @@ class TripsFirebaseSync {
         console.log('Replacing local trips with cloud data:', cloudData);
         
         // Get current local trips to preserve deleted ones
-        const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
         const localDeletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
         
         // Save shared data to localStorage (overwrite trips, but preserve deleted)
@@ -200,6 +216,14 @@ class TripsFirebaseSync {
                     if (window.tripsManager.updateCurrentTripDisplay) {
                         window.tripsManager.updateCurrentTripDisplay();
                     }
+                } else {
+                    // Current trip was deleted from another device
+                    window.tripsManager.currentTripData = null;
+                    // Hide trip detail and go back to trips list
+                    if (window.tripsManager.hideAllPages && window.tripsManager.showTripsPage) {
+                        window.tripsManager.hideAllPages();
+                        window.tripsManager.showTripsPage();
+                    }
                 }
             }
         }
@@ -222,6 +246,22 @@ class TripsFirebaseSync {
         // Then save local trips to cloud
         const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
         return await this.saveTripsToCloud(localTrips);
+    }
+
+    // Sync deleted trips bin separately
+    async syncDeletedTripsBin(deletedTrips) {
+        if (!this.isInitialized || !this.db) return false;
+        
+        try {
+            // We don't sync deleted trips to cloud - they're local only
+            // But we need to ensure the main trips list is synced
+            const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+            await this.saveTripsToCloud(localTrips);
+            return true;
+        } catch (error) {
+            console.error('Failed to sync after bin operation:', error);
+            return false;
+        }
     }
 
     // Show sync status

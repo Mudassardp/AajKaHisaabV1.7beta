@@ -1,4 +1,4 @@
-// script.js - Mobile App Redesign v4.5.4 - Fixed Create Button
+// script.js - Mobile App Redesign v4.5.6 - Fixed Delete Modal (Sheets working again)
 document.addEventListener('DOMContentLoaded', function() {
     // ===== GLOBAL STATE =====
     let selectedParticipants = [];
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshBtn.addEventListener('click', refreshApp);
         settingsBtn.addEventListener('click', () => showPage('settings'));
         
-        // Home Page - FIXED: Keep createQuickBtn event listener
+        // Home Page
         createQuickBtn.addEventListener('click', () => {
             if (isAdmin) {
                 showPage('create');
@@ -232,7 +232,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Modals
         confirmAdminLoginBtn.addEventListener('click', handleAdminLogin);
         cancelAdminLoginBtn.addEventListener('click', hideAdminLoginModal);
-        confirmDeleteBtn.addEventListener('click', deleteCurrentSheet);
+        
+        // FIXED: Handle both sheet and trip deletions
+        confirmDeleteBtn.addEventListener('click', function() {
+            const type = deleteModal.dataset.type;
+            
+            if (type === 'trip') {
+                // Trip deletion - handled by trips.js
+                // Do nothing here, trips.js has its own listener
+            } else {
+                // Default to sheet deletion
+                deleteCurrentSheet();
+            }
+        });
+        
         cancelDeleteBtn.addEventListener('click', hideDeleteConfirmation);
         closeDefaultParticipantsBtn.addEventListener('click', () => defaultParticipantsModal.style.display = 'none');
         
@@ -370,12 +383,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function showDeleteConfirmationForSheet(sheetId) {
         deleteModal.dataset.sheetId = sheetId;
+        deleteModal.dataset.type = 'sheet'; // Mark as sheet deletion
         deleteModal.style.display = 'flex';
     }
     
     function hideDeleteConfirmation() {
         deleteModal.style.display = 'none';
         delete deleteModal.dataset.sheetId;
+        delete deleteModal.dataset.type;
+    }
+    
+    function deleteCurrentSheet() {
+        const sheetId = deleteModal.dataset.sheetId;
+        
+        if (!sheetId) {
+            alert('Sheet ID not found.');
+            hideDeleteConfirmation();
+            return;
+        }
+        
+        deleteSheetById(sheetId);
+        hideDeleteConfirmation();
     }
     
     function deleteSheetById(sheetId) {
@@ -903,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sheetNameFinal = `${sheetNameBase}(${counter})`;
         }
         
-        const sheetId = 'sheet_' + Date.now();
+        const sheetId = 'sheet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
         currentSheetData = {
             id: sheetId,
@@ -1993,19 +2021,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function deleteCurrentSheet() {
-        const sheetId = deleteModal.dataset.sheetId;
-        
-        if (!sheetId) {
-            alert('Sheet ID not found.');
-            hideDeleteConfirmation();
-            return;
-        }
-        
-        deleteSheetById(sheetId);
-        hideDeleteConfirmation();
-    }
-    
     function updateDeletedSheetsBin() {
         deletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
         
@@ -2337,4 +2352,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadSavedSheets = loadAllSheets;
     window.renderExpenseTable = renderExpenseTable;
     window.currentSheetData = currentSheetData;
+    
+    console.log('script.js v4.5.6 loaded - Sheets working properly');
 });

@@ -1,5 +1,5 @@
-// trips.js - v1.9 - Trips Feature for HisaabKitaabApp v5.9
-// This file adds the Trips feature without modifying existing app functionality
+// trips.js - v2.0 - Trips Feature for HisaabKitaabApp v5.9
+// FIXED: Delete/restore operations, cloud sync, and modal conflicts
 
 (function() {
     'use strict';
@@ -11,16 +11,24 @@
     });
     
     function initTrips() {
-        console.log('Initializing Trips v1.9...');
+        console.log('Initializing Trips v2.0...');
         
         // ===== TRIPS STATE =====
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
         let deletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
         let currentTripData = null;
 
-        // Expose currentTripData globally for Firebase sync
-       window.tripsManager = window.tripsManager || {};
-       window.tripsManager.currentTripData = currentTripData;
+        // Expose functions and data globally for Firebase sync
+        window.tripsManager = {
+            savedTrips: savedTrips,
+            currentTripData: currentTripData,
+            loadAllTrips: loadAllTrips,
+            loadRecentTrips: loadRecentTrips,
+            updateDeletedTripsBin: updateDeletedTripsBin,
+            hideAllPages: hideAllPages,
+            showTripsPage: showTripsPage,
+            updateCurrentTripDisplay: updateCurrentTripDisplay
+        };
         
         // Check admin status from main app
         let isAdmin = localStorage.getItem('hisaabKitaabAdmin') === 'true';
@@ -76,6 +84,7 @@
         const confirmRenameTripBtn = document.getElementById('confirmRenameTripBtn');
         const cancelRenameTripBtn = document.getElementById('cancelRenameTripBtn');
         
+        // DELETE MODAL - We'll use the existing one but handle differently
         const deleteModal = document.getElementById('deleteModal');
         const deleteModalTitle = document.getElementById('deleteModalTitle');
         const deleteModalMessage = document.getElementById('deleteModalMessage');
@@ -92,13 +101,6 @@
         
         // ===== SETUP EVENT LISTENERS =====
         setupEventListeners();
-        
-        // Expose functions globally for Firebase sync to call
-        window.tripsManager = {
-            loadAllTrips: loadAllTrips,
-            loadRecentTrips: loadRecentTrips,
-            updateDeletedTripsBin: updateDeletedTripsBin
-        };
         
         // ===== FUNCTIONS =====
         
@@ -251,6 +253,22 @@
                 });
             }
             
+            // Delete Modal - We'll use the existing buttons but with our own handler
+            // IMPORTANT: Remove any existing listeners to avoid conflicts
+            if (confirmDeleteBtn) {
+                // Remove all existing listeners
+                const newConfirmBtn = confirmDeleteBtn.cloneNode(true);
+                confirmDeleteBtn.parentNode.replaceChild(newConfirmBtn, confirmDeleteBtn);
+                // Add our listener
+                newConfirmBtn.addEventListener('click', handleDeleteConfirmation);
+            }
+            
+            if (cancelDeleteBtn) {
+                const newCancelBtn = cancelDeleteBtn.cloneNode(true);
+                cancelDeleteBtn.parentNode.replaceChild(newCancelBtn, cancelDeleteBtn);
+                newCancelBtn.addEventListener('click', hideDeleteModal);
+            }
+            
             // Bin Actions
             if (emptyTripsBinBtn) {
                 emptyTripsBinBtn.addEventListener('click', emptyTripsBin);
@@ -282,38 +300,14 @@
             console.log('Hiding all pages');
             
             // Hide ALL pages by removing 'active' class
-            if (homeContent) {
-                homeContent.classList.remove('active');
-                console.log(' - Home page hidden');
-            }
-            if (sheetsContent) {
-                sheetsContent.classList.remove('active');
-                console.log(' - Sheets page hidden');
-            }
-            if (tripsContent) {
-                tripsContent.classList.remove('active');
-                console.log(' - Trips page hidden');
-            }
-            if (createContent) {
-                createContent.classList.remove('active');
-                console.log(' - Create page hidden');
-            }
-            if (settingsContent) {
-                settingsContent.classList.remove('active');
-                console.log(' - Settings page hidden');
-            }
-            if (sheetSection) {
-                sheetSection.classList.remove('active');
-                console.log(' - Sheet section hidden');
-            }
-            if (editParticipantsSection) {
-                editParticipantsSection.classList.remove('active');
-                console.log(' - Edit participants section hidden');
-            }
-            if (tripDetailSection) {
-                tripDetailSection.classList.remove('active');
-                console.log(' - Trip detail section hidden');
-            }
+            if (homeContent) homeContent.classList.remove('active');
+            if (sheetsContent) sheetsContent.classList.remove('active');
+            if (tripsContent) tripsContent.classList.remove('active');
+            if (createContent) createContent.classList.remove('active');
+            if (settingsContent) settingsContent.classList.remove('active');
+            if (sheetSection) sheetSection.classList.remove('active');
+            if (editParticipantsSection) editParticipantsSection.classList.remove('active');
+            if (tripDetailSection) tripDetailSection.classList.remove('active');
             
             // Remove active class from ALL nav buttons
             const homeBtn = document.getElementById('homeBtn');
@@ -329,10 +323,7 @@
         
         function showHomePage() {
             console.log('Showing Home page');
-            if (homeContent) {
-                homeContent.classList.add('active');
-                console.log(' - Home page active class added');
-            }
+            if (homeContent) homeContent.classList.add('active');
             const homeBtn = document.getElementById('homeBtn');
             if (homeBtn) homeBtn.classList.add('active');
             
@@ -342,20 +333,14 @@
         
         function showSheetsPage() {
             console.log('Showing Sheets page');
-            if (sheetsContent) {
-                sheetsContent.classList.add('active');
-                console.log(' - Sheets page active class added');
-            }
+            if (sheetsContent) sheetsContent.classList.add('active');
             const sheetsBtn = document.getElementById('sheetsBtn');
             if (sheetsBtn) sheetsBtn.classList.add('active');
         }
         
         function showTripsPage() {
             console.log('Showing Trips page');
-            if (tripsContent) {
-                tripsContent.classList.add('active');
-                console.log(' - Trips page active class added');
-            }
+            if (tripsContent) tripsContent.classList.add('active');
             const tripsBtn = document.getElementById('tripsBtn');
             if (tripsBtn) tripsBtn.classList.add('active');
             
@@ -365,10 +350,7 @@
         
         function showSettingsPage() {
             console.log('Showing Settings page');
-            if (settingsContent) {
-                settingsContent.classList.add('active');
-                console.log(' - Settings page active class added');
-            }
+            if (settingsContent) settingsContent.classList.add('active');
             const settingsBtn = document.getElementById('settingsBtn');
             if (settingsBtn) settingsBtn.classList.add('active');
             
@@ -389,12 +371,10 @@
                 showTripsPage();
             } else if (page === 'create') {
                 if (createContent) createContent.classList.add('active');
-                // No nav button for create
             } else if (page === 'settings') {
                 showSettingsPage();
             } else if (page === 'tripDetail') {
                 if (tripDetailSection) tripDetailSection.classList.add('active');
-                // No nav button for trip detail
             }
         }
         
@@ -408,7 +388,7 @@
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = String(now.getFullYear()); // Full 4-digit year
+            const year = String(now.getFullYear());
             const defaultName = `Trip-${day}/${month}/${year}`;
             
             createTripNameInput.value = defaultName;
@@ -451,7 +431,7 @@
             }
             
             const now = new Date();
-            const tripId = 'trip_' + Date.now();
+            const tripId = 'trip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
             const newTrip = {
                 id: tripId,
@@ -653,7 +633,7 @@
             }
             
             currentTripData = JSON.parse(JSON.stringify(trip));
-            window.tripsManager.currentTripData = currentTripData; // Add this line
+            window.tripsManager.currentTripData = currentTripData;
             
             // Update trip detail UI
             tripDetailName.textContent = currentTripData.name;
@@ -684,6 +664,33 @@
             editTripBtn.style.display = isAdmin ? 'inline-block' : 'none';
             
             showPage('tripDetail');
+        }
+        
+        function updateCurrentTripDisplay() {
+            if (!currentTripData) return;
+            
+            tripDetailName.textContent = currentTripData.name;
+            
+            // Remove any existing version badge and re-add
+            const existingBadge = tripDetailName.querySelector('.version-badge');
+            if (existingBadge) existingBadge.remove();
+            
+            const tripBadge = document.createElement('span');
+            tripBadge.className = 'version-badge';
+            tripBadge.style.cssText = `
+                font-size: 12px;
+                background-color: #e67e22;
+                color: white;
+                padding: 3px 8px;
+                border-radius: 12px;
+                margin-left: 10px;
+                cursor: default;
+            `;
+            tripBadge.textContent = 'Trip v1.0';
+            tripDetailName.appendChild(tripBadge);
+            
+            tripDetailDate.textContent = `Created: ${formatDateLong(new Date(currentTripData.createdAt))}`;
+            tripDetailDescription.textContent = currentTripData.description || 'No description';
         }
         
         function showRenameTripModal(tripId, currentName, currentDescription) {
@@ -755,24 +762,7 @@
             if (currentTripData && currentTripData.id === tripId) {
                 currentTripData.name = newName;
                 currentTripData.description = newDescription;
-                tripDetailName.textContent = newName;
-                
-                // Re-add badge
-                const tripBadge = document.createElement('span');
-                tripBadge.className = 'version-badge';
-                tripBadge.style.cssText = `
-                    font-size: 12px;
-                    background-color: #e67e22;
-                    color: white;
-                    padding: 3px 8px;
-                    border-radius: 12px;
-                    margin-left: 10px;
-                    cursor: default;
-                `;
-                tripBadge.textContent = 'Trip v1.0';
-                tripDetailName.appendChild(tripBadge);
-                
-                tripDetailDescription.textContent = newDescription || 'No description';
+                updateCurrentTripDisplay();
             }
             
             // Refresh UI
@@ -785,34 +775,36 @@
         }
         
         function showDeleteTripConfirmation(tripId) {
-            // Set modal for trip deletion
-            deleteModalTitle.textContent = 'Delete Trip';
-            deleteModalMessage.textContent = 'Are you sure you want to delete this trip? It will be moved to the bin and can be restored later.';
+            // Store the trip ID and type in the modal
             deleteModal.dataset.tripId = tripId;
             deleteModal.dataset.type = 'trip';
+            
+            // Update modal content for trip deletion
+            deleteModalTitle.textContent = 'Delete Trip';
+            deleteModalMessage.textContent = 'Are you sure you want to delete this trip? It will be moved to the bin and can be restored later.';
+            
+            // Show the modal
             deleteModal.style.display = 'flex';
-            
-            // Remove any existing listeners and add new one
-            confirmDeleteBtn.removeEventListener('click', handleDeleteTrip);
-            confirmDeleteBtn.addEventListener('click', handleDeleteTrip);
-        }
-        
-        function handleDeleteTrip() {
-            const tripId = deleteModal.dataset.tripId;
-            
-            if (!tripId) {
-                hideDeleteModal();
-                return;
-            }
-            
-            deleteTripById(tripId);
-            hideDeleteModal();
         }
         
         function hideDeleteModal() {
             deleteModal.style.display = 'none';
+            // Clear the dataset
             delete deleteModal.dataset.tripId;
             delete deleteModal.dataset.type;
+        }
+        
+        function handleDeleteConfirmation() {
+            const type = deleteModal.dataset.type;
+            const tripId = deleteModal.dataset.tripId;
+            
+            if (type === 'trip' && tripId) {
+                deleteTripById(tripId);
+            }
+            // For sheets, the main script.js will handle it
+            // We don't interfere with sheets deletion
+            
+            hideDeleteModal();
         }
         
         function deleteTripById(tripId) {
@@ -837,6 +829,7 @@
             // If this is the current open trip, navigate away
             if (currentTripData && currentTripData.id === tripId) {
                 currentTripData = null;
+                window.tripsManager.currentTripData = null;
                 hideAllPages();
                 showTripsPage();
             }
@@ -891,13 +884,7 @@
             
             // Show/hide create trip button based on admin status
             if (createTripHomeBtn) {
-                if (isAdmin) {
-                    createTripHomeBtn.style.display = 'block';
-                    console.log(' - Create Trip button shown (admin)');
-                } else {
-                    createTripHomeBtn.style.display = 'none';
-                    console.log(' - Create Trip button hidden (non-admin)');
-                }
+                createTripHomeBtn.style.display = isAdmin ? 'block' : 'none';
             }
             
             // Refresh all lists to show/hide admin controls
@@ -918,6 +905,7 @@
         
         function saveTripsToStorage() {
             localStorage.setItem('hisaabKitaabTrips', JSON.stringify(savedTrips));
+            window.tripsManager.savedTrips = savedTrips;
             updateTripsStats();
             
             // Sync to Firebase if available
@@ -1063,7 +1051,7 @@
             const d = new Date(date);
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = String(d.getFullYear()); // Full 4-digit year
+            const year = String(d.getFullYear());
             return `${day}/${month}/${year}`;
         }
         
@@ -1108,7 +1096,7 @@
                 }
             }, 2000);
             
-            console.log('Trips v1.9 initialized successfully!');
+            console.log('Trips v2.0 initialized successfully!');
             console.log('Saved Trips:', savedTrips.length);
             console.log('Admin status:', isAdmin);
         }
