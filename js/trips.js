@@ -1,4 +1,4 @@
-// trips.js - v1.8 - Trips Feature for HisaabKitaabApp v5.8
+// trips.js - v1.9 - Trips Feature for HisaabKitaabApp v5.9
 // This file adds the Trips feature without modifying existing app functionality
 
 (function() {
@@ -11,7 +11,7 @@
     });
     
     function initTrips() {
-        console.log('Initializing Trips v1.8...');
+        console.log('Initializing Trips v1.9...');
         
         // ===== TRIPS STATE =====
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
@@ -89,6 +89,13 @@
         // ===== SETUP EVENT LISTENERS =====
         setupEventListeners();
         
+        // Expose functions globally for Firebase sync to call
+        window.tripsManager = {
+            loadAllTrips: loadAllTrips,
+            loadRecentTrips: loadRecentTrips,
+            updateDeletedTripsBin: updateDeletedTripsBin
+        };
+        
         // ===== FUNCTIONS =====
         
         function setupEventListeners() {
@@ -131,7 +138,10 @@
             // Refresh button
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', function() {
-                    // Don't change page, just refresh
+                    // Trigger manual sync if available
+                    if (window.tripsFirebaseSync && window.tripsFirebaseSync.isInitialized) {
+                        window.tripsFirebaseSync.manualSync();
+                    }
                 });
             }
             
@@ -390,11 +400,11 @@
                 return;
             }
             
-            // Set default trip name: Trip-{current date in dd/mm/yy}
+            // Set default trip name: Trip-{current date in dd/mm/yyyy}
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = String(now.getFullYear());  // Full 4-digit year
+            const year = String(now.getFullYear()); // Full 4-digit year
             const defaultName = `Trip-${day}/${month}/${year}`;
             
             createTripNameInput.value = defaultName;
@@ -904,6 +914,11 @@
         function saveTripsToStorage() {
             localStorage.setItem('hisaabKitaabTrips', JSON.stringify(savedTrips));
             updateTripsStats();
+            
+            // Sync to Firebase if available
+            if (window.tripsFirebaseSync && window.tripsFirebaseSync.isInitialized) {
+                window.tripsFirebaseSync.saveTripsToCloud(savedTrips);
+            }
         }
         
         function saveDeletedTripsToStorage() {
@@ -1040,12 +1055,12 @@
         // ===== UTILITY FUNCTIONS =====
         
         function formatDateShort(date) {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = String(d.getFullYear());  // ← REMOVED .slice(-2)
-    return `${day}/${month}/${year}`;
-}
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()); // Full 4-digit year
+            return `${day}/${month}/${year}`;
+        }
         
         function formatDateLong(date) {
             return date.toLocaleDateString('en-US', {
@@ -1081,7 +1096,14 @@
             updateDeletedTripsBin();
             updateTripsUIForAdmin();
             
-            console.log('Trips v1.8 initialized successfully!');
+            // Initialize Firebase sync for trips
+            setTimeout(() => {
+                if (window.tripsFirebaseSync) {
+                    window.tripsFirebaseSync.initialize();
+                }
+            }, 2000);
+            
+            console.log('Trips v1.9 initialized successfully!');
             console.log('Saved Trips:', savedTrips.length);
             console.log('Admin status:', isAdmin);
         }
