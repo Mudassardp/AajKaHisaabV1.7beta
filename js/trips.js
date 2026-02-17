@@ -1,5 +1,5 @@
-// trips.js - v2.0 - Trips Feature for HisaabKitaabApp v5.9
-// FIXED: Delete/restore operations, cloud sync, and modal conflicts
+// trips.js - v2.1 - Trips Feature for HisaabKitaabApp v5.9
+// FIXED: Added custom event listener for trip deletion
 
 (function() {
     'use strict';
@@ -11,7 +11,7 @@
     });
     
     function initTrips() {
-        console.log('Initializing Trips v2.0...');
+        console.log('Initializing Trips v2.1...');
         
         // ===== TRIPS STATE =====
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
@@ -144,7 +144,6 @@
             // Refresh button
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', function() {
-                    // Trigger manual sync if available
                     if (window.tripsFirebaseSync && window.tripsFirebaseSync.isInitialized) {
                         window.tripsFirebaseSync.manualSync();
                     }
@@ -253,21 +252,13 @@
                 });
             }
             
-            // Delete Modal - We'll use the existing buttons but with our own handler
-            // IMPORTANT: Remove any existing listeners to avoid conflicts
-            if (confirmDeleteBtn) {
-                // Remove all existing listeners
-                const newConfirmBtn = confirmDeleteBtn.cloneNode(true);
-                confirmDeleteBtn.parentNode.replaceChild(newConfirmBtn, confirmDeleteBtn);
-                // Add our listener
-                newConfirmBtn.addEventListener('click', handleDeleteConfirmation);
-            }
-            
-            if (cancelDeleteBtn) {
-                const newCancelBtn = cancelDeleteBtn.cloneNode(true);
-                cancelDeleteBtn.parentNode.replaceChild(newCancelBtn, cancelDeleteBtn);
-                newCancelBtn.addEventListener('click', hideDeleteModal);
-            }
+            // FIXED: Listen for custom event from script.js for trip deletion
+            window.addEventListener('tripDeleteConfirmed', function(e) {
+                console.log('Trip delete confirmed event received:', e.detail);
+                if (e.detail && e.detail.tripId) {
+                    deleteTripById(e.detail.tripId);
+                }
+            });
             
             // Bin Actions
             if (emptyTripsBinBtn) {
@@ -299,7 +290,6 @@
         function hideAllPages() {
             console.log('Hiding all pages');
             
-            // Hide ALL pages by removing 'active' class
             if (homeContent) homeContent.classList.remove('active');
             if (sheetsContent) sheetsContent.classList.remove('active');
             if (tripsContent) tripsContent.classList.remove('active');
@@ -309,7 +299,6 @@
             if (editParticipantsSection) editParticipantsSection.classList.remove('active');
             if (tripDetailSection) tripDetailSection.classList.remove('active');
             
-            // Remove active class from ALL nav buttons
             const homeBtn = document.getElementById('homeBtn');
             const sheetsBtn = document.getElementById('sheetsBtn');
             const tripsBtn = document.getElementById('tripsBtn');
@@ -326,8 +315,6 @@
             if (homeContent) homeContent.classList.add('active');
             const homeBtn = document.getElementById('homeBtn');
             if (homeBtn) homeBtn.classList.add('active');
-            
-            // Load data
             loadRecentTrips();
         }
         
@@ -343,8 +330,6 @@
             if (tripsContent) tripsContent.classList.add('active');
             const tripsBtn = document.getElementById('tripsBtn');
             if (tripsBtn) tripsBtn.classList.add('active');
-            
-            // Load trips data
             loadAllTrips();
         }
         
@@ -353,16 +338,12 @@
             if (settingsContent) settingsContent.classList.add('active');
             const settingsBtn = document.getElementById('settingsBtn');
             if (settingsBtn) settingsBtn.classList.add('active');
-            
-            // Update bin
             updateDeletedTripsBin();
         }
         
         function showPage(page) {
-            // First hide all pages
             hideAllPages();
             
-            // Then show the requested page
             if (page === 'home') {
                 showHomePage();
             } else if (page === 'sheets') {
@@ -384,7 +365,6 @@
                 return;
             }
             
-            // Set default trip name: Trip-{current date in dd/mm/yyyy}
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -420,7 +400,6 @@
                 return;
             }
             
-            // Check if name already exists
             const nameExists = savedTrips.some(trip => 
                 trip.name.toLowerCase() === tripName.toLowerCase()
             );
@@ -449,7 +428,6 @@
             
             hideCreateTripModal();
             
-            // Open the newly created trip
             openTrip(tripId);
         }
         
@@ -523,7 +501,6 @@
                 </div>
             `;
             
-            // Add action buttons for admin
             if (isAdmin) {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'sheet-item-actions';
@@ -588,7 +565,6 @@
             
             item.appendChild(tripInfo);
             
-            // Add action buttons for admin
             if (isAdmin) {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'trip-item-actions';
@@ -635,14 +611,11 @@
             currentTripData = JSON.parse(JSON.stringify(trip));
             window.tripsManager.currentTripData = currentTripData;
             
-            // Update trip detail UI
             tripDetailName.textContent = currentTripData.name;
             
-            // Remove any existing version badge
             const existingBadge = tripDetailName.querySelector('.version-badge');
             if (existingBadge) existingBadge.remove();
             
-            // Add trip badge
             const tripBadge = document.createElement('span');
             tripBadge.className = 'version-badge';
             tripBadge.style.cssText = `
@@ -660,7 +633,6 @@
             tripDetailDate.textContent = `Created: ${formatDateLong(new Date(currentTripData.createdAt))}`;
             tripDetailDescription.textContent = currentTripData.description || 'No description';
             
-            // Show/hide edit button based on admin status
             editTripBtn.style.display = isAdmin ? 'inline-block' : 'none';
             
             showPage('tripDetail');
@@ -671,7 +643,6 @@
             
             tripDetailName.textContent = currentTripData.name;
             
-            // Remove any existing version badge and re-add
             const existingBadge = tripDetailName.querySelector('.version-badge');
             if (existingBadge) existingBadge.remove();
             
@@ -732,7 +703,6 @@
                 return;
             }
             
-            // Find and update the trip
             const tripIndex = savedTrips.findIndex(trip => trip.id === tripId);
             
             if (tripIndex === -1) {
@@ -741,7 +711,6 @@
                 return;
             }
             
-            // Check if name already exists (excluding current trip)
             const nameExists = savedTrips.some(trip => 
                 trip.id !== tripId && trip.name.toLowerCase() === newName.toLowerCase()
             );
@@ -751,21 +720,18 @@
                 return;
             }
             
-            // Update trip
             savedTrips[tripIndex].name = newName;
             savedTrips[tripIndex].description = newDescription;
             savedTrips[tripIndex].lastUpdated = formatDateTime(new Date());
             
             saveTripsToStorage();
             
-            // If this is the current open trip, update the UI
             if (currentTripData && currentTripData.id === tripId) {
                 currentTripData.name = newName;
                 currentTripData.description = newDescription;
                 updateCurrentTripDisplay();
             }
             
-            // Refresh UI
             updateTripsStats();
             loadRecentTrips();
             loadAllTrips();
@@ -775,39 +741,26 @@
         }
         
         function showDeleteTripConfirmation(tripId) {
-            // Store the trip ID and type in the modal
+            console.log('Showing delete confirmation for trip:', tripId);
+            
             deleteModal.dataset.tripId = tripId;
             deleteModal.dataset.type = 'trip';
             
-            // Update modal content for trip deletion
             deleteModalTitle.textContent = 'Delete Trip';
             deleteModalMessage.textContent = 'Are you sure you want to delete this trip? It will be moved to the bin and can be restored later.';
             
-            // Show the modal
             deleteModal.style.display = 'flex';
         }
         
         function hideDeleteModal() {
             deleteModal.style.display = 'none';
-            // Clear the dataset
             delete deleteModal.dataset.tripId;
             delete deleteModal.dataset.type;
         }
         
-        function handleDeleteConfirmation() {
-            const type = deleteModal.dataset.type;
-            const tripId = deleteModal.dataset.tripId;
-            
-            if (type === 'trip' && tripId) {
-                deleteTripById(tripId);
-            }
-            // For sheets, the main script.js will handle it
-            // We don't interfere with sheets deletion
-            
-            hideDeleteModal();
-        }
-        
         function deleteTripById(tripId) {
+            console.log('Deleting trip by ID:', tripId);
+            
             const tripIndex = savedTrips.findIndex(trip => trip.id === tripId);
             
             if (tripIndex === -1) {
@@ -817,16 +770,13 @@
             
             const trip = savedTrips[tripIndex];
             
-            // Add to deleted trips
             trip.deletedDate = new Date().toISOString();
             deletedTrips.push(trip);
             saveDeletedTripsToStorage();
             
-            // Remove from saved trips
             savedTrips.splice(tripIndex, 1);
             saveTripsToStorage();
             
-            // If this is the current open trip, navigate away
             if (currentTripData && currentTripData.id === tripId) {
                 currentTripData = null;
                 window.tripsManager.currentTripData = null;
@@ -834,7 +784,6 @@
                 showTripsPage();
             }
             
-            // Refresh UI
             updateTripsStats();
             loadRecentTrips();
             loadAllTrips();
@@ -882,22 +831,18 @@
         function updateTripsUIForAdmin() {
             console.log('Updating UI for admin status:', isAdmin);
             
-            // Show/hide create trip button based on admin status
             if (createTripHomeBtn) {
                 createTripHomeBtn.style.display = isAdmin ? 'block' : 'none';
             }
             
-            // Refresh all lists to show/hide admin controls
             loadRecentTrips();
             loadAllTrips();
             updateDeletedTripsBin();
             
-            // Update edit button on trip detail
             if (editTripBtn) {
                 editTripBtn.style.display = isAdmin && currentTripData ? 'inline-block' : 'none';
             }
             
-            // Show/hide bin section in settings
             if (deletedTripsBinSection) {
                 deletedTripsBinSection.style.display = isAdmin ? 'block' : 'none';
             }
@@ -908,7 +853,6 @@
             window.tripsManager.savedTrips = savedTrips;
             updateTripsStats();
             
-            // Sync to Firebase if available
             if (window.tripsFirebaseSync && window.tripsFirebaseSync.isInitialized) {
                 window.tripsFirebaseSync.saveTripsToCloud(savedTrips);
             }
@@ -962,23 +906,29 @@
                 deletedTripsList.appendChild(tripItem);
             });
             
-            // Add event listeners to restore buttons
             document.querySelectorAll('.restore-trip-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     restoreDeletedTrip(this.dataset.id);
                 });
             });
             
             document.querySelectorAll('.permanent-delete-trip-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     permanentlyDeleteTrip(this.dataset.id);
                 });
             });
         }
         
         function restoreDeletedTrip(tripId) {
+            console.log('Restoring deleted trip:', tripId);
+            
             const tripIndex = deletedTrips.findIndex(trip => trip.id === tripId);
-            if (tripIndex === -1) return;
+            if (tripIndex === -1) {
+                alert('Trip not found in bin.');
+                return;
+            }
             
             const trip = deletedTrips[tripIndex];
             
@@ -992,25 +942,34 @@
             loadRecentTrips();
             loadAllTrips();
             updateDeletedTripsBin();
+            
             alert('Trip restored successfully!');
         }
         
         function permanentlyDeleteTrip(tripId) {
+            console.log('Permanently deleting trip:', tripId);
+            
             if (!confirm('Permanently delete this trip? This action cannot be undone.')) {
                 return;
             }
             
             const tripIndex = deletedTrips.findIndex(trip => trip.id === tripId);
-            if (tripIndex === -1) return;
+            if (tripIndex === -1) {
+                alert('Trip not found in bin.');
+                return;
+            }
             
             deletedTrips.splice(tripIndex, 1);
             saveDeletedTripsToStorage();
             
             updateDeletedTripsBin();
+            
             alert('Trip permanently deleted!');
         }
         
         function emptyTripsBin() {
+            console.log('Emptying trips bin');
+            
             if (!confirm('Empty the entire trips bin? This will permanently delete all trips in the bin.')) {
                 return;
             }
@@ -1019,11 +978,17 @@
             saveDeletedTripsToStorage();
             
             updateDeletedTripsBin();
+            
             alert('Trips bin emptied successfully!');
         }
         
         function restoreAllTrips() {
-            if (deletedTrips.length === 0) return;
+            console.log('Restoring all deleted trips');
+            
+            if (deletedTrips.length === 0) {
+                alert('No trips to restore.');
+                return;
+            }
             
             if (!confirm(`Restore all ${deletedTrips.length} deleted trips?`)) {
                 return;
@@ -1042,6 +1007,7 @@
             loadRecentTrips();
             loadAllTrips();
             updateDeletedTripsBin();
+            
             alert('All trips restored successfully!');
         }
         
@@ -1079,24 +1045,21 @@
         
         // ===== INITIAL LOAD =====
         function init() {
-            // Load trips data
             savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
             deletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
             
-            // Update UI
             updateTripsStats();
             loadRecentTrips();
             updateDeletedTripsBin();
             updateTripsUIForAdmin();
             
-            // Initialize Firebase sync for trips
             setTimeout(() => {
                 if (window.tripsFirebaseSync) {
                     window.tripsFirebaseSync.initialize();
                 }
             }, 2000);
             
-            console.log('Trips v2.0 initialized successfully!');
+            console.log('Trips v2.1 initialized successfully!');
             console.log('Saved Trips:', savedTrips.length);
             console.log('Admin status:', isAdmin);
         }
