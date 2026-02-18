@@ -1,14 +1,18 @@
-// firebase-sync.js - v2.2 with Profile Image and Profile Data Sync
+// firebase-sync.js - v2.3 with Fixed Sheet Deletion Sync Across Devices
 class FirebaseSync {
     constructor() {
         this.isInitialized = false;
         this.isSyncing = false;
+        this.db = null;
+        this.storage = null;
+        this.pendingSyncTimeout = null;
+        this.lastSyncTimestamp = 0;
     }
 
     // Initialize Firebase
     initialize() {
         try {
-            console.log('Starting Firebase initialization v2.2 with Profile Sync...');
+            console.log('Starting Firebase initialization v2.3 with Fixed Sheet Deletion Sync...');
             
             // Your Firebase configuration
             const firebaseConfig = {
@@ -22,14 +26,21 @@ class FirebaseSync {
             };
 
             // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            
             this.db = firebase.database();
             this.storage = firebase.storage();
             
             this.isInitialized = true;
-            console.log('Firebase initialized successfully v2.2 with Profile Sync');
+            console.log('Firebase initialized successfully v2.3 with Fixed Sheet Deletion Sync');
             
             this.showSyncStatus('Connected to shared cloud', 'success');
+            
+            // Remove any existing listeners to prevent duplicates
+            this.db.ref('sharedSheets').off();
+            this.db.ref('sharedProfiles').off();
             
             // Listen for real-time updates for sheets
             this.setupSheetsRealTimeListener();
@@ -49,15 +60,37 @@ class FirebaseSync {
 
     // Listen for real-time updates for sheets from other users
     setupSheetsRealTimeListener() {
+        console.log('Setting up sheets real-time listener...');
+        
         this.db.ref('sharedSheets').on('value', (snapshot) => {
-            const cloudData = snapshot.val();
-            console.log('Real-time sheets update received:', cloudData);
+            const now = Date.now();
             
-            if (cloudData && Array.isArray(cloudData)) {
-                this.replaceLocalSheets(cloudData);
-                this.showSyncStatus('Sheets updated from cloud', 'info');
+            // Only process if we're not currently syncing and it's been at least 1 second since last sync
+            if (!this.isSyncing && (now - this.lastSyncTimestamp) > 1000) {
+                const cloudData = snapshot.val();
+                console.log('Real-time sheets update received:', cloudData);
+                
+                if (cloudData && Array.isArray(cloudData)) {
+                    this.replaceLocalSheets(cloudData);
+                    this.showSyncStatus('Sheets updated from cloud', 'success');
+                } else if (cloudData === null) {
+                    console.log('No sheets data in cloud yet');
+                    // If cloud is empty but we have local sheets, sync them up
+                    const localSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
+                    if (localSheets.length > 0) {
+                        console.log('Cloud empty, pushing local sheets to cloud');
+                        this.saveSheetsToCloud(localSheets);
+                    }
+                }
+            } else {
+                console.log('Skipping sheets cloud update - sync in progress or too soon after last sync');
             }
+        }, (error) => {
+            console.error('Error in sheets real-time listener:', error);
+            this.showSyncStatus('Sheets sync error: ' + error.message, 'error');
         });
+        
+        console.log('Sheets real-time listener setup complete');
     }
 
     // Listen for real-time updates for profiles from other users
@@ -73,29 +106,48 @@ class FirebaseSync {
         });
     }
 
-    // Save sheets data to shared cloud
+    // Save sheets data to shared cloud with debouncing
     async saveSheetsToCloud(data) {
-        if (!this.isInitialized || this.isSyncing) {
+        if (!this.isInitialized || !this.db) {
             console.log('Cannot sync sheets - not ready');
-            return;
+            return false;
         }
         
-        try {
-            this.isSyncing = true;
-            this.showSyncStatus('Syncing sheets to cloud...', 'syncing');
-            
-            console.log('Saving sheets to shared cloud...', data);
-            await this.db.ref('sharedSheets').set(data);
-            
-            this.showSyncStatus('Sheets synced to cloud', 'success');
-            console.log('Sheets data saved to shared cloud successfully');
-            
-        } catch (error) {
-            console.error('Failed to save sheets to shared cloud:', error);
-            this.showSyncStatus('Sheets sync failed: ' + error.message, 'error');
-        } finally {
-            this.isSyncing = false;
+        // Debounce multiple rapid saves
+        if (this.pendingSyncTimeout) {
+            clearTimeout(this.pendingSyncTimeout);
         }
+        
+        return new Promise((resolve) => {
+            this.pendingSyncTimeout = setTimeout(async () => {
+                if (this.isSyncing) {
+                    console.log('Already syncing sheets, waiting...');
+                    setTimeout(() => this.saveSheetsToCloud(data), 500);
+                    return;
+                }
+                
+                try {
+                    this.isSyncing = true;
+                    this.lastSyncTimestamp = Date.now();
+                    this.showSyncStatus('Syncing sheets to cloud...', 'syncing');
+                    
+                    console.log('Saving sheets to shared cloud...', data.length);
+                    await this.db.ref('sharedSheets').set(data);
+                    
+                    this.showSyncStatus('Sheets synced to cloud', 'success');
+                    console.log('Sheets data saved to shared cloud successfully');
+                    resolve(true);
+                    
+                } catch (error) {
+                    console.error('Failed to save sheets to shared cloud:', error);
+                    this.showSyncStatus('Sheets sync failed: ' + error.message, 'error');
+                    resolve(false);
+                } finally {
+                    this.isSyncing = false;
+                    this.pendingSyncTimeout = null;
+                }
+            }, 500);
+        });
     }
 
     // Save profiles data to shared cloud
@@ -125,12 +177,18 @@ class FirebaseSync {
 
     // Load sheets data from shared cloud
     async loadSheetsFromCloud() {
-        if (!this.isInitialized) {
+        if (!this.isInitialized || !this.db) {
             console.log('Cannot load sheets - not ready');
             return;
         }
         
+        if (this.isSyncing) {
+            console.log('Already syncing, skipping load');
+            return;
+        }
+        
         try {
+            this.isSyncing = true;
             this.showSyncStatus('Loading shared sheets...', 'syncing');
             
             console.log('Loading sheets from shared cloud...');
@@ -150,6 +208,8 @@ class FirebaseSync {
         } catch (error) {
             console.error('Failed to load sheets from shared cloud:', error);
             this.showSyncStatus('Sheets cloud load failed: ' + error.message, 'error');
+        } finally {
+            this.isSyncing = false;
         }
     }
 
@@ -183,10 +243,24 @@ class FirebaseSync {
         }
     }
 
-    // Replace local sheets with shared data
+    // Replace local sheets with shared data (handles deletions properly)
     replaceLocalSheets(cloudData) {
+        console.log('Replacing local sheets with cloud data:', cloudData);
+        
+        // Get current local deleted sheets
+        const localDeletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
+        
+        // Create a map of deleted sheets by ID
+        const deletedSheetsMap = new Map();
+        localDeletedSheets.forEach(sheet => deletedSheetsMap.set(sheet.id, sheet));
+        
+        // Filter out any sheets that are in the local deleted bin
+        const filteredCloudData = cloudData.filter(sheet => !deletedSheetsMap.has(sheet.id));
+        
+        console.log('After filtering deleted sheets:', filteredCloudData.length, 'original:', cloudData.length);
+        
         // Save shared data to localStorage
-        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(cloudData));
+        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(filteredCloudData));
         
         // Refresh the UI
         if (window.loadSavedSheets) {
@@ -195,15 +269,23 @@ class FirebaseSync {
         
         // If we have a current sheet open, check if it needs updating
         if (window.currentSheetData) {
-            const updatedSheet = cloudData.find(sheet => sheet.id === window.currentSheetData.id);
+            const updatedSheet = filteredCloudData.find(sheet => sheet.id === window.currentSheetData.id);
             if (updatedSheet) {
                 window.currentSheetData = updatedSheet;
-                // Trigger UI update if needed
                 if (window.renderExpenseTable) {
                     window.renderExpenseTable();
                 }
+            } else {
+                // Current sheet was deleted from another device
+                window.currentSheetData = null;
+                // Navigate back to sheets list
+                if (window.showPage) {
+                    window.showPage('sheets');
+                }
             }
         }
+        
+        console.log('Local sheets replaced with cloud data (deleted sheets preserved)');
     }
 
     // Replace local profiles with shared data
@@ -223,9 +305,7 @@ class FirebaseSync {
 
     // Update all avatars in the UI when profiles change
     updateAllProfileAvatars() {
-        // This function can be called to refresh avatars when profiles update
         if (window.profileManager && window.updateParticipantAvatars) {
-            // Update default participants list
             const defaultParticipants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || [];
             defaultParticipants.forEach(participant => {
                 window.profileManager.updateParticipantAvatars(participant);
@@ -240,20 +320,16 @@ class FirebaseSync {
         }
         
         try {
-            // Convert data URL to blob
             const response = await fetch(imageDataUrl);
             const blob = await response.blob();
             
-            // Create a reference to the storage location
             const storageRef = this.storage.ref();
             const imageRef = storageRef.child(`profile_images/${participantName}_${Date.now()}.jpg`);
             
-            // Upload the image
             const snapshot = await imageRef.put(blob, {
                 contentType: 'image/jpeg',
             });
             
-            // Get the download URL
             const downloadURL = await snapshot.ref.getDownloadURL();
             
             console.log('Profile image uploaded:', downloadURL);
@@ -282,6 +358,7 @@ class FirebaseSync {
                 z-index: 10000;
                 max-width: 200px;
                 text-align: center;
+                transition: opacity 0.3s;
             `;
             document.body.appendChild(statusElement);
         }
@@ -306,12 +383,15 @@ class FirebaseSync {
         statusElement.style.color = textColors[type] || textColors.info;
         statusElement.style.border = `1px solid ${textColors[type]}20`;
         statusElement.textContent = message;
+        statusElement.style.display = 'block';
         
-        if (type === 'success') {
+        if (type === 'success' || type === 'error') {
             setTimeout(() => {
-                if (statusElement.textContent === message) {
+                statusElement.style.opacity = '0';
+                setTimeout(() => {
                     statusElement.style.display = 'none';
-                }
+                    statusElement.style.opacity = '1';
+                }, 300);
             }, 3000);
         }
     }
@@ -323,6 +403,8 @@ class FirebaseSync {
             return;
         }
         
+        this.showSyncStatus('Manual sync started...', 'syncing');
+        
         // Sync sheets
         const localSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
         await this.saveSheetsToCloud(localSheets);
@@ -330,6 +412,8 @@ class FirebaseSync {
         // Sync profiles
         const localProfiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
         await this.saveProfilesToCloud(localProfiles);
+        
+        this.showSyncStatus('Manual sync completed', 'success');
     }
 
     // Sync a single profile update
@@ -339,16 +423,10 @@ class FirebaseSync {
         }
         
         try {
-            // Get current profiles
             const profiles = JSON.parse(localStorage.getItem('hisaabKitaabProfiles')) || {};
-            
-            // Update the specific profile
             profiles[participantName] = profileData;
             
-            // Save locally
             localStorage.setItem('hisaabKitaabProfiles', JSON.stringify(profiles));
-            
-            // Sync to cloud
             await this.saveProfilesToCloud(profiles);
             
             console.log('Profile synced to cloud:', participantName);

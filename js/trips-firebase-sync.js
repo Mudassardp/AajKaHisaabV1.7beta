@@ -1,5 +1,5 @@
-// trips-firebase-sync.js - v1.3 - Trips Firebase Sync for HisaabKitaabApp v5.9
-// FIXED: Better sync handling to prevent old data from overwriting deletions
+// trips-firebase-sync.js - v1.4 - Trips Firebase Sync for HisaabKitaabApp v5.9
+// FIXED: Stuck sync issue and cross-device deletion
 
 class TripsFirebaseSync {
     constructor() {
@@ -10,12 +10,13 @@ class TripsFirebaseSync {
         this.maxRetries = 5;
         this.pendingSyncTimeout = null;
         this.lastSyncTimestamp = 0;
+        this.listenerActive = false;
     }
 
     // Initialize Firebase for trips
     initialize() {
         try {
-            console.log('Initializing Trips Firebase Sync v1.3...');
+            console.log('Initializing Trips Firebase Sync v1.4...');
             
             // Check if Firebase is available
             if (typeof firebase === 'undefined') {
@@ -68,9 +69,10 @@ class TripsFirebaseSync {
         if (this.retryCount < this.maxRetries) {
             this.retryCount++;
             console.log(`Retrying Trips Firebase Sync initialization (${this.retryCount}/${this.maxRetries})...`);
-            setTimeout(() => this.initialize(), 2000 * this.retryCount);
+            setTimeout(() => this.initialize(), 2000);
         } else {
             console.error('Trips Firebase Sync failed to initialize after', this.maxRetries, 'attempts');
+            this.showSyncStatus('Trips sync unavailable', 'error');
         }
     }
 
@@ -81,20 +83,26 @@ class TripsFirebaseSync {
             return;
         }
         
+        // Prevent setting up multiple listeners
+        if (this.listenerActive) {
+            console.log('Trips listener already active, skipping...');
+            return;
+        }
+        
         console.log('Setting up trips real-time listener...');
         
-        // Remove any existing listener
+        // Remove any existing listener first
         this.db.ref('sharedTrips').off();
         
-        // Set up new listener
+        // Set up new listener with proper error handling
         this.db.ref('sharedTrips').on('value', (snapshot) => {
-            const cloudData = snapshot.val();
             const now = Date.now();
             
-            console.log('Real-time trips update received:', cloudData);
-            
-            // Only process if we're not currently syncing and it's been at least 1 second since last sync
-            if (!this.isSyncing && (now - this.lastSyncTimestamp) > 1000) {
+            // Only process if we're not currently syncing and it's been at least 2 seconds since last sync
+            if (!this.isSyncing && (now - this.lastSyncTimestamp) > 2000) {
+                const cloudData = snapshot.val();
+                console.log('Real-time trips update received:', cloudData);
+                
                 if (cloudData && Array.isArray(cloudData)) {
                     this.replaceLocalTrips(cloudData);
                     this.showSyncStatus('Trips updated from cloud', 'success');
@@ -108,13 +116,14 @@ class TripsFirebaseSync {
                     }
                 }
             } else {
-                console.log('Skipping cloud update - sync in progress or too soon after last sync');
+                console.log('Skipping trips cloud update - sync in progress or too soon after last sync');
             }
         }, (error) => {
             console.error('Error in trips real-time listener:', error);
             this.showSyncStatus('Trips sync error: ' + error.message, 'error');
         });
         
+        this.listenerActive = true;
         console.log('Trips real-time listener setup complete');
     }
 
@@ -123,7 +132,7 @@ class TripsFirebaseSync {
         if (!this.isInitialized || !this.db) {
             console.log('Cannot sync trips - not ready');
             // Try to initialize again
-            this.initialize();
+            setTimeout(() => this.initialize(), 1000);
             return false;
         }
         
@@ -145,7 +154,7 @@ class TripsFirebaseSync {
                     this.lastSyncTimestamp = Date.now();
                     this.showSyncStatus('Syncing trips to cloud...', 'syncing');
                     
-                    console.log('Saving trips to shared cloud...', data);
+                    console.log('Saving trips to shared cloud...', data.length);
                     await this.db.ref('sharedTrips').set(data);
                     
                     this.showSyncStatus('Trips synced to cloud', 'success');
@@ -160,7 +169,7 @@ class TripsFirebaseSync {
                     this.isSyncing = false;
                     this.pendingSyncTimeout = null;
                 }
-            }, 500); // 500ms debounce
+            }, 500);
         });
     }
 
@@ -187,7 +196,6 @@ class TripsFirebaseSync {
             console.log('Shared cloud trips data received:', cloudData);
             
             if (cloudData && Array.isArray(cloudData)) {
-                // Replace local data with shared data
                 this.replaceLocalTrips(cloudData);
                 this.showSyncStatus('Shared trips loaded', 'success');
             } else {
@@ -203,27 +211,21 @@ class TripsFirebaseSync {
         }
     }
 
-    // Replace local trips with shared data
+    // Replace local trips with shared data (handles deletions properly)
     replaceLocalTrips(cloudData) {
         console.log('Replacing local trips with cloud data:', cloudData);
         
-        // Get current local trips and deleted trips
-        const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+        // Get current local deleted trips
         const localDeletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
         
-        // IMPORTANT: We need to merge, not blindly replace
-        // Create a map of cloud trips by ID for quick lookup
-        const cloudTripsMap = new Map();
-        cloudData.forEach(trip => cloudTripsMap.set(trip.id, trip));
-        
-        // Create a map of deleted trips by ID (we want to keep these deleted)
+        // Create a map of deleted trips by ID
         const deletedTripsMap = new Map();
         localDeletedTrips.forEach(trip => deletedTripsMap.set(trip.id, trip));
         
-        // Filter out any trips that are in the deleted bin
+        // Filter out any trips that are in the local deleted bin
         const filteredCloudData = cloudData.filter(trip => !deletedTripsMap.has(trip.id));
         
-        console.log('After filtering deleted trips:', filteredCloudData.length);
+        console.log('After filtering deleted trips:', filteredCloudData.length, 'original:', cloudData.length);
         
         // Save filtered shared data to localStorage
         localStorage.setItem('hisaabKitaabTrips', JSON.stringify(filteredCloudData));
@@ -275,12 +277,20 @@ class TripsFirebaseSync {
             return false;
         }
         
+        this.showSyncStatus('Manual trips sync started...', 'syncing');
+        
         // First, load from cloud to get latest
         await this.loadTripsFromCloud();
         
         // Then save local trips to cloud
         const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
-        return await this.saveTripsToCloud(localTrips);
+        const result = await this.saveTripsToCloud(localTrips);
+        
+        if (result) {
+            this.showSyncStatus('Trips sync completed', 'success');
+        }
+        
+        return result;
     }
 
     // Show sync status
@@ -327,15 +337,13 @@ class TripsFirebaseSync {
         statusElement.textContent = message;
         statusElement.style.display = 'block';
         
-        if (type === 'success') {
+        if (type === 'success' || type === 'error') {
             setTimeout(() => {
-                if (statusElement.textContent === message) {
-                    statusElement.style.opacity = '0';
-                    setTimeout(() => {
-                        statusElement.style.display = 'none';
-                        statusElement.style.opacity = '1';
-                    }, 300);
-                }
+                statusElement.style.opacity = '0';
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                    statusElement.style.opacity = '1';
+                }, 300);
             }, 3000);
         }
     }
