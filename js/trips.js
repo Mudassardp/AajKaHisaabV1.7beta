@@ -1,5 +1,5 @@
-// trips.js - v2.2 - Trips Feature for HisaabKitaabApp v5.9
-// FIXED: Trip deletion persistence - now properly syncs with Firebase
+// trips.js - v2.3 - Trips Feature for HisaabKitaabApp v5.9
+// FIXED: Enhanced deletion tracking for cross-device sync
 
 (function() {
     'use strict';
@@ -11,7 +11,7 @@
     });
     
     function initTrips() {
-        console.log('Initializing Trips v2.2...');
+        console.log('Initializing Trips v2.3...');
         
         // ===== TRIPS STATE =====
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
@@ -783,7 +783,7 @@
             
             const trip = savedTrips[tripIndex];
             
-            // Add to deleted trips
+            // Add to deleted trips with timestamp
             trip.deletedDate = new Date().toISOString();
             deletedTrips.push(trip);
             saveDeletedTripsToStorage();
@@ -1107,9 +1107,8 @@
                 }
             }, 2000);
             
-            console.log('Trips v2.2 initialized successfully!');
-            console.log('Saved Trips:', savedTrips.length);
-            console.log('Admin status:', isAdmin);
+            console.log('Trips v2.3 initialized successfully!');
+            console.log('Saved Trips:', savedTrips.length, 'Deleted Trips:', deletedTrips.length);
         }
         
         init();

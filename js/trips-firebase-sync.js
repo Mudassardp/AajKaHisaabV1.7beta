@@ -1,5 +1,5 @@
-// trips-firebase-sync.js - v1.4 - Trips Firebase Sync for HisaabKitaabApp v5.9
-// FIXED: Stuck sync issue and cross-device deletion
+// trips-firebase-sync.js - v1.5 - Trips Firebase Sync for HisaabKitaabApp v5.9
+// FIXED: Cross-device trip deletion and restore - now works like sheets
 
 class TripsFirebaseSync {
     constructor() {
@@ -16,7 +16,7 @@ class TripsFirebaseSync {
     // Initialize Firebase for trips
     initialize() {
         try {
-            console.log('Initializing Trips Firebase Sync v1.4...');
+            console.log('Initializing Trips Firebase Sync v1.5...');
             
             // Check if Firebase is available
             if (typeof firebase === 'undefined') {
@@ -98,14 +98,13 @@ class TripsFirebaseSync {
         this.db.ref('sharedTrips').on('value', (snapshot) => {
             const now = Date.now();
             
-            // Only process if we're not currently syncing and it's been at least 2 seconds since last sync
-            if (!this.isSyncing && (now - this.lastSyncTimestamp) > 2000) {
+            // Only process if we're not currently syncing and it's been at least 1 second since last sync
+            if (!this.isSyncing && (now - this.lastSyncTimestamp) > 1000) {
                 const cloudData = snapshot.val();
                 console.log('Real-time trips update received:', cloudData);
                 
                 if (cloudData && Array.isArray(cloudData)) {
-                    this.replaceLocalTrips(cloudData);
-                    this.showSyncStatus('Trips updated from cloud', 'success');
+                    this.handleCloudUpdate(cloudData);
                 } else if (cloudData === null) {
                     console.log('No trips data in cloud yet');
                     // If cloud is empty but we have local trips, sync them up
@@ -125,6 +124,105 @@ class TripsFirebaseSync {
         
         this.listenerActive = true;
         console.log('Trips real-time listener setup complete');
+    }
+
+    // Handle cloud update - this is the key function for cross-device sync
+    handleCloudUpdate(cloudData) {
+        console.log('Handling cloud update with', cloudData.length, 'trips');
+        
+        // Get current local data
+        const localTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+        const localDeletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
+        
+        // Create maps for easy lookup
+        const cloudTripsMap = new Map();
+        cloudData.forEach(trip => cloudTripsMap.set(trip.id, trip));
+        
+        const localTripsMap = new Map();
+        localTrips.forEach(trip => localTripsMap.set(trip.id, trip));
+        
+        const deletedTripsMap = new Map();
+        localDeletedTrips.forEach(trip => deletedTripsMap.set(trip.id, trip));
+        
+        console.log('Local trips:', localTrips.length, 'Cloud trips:', cloudData.length, 'Deleted:', localDeletedTrips.length);
+        
+        // Step 1: Filter out any trips that are in the local deleted bin
+        const filteredCloudData = cloudData.filter(trip => !deletedTripsMap.has(trip.id));
+        
+        // Step 2: Check if any local trips are missing from cloud (they were deleted on another device)
+        // We need to move them to deleted bin
+        const newDeletedTrips = [];
+        localTrips.forEach(localTrip => {
+            if (!cloudTripsMap.has(localTrip.id)) {
+                // This trip was deleted on another device
+                console.log('Trip deleted on another device:', localTrip.name);
+                
+                // Check if it's already in deleted bin
+                if (!deletedTripsMap.has(localTrip.id)) {
+                    // Add to deleted bin
+                    localTrip.deletedDate = new Date().toISOString();
+                    newDeletedTrips.push(localTrip);
+                }
+            }
+        });
+        
+        // Step 3: Update deleted trips bin
+        if (newDeletedTrips.length > 0) {
+            console.log('Adding', newDeletedTrips.length, 'trips to deleted bin from cloud deletion');
+            localDeletedTrips.push(...newDeletedTrips);
+            localStorage.setItem('hisaabKitaabDeletedTrips', JSON.stringify(localDeletedTrips));
+        }
+        
+        // Step 4: Save filtered cloud data to localStorage (this becomes our new trips list)
+        console.log('Saving filtered cloud data:', filteredCloudData.length, 'trips');
+        localStorage.setItem('hisaabKitaabTrips', JSON.stringify(filteredCloudData));
+        
+        // Step 5: Refresh the UI
+        this.refreshTripsUI(filteredCloudData);
+        
+        this.showSyncStatus('Trips updated from cloud', 'success');
+    }
+
+    // Refresh all trips UI elements
+    refreshTripsUI(updatedTrips) {
+        console.log('Refreshing trips UI');
+        
+        if (window.tripsManager) {
+            // Force refresh from storage
+            if (window.tripsManager.forceRefreshFromStorage) {
+                window.tripsManager.forceRefreshFromStorage();
+            } else {
+                // Manual refresh of all UI components
+                if (window.tripsManager.loadAllTrips) {
+                    window.tripsManager.loadAllTrips();
+                }
+                if (window.tripsManager.loadRecentTrips) {
+                    window.tripsManager.loadRecentTrips();
+                }
+                if (window.tripsManager.updateDeletedTripsBin) {
+                    window.tripsManager.updateDeletedTripsBin();
+                }
+            }
+            
+            // Update current trip data if it's open
+            if (window.tripsManager.currentTripData) {
+                const updatedCurrentTrip = updatedTrips.find(t => t.id === window.tripsManager.currentTripData.id);
+                if (updatedCurrentTrip) {
+                    window.tripsManager.currentTripData = updatedCurrentTrip;
+                    if (window.tripsManager.updateCurrentTripDisplay) {
+                        window.tripsManager.updateCurrentTripDisplay();
+                    }
+                } else {
+                    // Current trip was deleted from another device
+                    console.log('Current trip was deleted on another device, closing...');
+                    window.tripsManager.currentTripData = null;
+                    if (window.tripsManager.hideAllPages && window.tripsManager.showTripsPage) {
+                        window.tripsManager.hideAllPages();
+                        window.tripsManager.showTripsPage();
+                    }
+                }
+            }
+        }
     }
 
     // Save trips data to shared cloud with debouncing
@@ -196,7 +294,7 @@ class TripsFirebaseSync {
             console.log('Shared cloud trips data received:', cloudData);
             
             if (cloudData && Array.isArray(cloudData)) {
-                this.replaceLocalTrips(cloudData);
+                this.handleCloudUpdate(cloudData);
                 this.showSyncStatus('Shared trips loaded', 'success');
             } else {
                 console.log('No shared trips found');
@@ -209,63 +307,6 @@ class TripsFirebaseSync {
         } finally {
             this.isSyncing = false;
         }
-    }
-
-    // Replace local trips with shared data (handles deletions properly)
-    replaceLocalTrips(cloudData) {
-        console.log('Replacing local trips with cloud data:', cloudData);
-        
-        // Get current local deleted trips
-        const localDeletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
-        
-        // Create a map of deleted trips by ID
-        const deletedTripsMap = new Map();
-        localDeletedTrips.forEach(trip => deletedTripsMap.set(trip.id, trip));
-        
-        // Filter out any trips that are in the local deleted bin
-        const filteredCloudData = cloudData.filter(trip => !deletedTripsMap.has(trip.id));
-        
-        console.log('After filtering deleted trips:', filteredCloudData.length, 'original:', cloudData.length);
-        
-        // Save filtered shared data to localStorage
-        localStorage.setItem('hisaabKitaabTrips', JSON.stringify(filteredCloudData));
-        
-        // Refresh the trips UI
-        if (window.tripsManager) {
-            if (window.tripsManager.forceRefreshFromStorage) {
-                window.tripsManager.forceRefreshFromStorage();
-            } else {
-                if (window.tripsManager.loadAllTrips) {
-                    window.tripsManager.loadAllTrips();
-                }
-                if (window.tripsManager.loadRecentTrips) {
-                    window.tripsManager.loadRecentTrips();
-                }
-                if (window.tripsManager.updateDeletedTripsBin) {
-                    window.tripsManager.updateDeletedTripsBin();
-                }
-            }
-            
-            // Update current trip data if it's open
-            if (window.tripsManager.currentTripData) {
-                const updatedCurrentTrip = filteredCloudData.find(t => t.id === window.tripsManager.currentTripData.id);
-                if (updatedCurrentTrip) {
-                    window.tripsManager.currentTripData = updatedCurrentTrip;
-                    if (window.tripsManager.updateCurrentTripDisplay) {
-                        window.tripsManager.updateCurrentTripDisplay();
-                    }
-                } else {
-                    // Current trip was deleted from another device
-                    window.tripsManager.currentTripData = null;
-                    if (window.tripsManager.hideAllPages && window.tripsManager.showTripsPage) {
-                        window.tripsManager.hideAllPages();
-                        window.tripsManager.showTripsPage();
-                    }
-                }
-            }
-        }
-        
-        console.log('Local trips replaced with cloud data (deleted trips preserved)');
     }
 
     // Manual sync trigger for trips
@@ -311,6 +352,7 @@ class TripsFirebaseSync {
                 max-width: 200px;
                 text-align: center;
                 transition: opacity 0.3s;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             `;
             document.body.appendChild(statusElement);
         }
