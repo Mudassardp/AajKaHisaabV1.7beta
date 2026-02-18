@@ -1,10 +1,9 @@
-// script.js - Mobile App Redesign v4.5.7 - Fixed Sheet Deletion and Bin Sync
+// script.js - Mobile App Redesign v4.5.1 - Fixed cloud deletion
 document.addEventListener('DOMContentLoaded', function() {
     // ===== GLOBAL STATE =====
     let selectedParticipants = [];
     let currentSheetData = null;
     let savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
-    let deletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
     let isAdmin = localStorage.getItem('hisaabKitaabAdmin') === 'true';
     let defaultParticipants = JSON.parse(localStorage.getItem('hisaabKitaabDefaultParticipants')) || [
         "Rizwan", "Aarif", "Abdul Razzaq", "Haris", "Mauzam", 
@@ -18,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Navigation
     const homeBtn = document.getElementById('homeBtn');
     const sheetsBtn = document.getElementById('sheetsBtn');
+    const createBtnNav = document.getElementById('createBtnNav');
     const refreshBtn = document.getElementById('refreshBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     
@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const autoSyncToggle = document.getElementById('autoSyncToggle');
     const defaultParticipantsBtn = document.getElementById('defaultParticipantsBtn');
     const manualSyncBtn = document.getElementById('manualSyncBtn');
-    const deletedSheetsBinSection = document.getElementById('deletedSheetsBinSection');
     
     // Sheet Page Elements
     const closeSheetBtn = document.getElementById('closeSheetBtn');
@@ -111,12 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmRenameBtn = document.getElementById('confirmRenameBtn');
     const cancelRenameBtn = document.getElementById('cancelRenameBtn');
     
-    // Deleted Sheets Bin Elements (in Settings)
-    const emptyBinBtn = document.getElementById('emptyBinBtn');
-    const restoreAllBtn = document.getElementById('restoreAllBtn');
-    const deletedSheetsList = document.getElementById('deletedSheetsList');
-    const emptyBinMessage = document.getElementById('emptyBinMessage');
-    const binActions = document.getElementById('binActions');
+    // Default Participants Modal Elements
     const addDefaultParticipantBtn = document.getElementById('addDefaultParticipantBtn');
     const newDefaultParticipantInput = document.getElementById('newDefaultParticipantInput');
     
@@ -131,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHomeStats();
         loadRecentSheets();
         loadAllSheets();
-        updateDeletedSheetsBin();
         
         if (window.profileManager) {
             window.profileManager.init();
@@ -155,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Navigation
         homeBtn.addEventListener('click', () => showPage('home'));
         sheetsBtn.addEventListener('click', () => showPage('sheets'));
+        createBtnNav.addEventListener('click', () => showPage('create'));
         refreshBtn.addEventListener('click', refreshApp);
         settingsBtn.addEventListener('click', () => showPage('settings'));
         
@@ -166,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Only admin users can create new sheets. Please login as admin.');
             }
         });
-        
         viewAllSheetsBtn.addEventListener('click', () => showPage('sheets'));
         defaultParticipantsCard.addEventListener('click', () => {
             defaultParticipantsModal.style.display = 'flex';
@@ -210,7 +203,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Sheet Name Click - Rename sheet from sheet view
         mobileSheetName.addEventListener('click', function(e) {
+            // Only allow renaming for admin
             if (isAdmin && currentSheetData) {
+                // Don't trigger if clicking on version badge
                 if (e.target.classList.contains('version-badge')) {
                     return;
                 }
@@ -230,32 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Modals
         confirmAdminLoginBtn.addEventListener('click', handleAdminLogin);
         cancelAdminLoginBtn.addEventListener('click', hideAdminLoginModal);
-        
-        // FIXED: Handle delete confirmation properly
-        confirmDeleteBtn.addEventListener('click', function() {
-            const type = deleteModal.dataset.type;
-            const sheetId = deleteModal.dataset.sheetId;
-            const tripId = deleteModal.dataset.tripId;
-            
-            console.log('Delete confirmed - Type:', type, 'Sheet ID:', sheetId, 'Trip ID:', tripId);
-            
-            if (type === 'trip' && tripId) {
-                // Trip deletion - handled by trips.js
-                // Dispatch a custom event that trips.js can listen for
-                const event = new CustomEvent('tripDeleteConfirmed', { 
-                    detail: { tripId: tripId } 
-                });
-                window.dispatchEvent(event);
-            } else if (sheetId) {
-                // Sheet deletion
-                deleteSheetById(sheetId);
-            } else {
-                console.log('No valid ID found for deletion');
-            }
-            
-            hideDeleteConfirmation();
-        });
-        
+        confirmDeleteBtn.addEventListener('click', deleteCurrentSheet);
         cancelDeleteBtn.addEventListener('click', hideDeleteConfirmation);
         closeDefaultParticipantsBtn.addEventListener('click', () => defaultParticipantsModal.style.display = 'none');
         
@@ -274,10 +244,6 @@ document.addEventListener('DOMContentLoaded', function() {
         newDefaultParticipantInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addDefaultParticipant();
         });
-        
-        // Deleted Sheets Bin Actions
-        emptyBinBtn.addEventListener('click', emptyDeletedSheetsBin);
-        restoreAllBtn.addEventListener('click', restoreAllDeletedSheets);
         
         window.addEventListener('click', (e) => {
             if (e.target === adminLoginModal) hideAdminLoginModal();
@@ -326,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Check if name already exists
         const nameExists = savedSheets.some(sheet => 
             sheet.id !== sheetId && sheet.name.toLowerCase() === newName.toLowerCase()
         );
@@ -335,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Find and update the sheet
         const sheetIndex = savedSheets.findIndex(sheet => sheet.id === sheetId);
         
         if (sheetIndex === -1) {
@@ -343,20 +311,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Store old name for reference
         const oldName = savedSheets[sheetIndex].name;
+        
+        // Update sheet name
         savedSheets[sheetIndex].name = newName;
         savedSheets[sheetIndex].lastUpdated = formatDateTime(new Date());
         
+        // Save to localStorage
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
+        // Sync to Firebase
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
         
+        // If this is the current open sheet, update the UI
         if (currentSheetData && currentSheetData.id === sheetId) {
             currentSheetData.name = newName;
             mobileSheetName.textContent = newName;
             
+            // Re-add version badge
             const versionBadge = document.createElement('span');
             versionBadge.className = 'version-badge';
             versionBadge.style.cssText = `
@@ -371,6 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mobileSheetName.appendChild(versionBadge);
         }
         
+        // Refresh UI
         updateHomeStats();
         loadRecentSheets();
         loadAllSheets();
@@ -379,28 +355,19 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(`Sheet renamed from "${oldName}" to "${newName}"`);
     }
     
-    // ===== SHEET DELETION FUNCTIONS =====
+    // ===== SHEET DELETION FUNCTIONS (NOW USING BIN MANAGER) =====
     
     function showDeleteConfirmationForSheet(sheetId) {
-        console.log('Showing delete confirmation for sheet:', sheetId);
         deleteModal.dataset.sheetId = sheetId;
-        deleteModal.dataset.type = 'sheet';
-        deleteModal.dataset.tripId = ''; // Clear any trip ID
-        deleteModalTitle.textContent = 'Delete Sheet';
-        deleteModalMessage.textContent = 'Are you sure you want to delete this sheet? It will be moved to the bin and can be restored later.';
         deleteModal.style.display = 'flex';
     }
     
     function hideDeleteConfirmation() {
         deleteModal.style.display = 'none';
         delete deleteModal.dataset.sheetId;
-        delete deleteModal.dataset.type;
-        delete deleteModal.dataset.tripId;
     }
     
-    function deleteSheetById(sheetId) {
-        console.log('Deleting sheet by ID:', sheetId);
-        
+    async function deleteSheetById(sheetId) {
         const sheetIndex = savedSheets.findIndex(sheet => sheet.id === sheetId);
         
         if (sheetIndex === -1) {
@@ -410,18 +377,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const sheet = savedSheets[sheetIndex];
         
-        // Add to deleted sheets
-        sheet.deletedDate = new Date().toISOString();
-        deletedSheets.push(sheet);
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
         // Remove from saved sheets
         savedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // Sync to Firebase
+        // Sync sheets to Firebase (this removes it from cloud)
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveSheetsToCloud(savedSheets);
+            await window.firebaseSync.saveSheetsToCloud(savedSheets);
+        }
+        
+        // Add to bin using bin manager
+        if (window.binManager) {
+            await window.binManager.addToBin(sheet);
         }
         
         // If this is the current open sheet, navigate away
@@ -435,9 +402,21 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHomeStats();
         loadRecentSheets();
         loadAllSheets();
-        updateDeletedSheetsBin();
         
         alert('Sheet moved to bin!');
+    }
+    
+    function deleteCurrentSheet() {
+        const sheetId = deleteModal.dataset.sheetId;
+        
+        if (!sheetId) {
+            alert('Sheet ID not found.');
+            hideDeleteConfirmation();
+            return;
+        }
+        
+        deleteSheetById(sheetId);
+        hideDeleteConfirmation();
     }
     
     // ===== PAGE MANAGEMENT =====
@@ -451,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         homeBtn.classList.remove('active');
         sheetsBtn.classList.remove('active');
+        createBtnNav.classList.remove('active');
         settingsBtn.classList.remove('active');
         
         switch(page) {
@@ -469,6 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'create':
                 if (isAdmin) {
                     createContent.classList.add('active');
+                    createBtnNav.classList.add('active');
                     loadCreateParticipants();
                 } else {
                     showPage('home');
@@ -479,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 settingsContent.classList.add('active');
                 settingsBtn.classList.add('active');
                 updateSettingsUI();
-                updateDeletedSheetsBin();
                 break;
             case 'sheet':
                 sheetSection.classList.add('active');
@@ -492,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (page === 'sheet' || page === 'editParticipants') {
             homeBtn.classList.remove('active');
             sheetsBtn.classList.remove('active');
+            createBtnNav.classList.remove('active');
             settingsBtn.classList.remove('active');
         }
     }
@@ -501,7 +482,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHomeStats();
         loadRecentSheets();
         loadAllSheets();
-        updateDeletedSheetsBin();
         
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             window.firebaseSync.manualSync();
@@ -519,8 +499,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCreateButtonVisibility() {
         if (isAdmin) {
             createQuickBtn.style.display = 'block';
+            createBtnNav.style.display = 'flex';
         } else {
             createQuickBtn.style.display = 'none';
+            createBtnNav.style.display = 'none';
         }
     }
     
@@ -548,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const sheetItem = document.createElement('div');
             sheetItem.className = 'recent-sheet-item';
             sheetItem.addEventListener('click', (e) => {
+                // Don't open sheet if clicking on action buttons
                 if (e.target.classList.contains('action-btn') || e.target.closest('.sheet-item-actions')) {
                     return;
                 }
@@ -566,6 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
+            // Add action buttons for admin (rename and delete)
             if (isAdmin) {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'sheet-item-actions';
@@ -640,6 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sheetItem = document.createElement('li');
         sheetItem.className = 'sheet-item';
         sheetItem.addEventListener('click', (e) => {
+            // Don't open sheet if clicking on action buttons
             if (e.target.classList.contains('action-btn') || e.target.closest('.sheet-item-actions')) {
                 return;
             }
@@ -668,6 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         sheetItem.appendChild(sheetInfo);
         
+        // Add action buttons for admin (rename and delete)
         if (isAdmin) {
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'sheet-item-actions';
@@ -921,7 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sheetNameFinal = `${sheetNameBase}(${counter})`;
         }
         
-        const sheetId = 'sheet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const sheetId = 'sheet_' + Date.now();
         
         currentSheetData = {
             id: sheetId,
@@ -976,12 +962,10 @@ document.addEventListener('DOMContentLoaded', function() {
             loginSection.style.display = 'none';
             adminSection.style.display = 'block';
             defaultParticipantsBtn.style.display = 'block';
-            deletedSheetsBinSection.style.display = 'block';
         } else {
             loginSection.style.display = 'block';
             adminSection.style.display = 'none';
             defaultParticipantsBtn.style.display = 'block';
-            deletedSheetsBinSection.style.display = 'none';
         }
         
         const savedTheme = localStorage.getItem('hisaabKitaabTheme') || 'light';
@@ -1138,6 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function calculateEqualSplit() {
+        // Store existing settlement statuses before recalculation
         const existingStatuses = {};
         if (currentSheetData.settlements) {
             Object.keys(currentSheetData.settlements).forEach(key => {
@@ -1200,6 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function calculateMealsBasedSplit() {
+        // Store existing settlement statuses before recalculation
         const existingStatuses = {};
         if (currentSheetData.settlements) {
             Object.keys(currentSheetData.settlements).forEach(key => {
@@ -1288,8 +1274,14 @@ document.addEventListener('DOMContentLoaded', function() {
         creditors.sort((a, b) => b.amount - a.amount);
         debtors.sort((a, b) => b.amount - a.amount);
         
+        console.log('=== SETTLEMENT CALCULATION ===');
+        console.log('Creditors (to be refunded):', creditors);
+        console.log('Debtors (owe money):', debtors);
+        
         const totalDebt = debtors.reduce((sum, d) => sum + d.amount, 0);
         const totalCredit = creditors.reduce((sum, c) => sum + c.amount, 0);
+        
+        console.log(`Total Debt: ${totalDebt.toFixed(2)}, Total Credit: ${totalCredit.toFixed(2)}`);
         
         let remainingCreditors = creditors.map(c => ({...c}));
         let remainingDebtors = debtors.map(d => ({...d}));
@@ -1311,6 +1303,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const settlementKey = `${debtor.name}_to_${creditor.name}`;
                 
+                // Check if this settlement existed before and preserve its status
                 const previousStatus = existingStatuses[settlementKey] || 'not-paid';
                 
                 settlements.push({
@@ -1323,10 +1316,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 creditor.amount -= paymentAmount;
                 debtor.amount = 0;
+                
+                console.log(`SETTLEMENT: ${debtor.name} pays ${roundedAmount.toFixed(2)} to ${creditor.name}`);
             }
         }
         
+        console.log('After first pass - Remaining creditors:', remainingCreditors.filter(c => c.amount >= 0.01 || c.amount <= -0.01));
+        
         const totalCollected = settlements.reduce((sum, s) => sum + s.amount, 0);
+        console.log(`Total collected from debtors: ${totalCollected.toFixed(2)}`);
         
         const overpaidCreditors = [];
         const underpaidCreditors = [];
@@ -1348,6 +1346,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        console.log('Overpaid creditors:', overpaidCreditors);
+        console.log('Underpaid creditors:', underpaidCreditors);
+        
         if (overpaidCreditors.length > 0 && underpaidCreditors.length > 0) {
             overpaidCreditors.sort((a, b) => b.amount - a.amount);
             underpaidCreditors.sort((a, b) => b.amount - a.amount);
@@ -1366,6 +1367,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (roundedTransfer >= 0.01) {
                         const settlementKey = `${overpaid.name}_to_${underpaid.name}`;
                         
+                        // Check if this settlement existed before and preserve its status
                         const previousStatus = existingStatuses[settlementKey] || 'not-paid';
                         
                         settlements.push({
@@ -1375,6 +1377,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             key: settlementKey,
                             status: previousStatus
                         });
+                        
+                        console.log(`REDISTRIBUTION: ${overpaid.name} pays ${roundedTransfer.toFixed(2)} to ${underpaid.name}`);
                         
                         overpaid.amount -= roundedTransfer;
                         underpaid.amount -= roundedTransfer;
@@ -1391,8 +1395,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (consolidatedMap.has(key)) {
                 const existing = consolidatedMap.get(key);
                 existing.amount = Math.round((existing.amount + settlement.amount) * 100) / 100;
+                // Keep the most recent status? Or merge? For now, keep existing
                 if (existing.status === 'not-paid' && settlement.status === 'paid') {
-                    existing.status = 'paid';
+                    existing.status = 'paid'; // If any part is paid, consider it paid
                 }
             } else {
                 consolidatedMap.set(key, {
@@ -1408,6 +1413,16 @@ document.addEventListener('DOMContentLoaded', function() {
         consolidatedMap.forEach((settlement, key) => {
             currentSheetData.settlements[key] = settlement;
         });
+        
+        const finalTotalPaid = Array.from(consolidatedMap.values())
+            .reduce((sum, s) => sum + s.amount, 0);
+        
+        console.log('=== SETTLEMENT VERIFICATION ===');
+        console.log(`Total owed by debtors: ${totalDebt.toFixed(2)}`);
+        console.log(`Total owed to creditors: ${totalCredit.toFixed(2)}`);
+        console.log(`Total settlement amount: ${finalTotalPaid.toFixed(2)}`);
+        console.log(`Difference: ${(finalTotalPaid - totalDebt).toFixed(2)}`);
+        console.log('================================');
         
         renderSettlementList();
     }
@@ -1456,6 +1471,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const settlementKey = `${debtors[i].name}_to_${creditors[j].name}`;
                 const roundedAmount = Math.round(settlementAmount * 100) / 100;
                 
+                // Check if this settlement existed before and preserve its status
                 const previousStatus = existingStatuses[settlementKey] || 'not-paid';
                 
                 settlements.push({
@@ -1481,6 +1497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderSettlementList();
     }
     
+    // Render settlement list with checkboxes
     function renderSettlementList() {
         settlementList.innerHTML = '';
         
@@ -1512,6 +1529,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 : parseFloat(settlement.amount).toFixed(2);
             
             if (isAdmin) {
+                // Admin view with checkbox
                 settlementItem.innerHTML = `
                     <div class="settlement-details">
                         <div class="settlement-info">
@@ -1529,6 +1547,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             } else {
+                // Non-admin view - just show status text
                 settlementItem.innerHTML = `
                     <div class="settlement-details">
                         <div class="settlement-info">
@@ -1549,8 +1568,10 @@ document.addEventListener('DOMContentLoaded', function() {
             settlementList.appendChild(settlementItem);
         });
         
+        // Add event listeners to checkboxes for admin
         if (isAdmin) {
             document.querySelectorAll('.settlement-checkbox').forEach(checkbox => {
+                // Stop click event from bubbling up to prevent triggering other handlers
                 checkbox.addEventListener('click', function(e) {
                     e.stopPropagation();
                 });
@@ -1560,6 +1581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Toggle settlement status via checkbox
     function toggleSettlementCheckbox(event) {
         const checkbox = event.currentTarget;
         const settlementKey = checkbox.dataset.settlementKey;
@@ -1569,13 +1591,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Find the settlement in currentSheetData.settlements
         let settlement = null;
         let actualKey = null;
         
+        // Try direct lookup first
         if (currentSheetData.settlements[settlementKey]) {
             settlement = currentSheetData.settlements[settlementKey];
             actualKey = settlementKey;
         } else {
+            // Try to find by matching from/to
             settlement = Object.values(currentSheetData.settlements).find(s => 
                 `${s.from}_to_${s.to}` === settlementKey || s.key === settlementKey
             );
@@ -1589,20 +1614,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Update status based on checkbox
         const newStatus = checkbox.checked ? 'paid' : 'not-paid';
         settlement.status = newStatus;
         
+        // Update the status text next to checkbox
         const statusText = checkbox.parentElement.querySelector('.settlement-status-text');
         if (statusText) {
             statusText.textContent = newStatus === 'paid' ? 'Settled' : 'Not Settled yet';
             statusText.className = `settlement-status-text ${newStatus === 'paid' ? 'paid' : 'not-paid'}`;
         }
         
+        // Save the updated sheet silently (no alert)
         saveSheetSilently();
     }
     
+    // Silent save function that doesn't show alert
     function saveSheetSilently() {
         if (!currentSheetData || !isAdmin) return;
+        
+        // Don't call calculateShares() here to avoid resetting settlements
+        // Just save the current data as is
         
         const existingIndex = savedSheets.findIndex(sheet => sheet.id === currentSheetData.id);
         if (existingIndex !== -1) {
@@ -1617,12 +1649,14 @@ document.addEventListener('DOMContentLoaded', function() {
             window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
         
+        // No alert here!
         updateHomeStats();
     }
     
     function saveSheet() {
         if (!currentSheetData || !isAdmin) return;
         
+        // Store existing settlement statuses before recalculation
         const existingStatuses = {};
         if (currentSheetData.settlements) {
             Object.keys(currentSheetData.settlements).forEach(key => {
@@ -1632,6 +1666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         calculateShares();
         
+        // After calculation, restore the statuses that existed before
         if (currentSheetData.settlements && Object.keys(existingStatuses).length > 0) {
             Object.keys(currentSheetData.settlements).forEach(key => {
                 if (existingStatuses[key] !== undefined) {
@@ -1654,6 +1689,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         updateHomeStats();
+        
+        // Re-render settlements to ensure UI reflects the restored statuses
         renderSettlementList();
         
         alert('Sheet saved successfully!');
@@ -1896,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateSheetAdminControls();
                 updateTableHeader();
                 renderExpenseTable();
-                renderSettlementList();
+                renderSettlementList(); // Re-render settlements with checkboxes
                 mobileSheetName.style.cursor = 'pointer';
                 mobileSheetName.title = 'Click to rename sheet';
             }
@@ -1921,7 +1958,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSheetAdminControls();
             updateTableHeader();
             renderExpenseTable();
-            renderSettlementList();
+            renderSettlementList(); // Re-render settlements without checkboxes
             mobileSheetName.style.cursor = 'default';
             mobileSheetName.title = '';
         }
@@ -1956,164 +1993,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             alert('Cloud sync not available.');
         }
-    }
-    
-    function updateDeletedSheetsBin() {
-        console.log('Updating deleted sheets bin');
-        deletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
-        
-        if (deletedSheets.length === 0) {
-            emptyBinMessage.style.display = 'block';
-            deletedSheetsList.style.display = 'none';
-            binActions.style.display = 'none';
-            return;
-        }
-        
-        emptyBinMessage.style.display = 'none';
-        deletedSheetsList.style.display = 'block';
-        binActions.style.display = 'flex';
-        
-        const sortedDeletedSheets = [...deletedSheets].sort((a, b) => {
-            return new Date(b.deletedDate) - new Date(a.deletedDate);
-        });
-        
-        deletedSheetsList.innerHTML = '';
-        
-        sortedDeletedSheets.forEach(sheet => {
-            const sheetItem = document.createElement('li');
-            sheetItem.className = 'sheet-item deleted-sheet-item';
-            
-            const displayDate = sheet.deletedDate ? formatDateTime(new Date(sheet.deletedDate)) : 'Unknown';
-            
-            const version = sheet.version || 'v3.0';
-            const versionColor = version === 'v4.0' ? '#9b59b6' : '#7f8c8d';
-            
-            sheetItem.innerHTML = `
-                <div>
-                    <strong>${sheet.name}</strong>
-                    <div class="sheet-date">Deleted: ${displayDate}</div>
-                    <div style="font-size: 10px; color: ${versionColor}; margin-top: 2px;">${version} ${version === 'v4.0' ? '• Equal Split' : ''}</div>
-                </div>
-                <div class="sheet-item-actions">
-                    <button class="btn btn-small btn-success restore-sheet-btn" data-id="${sheet.id}">Restore</button>
-                    <button class="btn btn-small btn-danger permanent-delete-btn" data-id="${sheet.id}">Delete</button>
-                </div>
-            `;
-            
-            deletedSheetsList.appendChild(sheetItem);
-        });
-        
-        document.querySelectorAll('.restore-sheet-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                restoreDeletedSheet(this.dataset.id);
-            });
-        });
-        
-        document.querySelectorAll('.permanent-delete-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                permanentlyDeleteSheet(this.dataset.id);
-            });
-        });
-    }
-    
-    function restoreDeletedSheet(sheetId) {
-        console.log('Restoring deleted sheet:', sheetId);
-        
-        const sheetIndex = deletedSheets.findIndex(sheet => sheet.id === sheetId);
-        if (sheetIndex === -1) {
-            alert('Sheet not found in bin.');
-            return;
-        }
-        
-        const sheet = deletedSheets[sheetIndex];
-        
-        deletedSheets.splice(sheetIndex, 1);
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
-        savedSheets.push(sheet);
-        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
-        
-        if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveSheetsToCloud(savedSheets);
-        }
-        
-        updateHomeStats();
-        loadRecentSheets();
-        loadAllSheets();
-        updateDeletedSheetsBin();
-        
-        alert('Sheet restored successfully!');
-    }
-    
-    function permanentlyDeleteSheet(sheetId) {
-        console.log('Permanently deleting sheet:', sheetId);
-        
-        if (!confirm('Permanently delete this sheet? This action cannot be undone.')) {
-            return;
-        }
-        
-        const sheetIndex = deletedSheets.findIndex(sheet => sheet.id === sheetId);
-        if (sheetIndex === -1) {
-            alert('Sheet not found in bin.');
-            return;
-        }
-        
-        deletedSheets.splice(sheetIndex, 1);
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
-        updateDeletedSheetsBin();
-        
-        alert('Sheet permanently deleted!');
-    }
-    
-    function emptyDeletedSheetsBin() {
-        console.log('Emptying deleted sheets bin');
-        
-        if (!confirm('Empty the entire bin? This will permanently delete all sheets in the bin.')) {
-            return;
-        }
-        
-        deletedSheets = [];
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
-        updateDeletedSheetsBin();
-        
-        alert('Bin emptied successfully!');
-    }
-    
-    function restoreAllDeletedSheets() {
-        console.log('Restoring all deleted sheets');
-        
-        if (deletedSheets.length === 0) {
-            alert('No sheets to restore.');
-            return;
-        }
-        
-        if (!confirm(`Restore all ${deletedSheets.length} deleted sheets?`)) {
-            return;
-        }
-        
-        deletedSheets.forEach(sheet => {
-            savedSheets.push(sheet);
-        });
-        
-        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
-        
-        if (window.firebaseSync && window.firebaseSync.isInitialized) {
-            window.firebaseSync.saveSheetsToCloud(savedSheets);
-        }
-        
-        deletedSheets = [];
-        localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(deletedSheets));
-        
-        updateHomeStats();
-        loadRecentSheets();
-        loadAllSheets();
-        updateDeletedSheetsBin();
-        
-        alert('All sheets restored successfully!');
     }
     
     function saveDefaultParticipants() {
@@ -2313,6 +2192,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadSavedSheets = loadAllSheets;
     window.renderExpenseTable = renderExpenseTable;
     window.currentSheetData = currentSheetData;
-    
-    console.log('script.js v4.5.7 loaded - Sheets deletion and bin sync fixed');
+    window.updateHomeStats = updateHomeStats;
+    window.showPage = showPage;
 });

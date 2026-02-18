@@ -1,20 +1,27 @@
 HisaabKitaab-PWA/
 │
-├── index.html                                  [UPDATED - v5.0]
+├── index.html                                  [UPDATED - v4.5]
 ├── manifest.json                               [UNCHANGED]
 ├── service-worker.js                           [UNCHANGED]
 ├── pwa-install.js                              [UNCHANGED]
 │
 ├── icons/                                      [UNCHANGED]
+│   ├── icon-72x72.png
+│   ├── icon-96x96.png
+│   ├── icon-128x128.png
+│   ├── icon-144x144.png
+│   ├── icon-152x152.png
+│   ├── icon-192x192.png
+│   ├── icon-384x384.png
+│   └── icon-512x512.png
 │
-├── css/                                        
-│   ├── style.css                              [UNCHANGED - v4.5]
-│   └── trips.css                              [NEW - v1.0]
+├── css/                                        [UNCHANGED]
+│   └── style.css
 │
-└── js/                                         
-    ├── script.js                               [UNCHANGED - v4.5.3]
+└── js/                                         [READY FOR v4.5]
+    ├── script.js                              [UPDATED - v4.5 - Bin features removed]
+    ├── bin.js                                  [NEW - v1.0 - Bin management with cloud sync]
     ├── profile-manager.js                      [UNCHANGED - v2.2]
-    ├── pdf-generator.js                         [UNCHANGED - v4.3]
-    ├── firebase-sync.js                         [UNCHANGED - v2.2]
-    ├── Firebaseconfig.js                        [UNCHANGED]
-    └── trips.js                                 [NEW - v1.0]
+    ├── pdf-generator.js                        [UNCHANGED - v4.3]
+    ├── firebase-sync.js                        [UPDATED - v2.3 - Added bin sync]
+    └── Firebaseconfig.js                       [UNCHANGED]
