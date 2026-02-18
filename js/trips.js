@@ -1,5 +1,5 @@
-// trips.js - v2.1 - Trips Feature for HisaabKitaabApp v5.9
-// FIXED: Added custom event listener for trip deletion
+// trips.js - v2.2 - Trips Feature for HisaabKitaabApp v5.9
+// FIXED: Trip deletion persistence - now properly syncs with Firebase
 
 (function() {
     'use strict';
@@ -11,7 +11,7 @@
     });
     
     function initTrips() {
-        console.log('Initializing Trips v2.1...');
+        console.log('Initializing Trips v2.2...');
         
         // ===== TRIPS STATE =====
         let savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
@@ -27,7 +27,8 @@
             updateDeletedTripsBin: updateDeletedTripsBin,
             hideAllPages: hideAllPages,
             showTripsPage: showTripsPage,
-            updateCurrentTripDisplay: updateCurrentTripDisplay
+            updateCurrentTripDisplay: updateCurrentTripDisplay,
+            forceRefreshFromStorage: forceRefreshFromStorage
         };
         
         // Check admin status from main app
@@ -84,7 +85,7 @@
         const confirmRenameTripBtn = document.getElementById('confirmRenameTripBtn');
         const cancelRenameTripBtn = document.getElementById('cancelRenameTripBtn');
         
-        // DELETE MODAL - We'll use the existing one but handle differently
+        // DELETE MODAL
         const deleteModal = document.getElementById('deleteModal');
         const deleteModalTitle = document.getElementById('deleteModalTitle');
         const deleteModalMessage = document.getElementById('deleteModalMessage');
@@ -103,6 +104,18 @@
         setupEventListeners();
         
         // ===== FUNCTIONS =====
+        
+        function forceRefreshFromStorage() {
+            console.log('Force refreshing trips from localStorage');
+            savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
+            deletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
+            window.tripsManager.savedTrips = savedTrips;
+            
+            updateTripsStats();
+            loadRecentTrips();
+            loadAllTrips();
+            updateDeletedTripsBin();
+        }
         
         function setupEventListeners() {
             // Navigation - Trips button
@@ -252,7 +265,7 @@
                 });
             }
             
-            // FIXED: Listen for custom event from script.js for trip deletion
+            // Listen for custom event from script.js for trip deletion
             window.addEventListener('tripDeleteConfirmed', function(e) {
                 console.log('Trip delete confirmed event received:', e.detail);
                 if (e.detail && e.detail.tripId) {
@@ -770,13 +783,21 @@
             
             const trip = savedTrips[tripIndex];
             
+            // Add to deleted trips
             trip.deletedDate = new Date().toISOString();
             deletedTrips.push(trip);
             saveDeletedTripsToStorage();
             
+            // Remove from saved trips
             savedTrips.splice(tripIndex, 1);
+            
+            // Update window reference
+            window.tripsManager.savedTrips = savedTrips;
+            
+            // Save to storage (this will also sync to Firebase)
             saveTripsToStorage();
             
+            // If this is the current open trip, navigate away
             if (currentTripData && currentTripData.id === tripId) {
                 currentTripData = null;
                 window.tripsManager.currentTripData = null;
@@ -784,6 +805,7 @@
                 showTripsPage();
             }
             
+            // Refresh UI
             updateTripsStats();
             loadRecentTrips();
             loadAllTrips();
@@ -849,16 +871,19 @@
         }
         
         function saveTripsToStorage() {
+            console.log('Saving trips to storage:', savedTrips.length);
             localStorage.setItem('hisaabKitaabTrips', JSON.stringify(savedTrips));
             window.tripsManager.savedTrips = savedTrips;
             updateTripsStats();
             
+            // Sync to Firebase if available
             if (window.tripsFirebaseSync && window.tripsFirebaseSync.isInitialized) {
                 window.tripsFirebaseSync.saveTripsToCloud(savedTrips);
             }
         }
         
         function saveDeletedTripsToStorage() {
+            console.log('Saving deleted trips to storage:', deletedTrips.length);
             localStorage.setItem('hisaabKitaabDeletedTrips', JSON.stringify(deletedTrips));
         }
         
@@ -906,19 +931,26 @@
                 deletedTripsList.appendChild(tripItem);
             });
             
+            // Re-attach event listeners
             document.querySelectorAll('.restore-trip-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    restoreDeletedTrip(this.dataset.id);
-                });
+                btn.removeEventListener('click', handleRestoreClick);
+                btn.addEventListener('click', handleRestoreClick);
             });
             
             document.querySelectorAll('.permanent-delete-trip-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    permanentlyDeleteTrip(this.dataset.id);
-                });
+                btn.removeEventListener('click', handlePermanentDeleteClick);
+                btn.addEventListener('click', handlePermanentDeleteClick);
             });
+        }
+        
+        function handleRestoreClick(e) {
+            e.stopPropagation();
+            restoreDeletedTrip(this.dataset.id);
+        }
+        
+        function handlePermanentDeleteClick(e) {
+            e.stopPropagation();
+            permanentlyDeleteTrip(this.dataset.id);
         }
         
         function restoreDeletedTrip(tripId) {
@@ -932,12 +964,20 @@
             
             const trip = deletedTrips[tripIndex];
             
+            // Remove from deleted trips
             deletedTrips.splice(tripIndex, 1);
             saveDeletedTripsToStorage();
             
+            // Add back to saved trips
             savedTrips.push(trip);
+            
+            // Update window reference
+            window.tripsManager.savedTrips = savedTrips;
+            
+            // Save to storage (this will also sync to Firebase)
             saveTripsToStorage();
             
+            // Refresh UI
             updateTripsStats();
             loadRecentTrips();
             loadAllTrips();
@@ -994,15 +1034,22 @@
                 return;
             }
             
+            // Add all deleted trips back to saved trips
             deletedTrips.forEach(trip => {
                 savedTrips.push(trip);
             });
             
+            // Update window reference
+            window.tripsManager.savedTrips = savedTrips;
+            
+            // Save to storage (this will also sync to Firebase)
             saveTripsToStorage();
             
+            // Clear deleted trips
             deletedTrips = [];
             saveDeletedTripsToStorage();
             
+            // Refresh UI
             updateTripsStats();
             loadRecentTrips();
             loadAllTrips();
@@ -1047,6 +1094,7 @@
         function init() {
             savedTrips = JSON.parse(localStorage.getItem('hisaabKitaabTrips')) || [];
             deletedTrips = JSON.parse(localStorage.getItem('hisaabKitaabDeletedTrips')) || [];
+            window.tripsManager.savedTrips = savedTrips;
             
             updateTripsStats();
             loadRecentTrips();
@@ -1059,7 +1107,7 @@
                 }
             }, 2000);
             
-            console.log('Trips v2.1 initialized successfully!');
+            console.log('Trips v2.2 initialized successfully!');
             console.log('Saved Trips:', savedTrips.length);
             console.log('Admin status:', isAdmin);
         }
