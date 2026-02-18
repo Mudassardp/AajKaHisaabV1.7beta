@@ -1,4 +1,4 @@
-// bin.js - v1.0.2 - Fixed restore to remove from bin after restoring
+// bin.js - v1.0.3 - Simple fix for restore (remove from bin after restoring)
 class BinManager {
     constructor() {
         this.deletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
@@ -170,7 +170,7 @@ class BinManager {
         this.deletedSheets.push(sheet);
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Sync to cloud
+        // Sync bin to cloud
         await this.syncToCloud();
         
         // Update UI
@@ -182,23 +182,26 @@ class BinManager {
     // Restore sheet from bin
     async restoreSheet(sheetId) {
         const sheetIndex = this.deletedSheets.findIndex(sheet => sheet.id === sheetId);
-        if (sheetIndex === -1) return false;
+        if (sheetIndex === -1) {
+            alert('Sheet not found in bin');
+            return false;
+        }
         
         const sheet = this.deletedSheets[sheetIndex];
         
-        // Remove from bin FIRST (locally)
+        // STEP 1: Remove from bin FIRST (locally)
         this.deletedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Add back to saved sheets
+        // STEP 2: Sync bin to cloud (this removes it from sharedBin)
+        await this.syncToCloud();
+        
+        // STEP 3: Add to saved sheets
         const savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
         savedSheets.push(sheet);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // Sync bin to cloud (this will remove it from sharedBin)
-        await this.syncToCloud();
-        
-        // Sync sheets to cloud (this will add it to sharedSheets)
+        // STEP 4: Sync sheets to cloud (this adds it to sharedSheets)
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             await window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
@@ -227,10 +230,11 @@ class BinManager {
         const sheetIndex = this.deletedSheets.findIndex(sheet => sheet.id === sheetId);
         if (sheetIndex === -1) return false;
         
+        // Remove from bin
         this.deletedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Sync to cloud
+        // Sync bin to cloud
         await this.syncToCloud();
         
         // Update UI
@@ -248,10 +252,11 @@ class BinManager {
             return false;
         }
         
+        // Clear bin
         this.deletedSheets = [];
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Sync to cloud
+        // Sync bin to cloud
         await this.syncToCloud();
         
         // Update UI
@@ -269,23 +274,24 @@ class BinManager {
             return false;
         }
         
-        const savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
+        // Save the sheets to restore
+        const sheetsToRestore = [...this.deletedSheets];
         
-        // Add all deleted sheets to saved sheets
-        this.deletedSheets.forEach(sheet => {
-            savedSheets.push(sheet);
-        });
-        
-        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
-        
-        // Clear the bin
+        // STEP 1: Clear the bin FIRST
         this.deletedSheets = [];
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Sync bin to cloud (this will clear sharedBin)
+        // STEP 2: Sync bin to cloud (this clears sharedBin)
         await this.syncToCloud();
         
-        // Sync sheets to cloud (this will add all restored sheets to sharedSheets)
+        // STEP 3: Add all to saved sheets
+        const savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
+        sheetsToRestore.forEach(sheet => {
+            savedSheets.push(sheet);
+        });
+        localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
+        
+        // STEP 4: Sync sheets to cloud (this adds them to sharedSheets)
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             await window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
@@ -310,7 +316,7 @@ class BinManager {
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             try {
                 await window.firebaseSync.saveBinToCloud(this.deletedSheets);
-                console.log('Bin synced to cloud');
+                console.log('Bin synced to cloud with', this.deletedSheets.length, 'items');
             } catch (error) {
                 console.error('Failed to sync bin to cloud:', error);
             }
