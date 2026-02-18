@@ -1,4 +1,4 @@
-// bin.js - v1.0.1 - Fixed bin visibility and cloud sync
+// bin.js - v1.0.2 - Fixed restore to remove from bin after restoring
 class BinManager {
     constructor() {
         this.deletedSheets = JSON.parse(localStorage.getItem('hisaabKitaabDeletedSheets')) || [];
@@ -186,7 +186,7 @@ class BinManager {
         
         const sheet = this.deletedSheets[sheetIndex];
         
-        // Remove from bin
+        // Remove from bin FIRST (locally)
         this.deletedSheets.splice(sheetIndex, 1);
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
@@ -195,9 +195,10 @@ class BinManager {
         savedSheets.push(sheet);
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
-        // Sync both to cloud
+        // Sync bin to cloud (this will remove it from sharedBin)
         await this.syncToCloud();
         
+        // Sync sheets to cloud (this will add it to sharedSheets)
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             await window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
@@ -270,18 +271,21 @@ class BinManager {
         
         const savedSheets = JSON.parse(localStorage.getItem('hisaabKitaabSheets')) || [];
         
+        // Add all deleted sheets to saved sheets
         this.deletedSheets.forEach(sheet => {
             savedSheets.push(sheet);
         });
         
         localStorage.setItem('hisaabKitaabSheets', JSON.stringify(savedSheets));
         
+        // Clear the bin
         this.deletedSheets = [];
         localStorage.setItem('hisaabKitaabDeletedSheets', JSON.stringify(this.deletedSheets));
         
-        // Sync both to cloud
+        // Sync bin to cloud (this will clear sharedBin)
         await this.syncToCloud();
         
+        // Sync sheets to cloud (this will add all restored sheets to sharedSheets)
         if (window.firebaseSync && window.firebaseSync.isInitialized) {
             await window.firebaseSync.saveSheetsToCloud(savedSheets);
         }
